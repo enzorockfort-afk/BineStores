@@ -1,2305 +1,759 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>Склад — CRM</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="color-scheme" content="light">
+<title>Bine Store CRM</title>
 <style>
-/* ============ TOKENS ============ */
 :root{
-  --paper:#FFFFFF;
-  --paper-alt:#EEF0F3;
-  --card:#FFFFFF;
-  --card-2:#F2F3F6;
-  --ink:#101114;
-  --ink-soft:#54565D;
-  --ink-faint:#94969E;
-  --line:#E1E3E8;
-  --line-soft:#EBECF0;
-  --ledger:#3B5EDB;
-  --ledger-dark:#2A47B5;
-  --ledger-soft:#E7ECFB;
-  --amber:#75777E;
-  --amber-soft:#EEEFF2;
-  --amber-ink:#54565D;
-  --success:#3B5EDB;
-  --success-soft:#E7ECFB;
-  --danger:#B23B2D;
-  --danger-soft:#F7E3DF;
-  --info:#AEB0B8;
-  --radius-s:8px;
-  --radius-m:14px;
-  --radius-l:20px;
-  --font-head:'Sora', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-body:'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono:'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-  --shadow: 0 1px 0 rgba(16,17,20,0.05);
+  --brand:#2563eb;--brand-2:#1d4ed8;--brand-3:#60a5fa;--ink:#0f172a;--muted:#667085;
+  --bg:#f4f7fb;--card:#ffffff;--line:#e7ebf2;--soft:#f7f9fc;--soft-blue:#eff6ff;
+  --green:#059669;--green-soft:#ecfdf5;--amber:#d97706;--amber-soft:#fffbeb;
+  --red:#dc2626;--red-soft:#fef2f2;--purple:#7c3aed;--shadow:0 12px 38px rgba(15,23,42,.07);
+  --shadow-lg:0 26px 80px rgba(15,23,42,.15);--radius:22px;--radius-sm:14px
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --paper:#0C0D10;
-    --paper-alt:#050507;
-    --card:#17181C;
-    --card-2:#1D1F24;
-    --ink:#F2F3F5;
-    --ink-soft:#B4B6BE;
-    --ink-faint:#74767E;
-    --line:#2B2D33;
-    --line-soft:#212328;
-    --ledger:#5E82F0;
-    --ledger-dark:#3E5FCB;
-    --ledger-soft:#1B2440;
-    --amber:#92949C;
-    --amber-soft:#202227;
-    --amber-ink:#B4B6BE;
-    --success:#5E82F0;
-    --success-soft:#1B2440;
-    --danger:#E2685A;
-    --danger-soft:#3A1F1A;
-    --info:#54565D;
-    --shadow: 0 1px 0 rgba(0,0,0,0.4);
-  }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:radial-gradient(circle at 5% 0%,rgba(37,99,235,.07),transparent 28%),var(--bg);color:var(--ink);
+  min-height:100vh}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:0}
+button:disabled{opacity:.55;cursor:not-allowed}
+a{color:inherit}
+svg{display:block}
+.app{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:276px;background:rgba(255,255,255,.92);backdrop-filter:blur(18px);
+  border-right:1px solid rgba(231,235,242,.9);padding:20px 15px;z-index:30;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:11px;padding:7px 8px 23px;border-bottom:1px solid var(--line)}
+.brandmark{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,#3b82f6,#1d4ed8);
+  box-shadow:0 12px 26px rgba(37,99,235,.26);flex:none}
+.brandname{font-size:18px;font-weight:850;letter-spacing:-.02em}
+.brandsub{font-size:11px;color:var(--muted);margin-top:2px}
+.nav{padding:18px 0;display:grid;gap:5px}
+.nav-group{font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:#98a2b3;font-weight:800;padding:12px 12px 7px}
+.navbtn{display:flex;align-items:center;gap:12px;width:100%;padding:12px 13px;border-radius:13px;background:transparent;color:#667085;text-align:left;font-weight:720;transition:.18s}
+.navbtn:hover{background:#f5f8fc;color:var(--ink);transform:translateX(2px)}
+.navbtn.active{background:linear-gradient(90deg,#eef5ff,#f5f9ff);color:var(--brand);box-shadow:inset 3px 0 var(--brand)}
+.iconbox{width:20px;height:20px;display:grid;place-items:center;flex:none}
+.sidebar-bottom{margin-top:auto;padding-top:13px;border-top:1px solid var(--line)}
+.user-mini{display:flex;align-items:center;gap:10px;padding:11px}
+.avatar{width:38px;height:38px;border-radius:12px;background:#eef2ff;color:#4338ca;display:grid;place-items:center;font-weight:850}
+.user-mini b{font-size:13px}.user-mini span{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+.main{margin-left:276px;min-height:100vh;padding:28px 31px 46px;max-width:1700px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:25px}
+.page-title h1{margin:0;font-size:29px;line-height:1.05;letter-spacing:-.035em}
+.page-title p{margin:8px 0 0;color:var(--muted);font-size:13px}
+.top-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.search-global{width:min(330px,34vw);position:relative}
+.search-global input{padding-left:39px}
+.search-global .sgicon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#98a2b3;pointer-events:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--ink);
+  min-height:42px;padding:0 14px;border-radius:13px;font-weight:750;transition:.18s;box-shadow:0 1px 1px rgba(15,23,42,.02)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(15,23,42,.07)}
+.btn.primary{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#2563eb;color:#fff;box-shadow:0 9px 24px rgba(37,99,235,.23)}
+.btn.ghost{background:transparent}
+.btn.danger{background:#fff;color:var(--red);border-color:#fecaca}
+.btn.icon{width:42px;padding:0}
+.btn.sm{min-height:35px;padding:0 10px;border-radius:11px;font-size:12px}
+.grid-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:18px}
+.metric{position:relative;overflow:hidden;padding:17px 18px 16px;border:1px solid var(--line);background:rgba(255,255,255,.94);border-radius:20px;box-shadow:var(--shadow)}
+.metric:after{content:"";position:absolute;width:110px;height:110px;right:-45px;top:-45px;border-radius:50%;background:rgba(37,99,235,.045)}
+.metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.metric-label{color:var(--muted);font-size:12px;font-weight:780}
+.metric-icon{width:36px;height:36px;border-radius:11px;background:var(--soft-blue);color:var(--brand);display:grid;place-items:center}
+.metric-value{font-size:24px;font-weight:850;letter-spacing:-.03em;margin-top:12px}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:7px}
+.layout-2{display:grid;grid-template-columns:1.45fr 1fr;gap:18px}
+.panel{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:19px;margin-bottom:18px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.panel-head h2{font-size:16px;letter-spacing:-.02em;margin:0}
+.panel-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.section-link{font-size:12px;color:var(--brand);font-weight:800;cursor:pointer}
+.chart-wrap{height:258px}
+.svg-chart{width:100%;height:100%;overflow:visible}
+.chart-tooltip{font-size:10px;fill:var(--muted)}
+.chart-grid{stroke:#edf0f4;stroke-width:1}
+.chart-line{fill:none;stroke:var(--brand);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart-area{fill:url(#areaFill)}
+.chart-dot{fill:#fff;stroke:var(--brand);stroke-width:2}
+.recent-list{display:grid;gap:8px}
+.recent-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 10px;border-radius:14px;cursor:pointer;transition:.15s}
+.recent-row:hover{background:#f8fafc}
+.order-left{display:flex;align-items:center;gap:10px;min-width:0}
+.order-mark{width:38px;height:38px;border-radius:11px;background:#f0f5ff;color:var(--brand);display:grid;place-items:center;flex:none}
+.ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.amount{font-weight:820;white-space:nowrap}
+.small{font-size:11px;color:var(--muted)}
+.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+.grow{flex:1;min-width:220px}
+.control{height:42px;width:100%;padding:0 12px;border:1px solid #dfe4ec;border-radius:12px;background:#fff;color:var(--ink);outline:0;transition:.18s}
+textarea.control{height:auto;padding-top:11px;padding-bottom:11px;resize:vertical}
+.control:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.10)}
+.select-small{width:auto;min-width:140px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}
+.table{width:100%;border-collapse:collapse;min-width:780px}
+.table th{background:#fbfcfe;color:#98a2b3;text-transform:uppercase;font-size:10px;letter-spacing:.08em}
+.table td,.table th{padding:12px 13px;border-bottom:1px solid #eff2f5;text-align:left;font-size:13px}
+.table tr:last-child td{border-bottom:0}
+.product-cell{display:flex;align-items:center;gap:10px;min-width:200px}
+.product-photo,.photo-placeholder{width:42px;height:42px;border-radius:11px;object-fit:cover;flex:none}
+.photo-placeholder{background:linear-gradient(145deg,#eef2ff,#f8fafc);display:grid;place-items:center;color:#94a3b8}
+.actions-inline{display:flex;gap:6px;align-items:center}
+.stock-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:6px 9px;border-radius:999px}
+.stock-ok{background:#ecfdf5;color:#047857}.stock-low{background:#fffbeb;color:#b45309}.stock-zero{background:#fef2f2;color:#b91c1c}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}
+.badge-new{background:#eff6ff;color:#1d4ed8}.badge-work{background:#fffbeb;color:#b45309}.badge-closed{background:#ecfdf5;color:#047857}.badge-cancel{background:#fef2f2;color:#b91c1c}
+.mobile-list{display:none}
+.empty{padding:48px 18px;text-align:center;color:var(--muted)}
+.empty .empty-icon{width:54px;height:54px;border-radius:18px;background:#f1f5f9;color:#94a3b8;display:grid;place-items:center;margin:0 auto 13px}
+.empty b{display:block;color:var(--ink);font-size:14px;margin-bottom:5px}
+.more-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.more-card{padding:19px;border:1px solid var(--line);border-radius:18px;background:#fff;cursor:pointer;transition:.18s;box-shadow:var(--shadow)}
+.more-card:hover{transform:translateY(-2px);box-shadow:0 15px 36px rgba(15,23,42,.1)}
+.more-icon{width:42px;height:42px;border-radius:13px;background:#eef5ff;color:var(--brand);display:grid;place-items:center;margin-bottom:13px}
+.more-card h3{margin:0 0 5px;font-size:14px}.more-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpi-mini{padding:14px;border-radius:15px;background:var(--soft);border:1px solid var(--line)}
+.kpi-mini b{font-size:18px}.kpi-mini span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{display:grid;gap:6px}.field.full{grid-column:1/-1}
+.field label{font-size:11px;color:#667085;font-weight:800}
+.dialog-note{font-size:11px;color:var(--muted);line-height:1.5}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.48);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
+.modal.show{display:flex}
+.dialog{width:min(800px,100%);max-height:min(90vh,900px);overflow:auto;background:#fff;border:1px solid rgba(255,255,255,.7);
+  border-radius:24px;box-shadow:var(--shadow-lg);animation:modalIn .22s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:21px 22px 14px;position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);z-index:2;border-bottom:1px solid #f0f2f6}
+.dialog-head h2{margin:0;font-size:20px;letter-spacing:-.03em}.dialog-head p{margin:5px 0 0;color:var(--muted);font-size:11px}
+.dialog-body{padding:18px 22px}.dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px 20px;border-top:1px solid #f0f2f6}
+.image-upload{display:grid;grid-template-columns:86px 1fr;gap:12px;align-items:center;padding:12px;border:1px dashed #cbd5e1;border-radius:15px;background:#fbfcfe}
+.image-preview{width:86px;height:86px;border-radius:15px;object-fit:cover;background:#eef2f7}
+.order-items{display:grid;gap:9px}
+.item-row{display:grid;grid-template-columns:minmax(0,1.6fr) 76px 110px 38px;gap:8px;align-items:center}
+.item-total{font-size:12px;font-weight:800;text-align:right;color:#334155}
+.order-summary{display:grid;gap:8px;border:1px solid var(--line);padding:14px;border-radius:15px;background:#fbfcfe}
+.summary-row{display:flex;justify-content:space-between;gap:10px;font-size:13px}.summary-row.total{font-size:17px;font-weight:850;padding-top:8px;border-top:1px solid var(--line)}
+.preview-big{width:100%;max-height:330px;object-fit:contain;background:#f8fafc;border-radius:16px}
+.toast{position:fixed;right:20px;bottom:20px;z-index:140;display:none;min-width:230px;max-width:360px;color:#fff;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px 14px;box-shadow:0 18px 40px rgba(15,23,42,.25)}
+.toast.show{display:flex;gap:10px;align-items:flex-start;animation:toastIn .22s ease}
+.toast.ok:before{content:"✓";width:22px;height:22px;border-radius:8px;background:#059669;display:grid;place-items:center;font-weight:900}
+.toast.bad:before{content:"!";width:22px;height:22px;border-radius:8px;background:#dc2626;display:grid;place-items:center;font-weight:900}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.login{min-height:100vh;display:grid;place-items:center;padding:22px;position:relative;overflow:hidden;background:
+ radial-gradient(circle at 12% 20%,rgba(59,130,246,.22),transparent 30%),
+ radial-gradient(circle at 88% 80%,rgba(99,102,241,.16),transparent 30%),#eef4ff}
+.login-orb{position:absolute;border-radius:50%;filter:blur(2px);opacity:.35}
+.orb1{width:310px;height:310px;left:-130px;top:-120px;background:#3b82f6}.orb2{width:260px;height:260px;right:-100px;bottom:-100px;background:#818cf8}
+.loginbox{width:min(430px,100%);background:rgba(255,255,255,.9);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.9);
+  border-radius:28px;padding:31px;box-shadow:0 30px 90px rgba(30,64,175,.18);position:relative}
+.login-brand{display:flex;align-items:center;gap:11px;margin-bottom:23px}
+.login-brand .brandmark{width:48px;height:48px}.login-brand b{font-size:19px}.login-brand small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.login h1{font-size:26px;letter-spacing:-.035em;margin:0 0 7px}.login p{margin:0 0 20px;color:var(--muted);font-size:12px;line-height:1.55}
+.pass-wrap{position:relative}.pass-wrap input{padding-right:43px}.eye-btn{position:absolute;right:7px;top:5px;width:32px;height:32px;border-radius:9px;background:transparent;color:#98a2b3}
+.login-foot{margin-top:16px;text-align:center;color:#98a2b3;font-size:10px}
+.spinner{width:17px;height:17px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.file-input{display:none}
+.toggle{width:42px;height:25px;border-radius:999px;background:#cbd5e1;position:relative;transition:.18s}.toggle:after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.14);transition:.18s}.toggle.on{background:var(--brand)}.toggle.on:after{left:20px}
+.settings-list{display:grid;gap:10px}.setting{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:16px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.setting-info b{font-size:13px}.setting-info span{display:block;color:var(--muted);font-size:11px;margin-top:4px;line-height:1.4}
+.category-chips{display:flex;gap:7px;flex-wrap:wrap}.chip{padding:7px 10px;border-radius:999px;background:#f8fafc;border:1px solid var(--line);font-size:11px;cursor:pointer}.chip.active{background:#eef5ff;border-color:#bfdbfe;color:var(--brand);font-weight:800}
+.mobile-nav{display:none}
+.detail-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px}.detail-side{display:grid;align-content:start;gap:12px}.detail-stat{padding:13px 14px;background:#f8fafc;border:1px solid var(--line);border-radius:14px}.detail-stat span{font-size:10px;color:var(--muted);display:block}.detail-stat b{display:block;margin-top:4px;font-size:16px}
+.scroll-x{overflow-x:auto}
+.mini-list{display:grid;gap:8px}.mini-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px}.mini-row:hover{background:#f8fafc}
+.progress{height:8px;background:#edf1f6;border-radius:999px;overflow:hidden}.progress > div{height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:999px}
+.success{color:var(--green)}.danger{color:var(--red)}.warning{color:var(--amber)}.muted{color:var(--muted)}.hide{display:none!important}
+@media(max-width:1180px){.grid-metrics{grid-template-columns:repeat(2,1fr)}.layout-2{grid-template-columns:1fr}.more-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){
+  .sidebar{display:none}.main{margin:0;padding:16px 13px 92px}
+  .topbar{align-items:flex-start;margin-bottom:18px}.page-title h1{font-size:23px}.page-title p{font-size:11px;margin-top:6px}
+  .top-actions{justify-content:flex-end}.search-global{display:none}.btn{min-height:43px}.grid-metrics{grid-template-columns:1fr 1fr;gap:9px}.metric{padding:13px;border-radius:16px}.metric-value{font-size:18px}.metric-label{font-size:10px}.metric-icon{width:31px;height:31px}
+  .panel{padding:14px;border-radius:17px}.table-wrap{display:none}.mobile-list{display:grid;gap:9px}
+  .mobile-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px;display:grid;gap:9px}
+  .mc-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .mc-main{display:flex;align-items:center;gap:10px;min-width:0}.mc-main b{font-size:13px}.mc-main .small{font-size:10px}
+  .mc-photo{width:46px;height:46px;border-radius:12px;object-fit:cover;flex:none}
+  .toolbar{display:grid;grid-template-columns:1fr 1fr}.toolbar .grow{grid-column:1/-1}.toolbar .select-small{min-width:0;width:100%}
+  .formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.dialog{max-height:94vh;border-radius:22px}.dialog-head{padding:18px 17px 13px}.dialog-body{padding:15px 17px}.dialog-foot{padding:12px 17px 17px}
+  .item-row{grid-template-columns:minmax(0,1fr) 66px 95px 36px}.item-row .item-total{display:none}
+  .more-cards{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr 1fr 1fr;gap:8px}.kpi-mini{padding:11px}.kpi-mini b{font-size:14px}
+  .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:0;right:0;bottom:0;height:72px;padding:7px 7px calc(7px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border-top:1px solid var(--line);z-index:60}
+  .mobile-nav button{background:transparent;color:#98a2b3;border-radius:12px;font-size:9px;font-weight:760;display:grid;place-items:center;gap:3px}.mobile-nav button.active{color:var(--brand);background:#eff6ff}.mobile-nav .m-ico{width:21px;height:21px}
+  .setting{align-items:flex-start}.setting .btn{flex:none}.detail-grid{grid-template-columns:1fr}
 }
-:root[data-theme="dark"]{
-  --paper:#0C0D10;
-  --paper-alt:#050507;
-  --card:#17181C;
-  --card-2:#1D1F24;
-  --ink:#F2F3F5;
-  --ink-soft:#B4B6BE;
-  --ink-faint:#74767E;
-  --line:#2B2D33;
-  --line-soft:#212328;
-  --ledger:#5E82F0;
-  --ledger-dark:#3E5FCB;
-  --ledger-soft:#1B2440;
-  --amber:#92949C;
-  --amber-soft:#202227;
-  --amber-ink:#B4B6BE;
-  --success:#5E82F0;
-  --success-soft:#1B2440;
-  --danger:#E2685A;
-  --danger-soft:#3A1F1A;
-  --info:#54565D;
-}
-
-*{box-sizing:border-box;}
-html,body{height:100%;margin:0;}
-html{scroll-padding-top:env(safe-area-inset-top,0px);}
-body{
-  background:var(--paper-alt);
-  font-family:var(--font-body);
-  color:var(--ink);
-  -webkit-tap-highlight-color:transparent;
-  overscroll-behavior-y:none;
-}
-button,input,select,textarea{font-family:inherit;color:inherit;}
-button{cursor:pointer;}
-h1,h2,h3{font-family:var(--font-head);margin:0;}
-.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
-
-/* ============ SHELL ============ */
-:root{ --shell-w:480px; }
-#shell{
-  min-height:100%;
-  max-width:var(--shell-w);
-  margin:0 auto;
-  background:var(--paper);
-  display:flex;
-  flex-direction:column;
-  position:relative;
-  border-left:1px solid var(--line-soft);
-  border-right:1px solid var(--line-soft);
-}
-
-/* ---- header ---- */
-header{
-  flex:0 0 auto;
-  padding:calc(14px + env(safe-area-inset-top,0px)) 18px 12px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--line);
-  background:var(--paper);
-}
-.brand{display:flex;flex-direction:column;line-height:1.1;}
-.brand h1{font-size:19px;font-weight:600;letter-spacing:0.2px;}
-.brand .sub{font-size:11.5px;color:var(--ink-faint);margin-top:3px;}
-.gear-btn{
-  width:38px;height:38px;border-radius:10px;border:1px solid var(--line);
-  background:var(--card);display:flex;align-items:center;justify-content:center;
-  flex:0 0 auto;
-}
-.gear-btn svg{width:18px;height:18px;stroke:var(--ink-soft);}
-
-/* ---- main scroll area ---- */
-main{
-  flex:1 1 auto;
-  overflow-y:auto;
-  padding:16px 16px 28px;
-  -webkit-overflow-scrolling:touch;
-}
-.view{display:none;}
-.view.active{display:block;animation:fadein .18s ease;}
-@media (prefers-reduced-motion: reduce){.view.active{animation:none;}}
-@keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-
-/* ---- bottom nav ---- */
-nav#tabbar{
-  flex:0 0 auto;
-  display:flex;
-  border-top:1px solid var(--line);
-  background:var(--paper);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-}
-nav#tabbar button{
-  flex:1;background:none;border:none;padding:9px 4px 10px;
-  display:flex;flex-direction:column;align-items:center;gap:4px;
-  color:var(--ink-faint);
-}
-nav#tabbar button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;}
-nav#tabbar button span{font-size:10.5px;font-weight:600;letter-spacing:.2px;}
-nav#tabbar button.active{color:var(--ledger);}
-:root[data-theme="dark"] nav#tabbar button.active,
-@media (prefers-color-scheme:dark){ nav#tabbar button.active{color:var(--ledger);} }
-
-/* ============ SECTION HEADINGS ============ */
-.section-title{
-  font-size:22px;font-weight:600;margin-bottom:14px;display:flex;align-items:baseline;justify-content:space-between;gap:8px;
-}
-.section-title .stamp{
-  font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);font-weight:500;
-}
-
-/* ============ STAT CARDS (Home) ============ */
-.period-row{display:flex;gap:6px;margin-bottom:16px;}
-.chip{
-  flex:1;text-align:center;padding:8px 6px;border-radius:999px;border:1px solid var(--line);
-  background:var(--card);font-size:12.5px;font-weight:600;color:var(--ink-soft);
-}
-.chip.active{background:var(--ledger);border-color:var(--ledger);color:#FFFFFF;}
-
-.stat-hero{
-  background:var(--ledger);
-  color:#FFFFFF;
-  border-radius:var(--radius-l);
-  padding:20px 20px 18px;
-  margin-bottom:12px;
-  position:relative;
-  overflow:hidden;
-}
-.stat-hero .label{font-size:12px;letter-spacing:.3px;opacity:.78;font-weight:600;}
-.stat-hero .value{font-family:var(--font-mono);font-size:34px;font-weight:600;margin-top:6px;letter-spacing:-0.5px;}
-.stat-hero .value.neg{color:#FFD3C9;}
-.stat-hero .foot{margin-top:10px;font-size:12px;opacity:.75;}
-
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.stat-card{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);padding:13px 14px;
-}
-.stat-card .label{font-size:11.5px;color:var(--ink-faint);font-weight:600;letter-spacing:.15px;}
-.stat-card .value{font-family:var(--font-mono);font-size:20px;font-weight:600;margin-top:5px;}
-.stat-card .value.pos{color:var(--success);}
-.stat-card .value.neg{color:var(--danger);}
-
-.quick-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 6px;}
-.quick-btn{
-  background:var(--card-2);border:1px dashed var(--line);border-radius:var(--radius-m);
-  padding:12px 8px;text-align:center;font-size:12px;font-weight:600;color:var(--ledger-dark);line-height:1.25;
-}
-:root[data-theme="dark"] .quick-btn, @media (prefers-color-scheme:dark){.quick-btn{color:var(--ledger);}}
-.quick-btn .qicon{font-size:18px;display:block;margin-bottom:4px;}
-
-.mini-title{font-size:13.5px;font-weight:700;color:var(--ink-soft);margin:22px 0 10px;text-transform:none;}
-
-/* ============ LIST CARDS (products/orders/finance) ============ */
-.card{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);
-  padding:13px 14px;margin-bottom:10px;
-}
-.prod-card{display:flex;gap:12px;}
-.prod-photo{
-  width:56px;height:56px;border-radius:10px;background:var(--card-2);border:1px solid var(--line-soft);
-  display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden;
-}
-.prod-photo img{width:100%;height:100%;object-fit:cover;}
-.prod-photo svg{width:22px;height:22px;stroke:var(--ink-faint);}
-.prod-body{flex:1;min-width:0;}
-.prod-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
-.prod-name{font-weight:700;font-size:14.5px;line-height:1.25;}
-.tag{
-  display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;
-  background:var(--ledger-soft);color:var(--ledger-dark);margin-top:4px;
-}
-:root[data-theme="dark"] .tag,@media (prefers-color-scheme:dark){.tag{color:var(--ledger);}}
-.tag.tag-outline{background:transparent;border:1px solid var(--line);color:var(--ink-faint);font-family:var(--font-mono);font-weight:600;}
-.qty-badge{font-family:var(--font-mono);font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--card-2);border:1px solid var(--line-soft);white-space:nowrap;}
-.qty-badge.low{background:var(--danger-soft);color:var(--danger);border-color:transparent;}
-.prod-prices{display:flex;gap:14px;margin-top:8px;font-size:12px;}
-.prod-prices .num{font-size:13px;font-weight:600;}
-.prod-prices .plabel{color:var(--ink-faint);display:block;font-size:10.5px;}
-.prod-foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--line-soft);}
-.prod-supplier{font-size:11.5px;color:var(--ink-faint);}
-.icon-btn{
-  width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card-2);
-  display:inline-flex;align-items:center;justify-content:center;
-}
-.icon-btn svg{width:15px;height:15px;stroke:var(--ink-soft);}
-.icon-row{display:flex;gap:6px;}
-
-/* order card */
-.order-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-.order-client{font-weight:700;font-size:14.5px;}
-.order-contact{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
-.status-badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;}
-.status-new{background:var(--card-2);border:1px solid var(--line);color:var(--ink-soft);}
-.status-progress{background:var(--ledger-soft);color:var(--ledger-dark);}
-:root[data-theme="dark"] .status-progress,@media (prefers-color-scheme:dark){.status-progress{color:var(--ledger);}}
-.status-done{background:var(--ink);color:var(--paper);}
-:root[data-theme="dark"] .status-done,@media (prefers-color-scheme:dark){.status-done{background:var(--ledger);color:#FFFFFF;}}
-.status-cancel{background:var(--danger-soft);color:var(--danger);}
-.order-items{margin-top:9px;font-size:12.5px;color:var(--ink-soft);}
-.order-items div{display:flex;justify-content:space-between;padding:2px 0;}
-.order-totals{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line-soft);font-size:11.5px;}
-.order-totals .t{display:flex;flex-direction:column;}
-.order-totals .t .num{font-size:13.5px;}
-.order-totals .plabel{color:var(--ink-faint);font-size:10.5px;}
-.order-meta-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;}
-.status-select{
-  font-size:11.5px;font-weight:600;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card-2);
-}
-.order-date{font-size:11px;color:var(--ink-faint);font-family:var(--font-mono);}
-
-/* finance rows */
-.fin-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
-.fin-row{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 4px;border-bottom:1px solid var(--line-soft);}
-.fin-row:last-child{border-bottom:none;}
-.fin-left{display:flex;gap:10px;align-items:center;min-width:0;}
-.fin-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
-.fin-dot.topup{background:var(--info);}
-.fin-dot.income{background:var(--success);}
-.fin-dot.purchase{background:var(--amber);}
-.fin-dot.delivery{background:var(--ink);}
-.fin-dot.expense{background:var(--danger);}
-.fin-dot.other{background:var(--ink-faint);}
-.fin-text{min-width:0;}
-.fin-reason{font-size:13px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.fin-meta{font-size:10.5px;color:var(--ink-faint);margin-top:2px;}
-.fin-amount{font-family:var(--font-mono);font-weight:700;font-size:13.5px;white-space:nowrap;padding-left:8px;}
-.fin-amount.plus{color:var(--success);}
-.fin-amount.minus{color:var(--danger);}
-.fin-left{flex:1;align-items:flex-start;}
-.fin-dot{margin-top:5px;}
-.fin-reason{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-#finList{margin-bottom:84px;}
-.fin-act{
-  margin-top:7px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;
-  border:1px solid var(--line);background:var(--card-2);color:var(--ink-soft);white-space:nowrap;
-}
-.fin-act:active{background:var(--line-soft);}
-.fin-row.cancelled .fin-reason,
-.fin-row.cancelled .fin-amount{text-decoration:line-through;color:var(--ink-faint);}
-.fin-row.cancelled .fin-dot{opacity:.35;}
-.fin-tag{
-  display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;margin-left:4px;border-radius:999px;
-  background:var(--danger-soft);color:var(--danger);
-}
-
-/* client cards */
-.client-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-.client-name{font-weight:700;font-size:14.5px;}
-.client-contact{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
-.client-stats{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line-soft);font-size:11.5px;}
-.client-stats .t{display:flex;flex-direction:column;}
-.client-stats .t .num{font-size:13.5px;}
-.client-arrow{flex:0 0 auto;color:var(--ink-faint);}
-
-/* ============ EMPTY STATES ============ */
-.empty{
-  text-align:center;padding:40px 20px;color:var(--ink-faint);
-}
-.empty .eicon{font-size:30px;margin-bottom:10px;display:block;}
-.empty .etitle{font-weight:700;color:var(--ink-soft);font-size:14.5px;margin-bottom:4px;}
-.empty .etext{font-size:12.5px;line-height:1.5;}
-
-/* ============ FAB ============ */
-/* position:fixed relative to viewport (not to scrolling content), so the "+"
-   button always stays visible on screen and never requires scrolling to reach,
-   even when a list is very long. Horizontal offset is computed so it hugs the
-   right edge of the (possibly centered) shell on any screen width. */
-.fab{
-  position:fixed;
-  right:max(18px, calc((100vw - var(--shell-w))/2 + 18px));
-  bottom:calc(78px + env(safe-area-inset-bottom,0px));
-  width:54px;height:54px;border-radius:16px;background:var(--ledger);color:#FFFFFF;border:none;
-  display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(30,50,120,0.34);
-  z-index:20;
-}
-.fab svg{width:24px;height:24px;stroke:#FFFFFF;stroke-width:2.2;}
-.view-wrap{position:relative;min-height:calc(100% - 0px);}
-
-/* ============ DESKTOP / PC ADAPTATION ============ */
-@media (min-width:900px){
-  :root{ --shell-w:900px; }
-  body{background:var(--paper-alt);}
-  #shell{
-    border-left:1px solid var(--line-soft);border-right:1px solid var(--line-soft);
-    box-shadow:0 0 0 1px var(--line-soft), 0 12px 40px rgba(0,0,0,0.06);
-    min-height:100vh;
-  }
-  header{padding-left:28px;padding-right:28px;}
-  main{padding:22px 28px 40px;}
-  nav#tabbar{
-    position:sticky;bottom:0;
-  }
-  .stat-grid{grid-template-columns:repeat(4,1fr);}
-  .fin-summary-grid{grid-template-columns:repeat(3,1fr);}
-  #productsList, #ordersList, #clientsList{
-    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-content:start;
-  }
-  #productsList .card, #ordersList .card, #clientsList .card{margin-bottom:0;}
-  .quick-row{grid-template-columns:repeat(4,1fr);}
-  .sheet{
-    max-width:560px;border-radius:20px;margin:auto;
-    max-height:88vh;
-  }
-  .overlay{align-items:center;}
-  .overlay .sheet{transform:translateY(12px);}
-  .overlay.show .sheet{transform:translateY(0);}
-}
-@media (min-width:1200px){
-  :root{ --shell-w:1100px; }
-  #productsList, #ordersList, #clientsList{grid-template-columns:repeat(3,1fr);}
-}
-
-/* ============ MODAL / SHEET ============ */
-.overlay{
-  position:fixed;inset:0;background:rgba(20,17,10,0.45);z-index:100;display:none;
-  align-items:flex-end;justify-content:center;
-}
-.overlay.show{display:flex;}
-.sheet{
-  width:100%;max-width:480px;background:var(--paper);border-radius:20px 20px 0 0;
-  max-height:92vh;overflow-y:auto;padding:6px 20px calc(20px + env(safe-area-inset-bottom,0px));
-  transform:translateY(100%);transition:transform .22s ease;
-  border-top:1px solid var(--line);
-}
-.overlay.show .sheet{transform:translateY(0);}
-.sheet-handle{width:36px;height:4px;background:var(--line);border-radius:99px;margin:10px auto 6px;}
-.sheet-title{font-size:18px;font-weight:700;margin:6px 0 16px;display:flex;justify-content:space-between;align-items:center;}
-.sheet-title button.close{background:none;border:none;color:var(--ink-faint);font-size:20px;line-height:1;padding:4px;}
-
-.field{margin-bottom:13px;}
-.field label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;}
-.field input[type=text],.field input[type=number],.field input[type=date],.field input[type=tel],
-.field select,.field textarea{
-  width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);
-  font-size:14.5px;color:var(--ink);
-}
-.field textarea{resize:vertical;min-height:56px;}
-.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--ledger);outline-offset:1px;}
-.field-row{display:flex;gap:10px;}
-.field-row .field{flex:1;}
-.hint{font-size:11px;color:var(--ink-faint);margin-top:4px;}
-
-.photo-picker{display:flex;align-items:center;gap:12px;}
-.photo-preview{
-  width:64px;height:64px;border-radius:12px;background:var(--card-2);border:1px dashed var(--line);
-  display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto;
-}
-.photo-preview img{width:100%;height:100%;object-fit:cover;}
-.photo-preview svg{width:22px;height:22px;stroke:var(--ink-faint);}
-.btn-secondary{
-  padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600;
-}
-
-.order-item-row{
-  display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;background:var(--card-2);
-  border:1px solid var(--line-soft);border-radius:12px;padding:10px;flex-wrap:wrap;
-}
-.order-item-row .oi-product{flex:1 1 100%;}
-.order-item-row .oi-qty{flex:1 1 28%;}
-.order-item-row .oi-price{flex:1 1 30%;}
-.order-item-row select,.order-item-row input{padding:9px 10px;font-size:13.5px;border-radius:8px;border:1px solid var(--line);background:var(--card);width:100%;}
-.oi-remove{flex:0 0 auto;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;align-self:center;}
-.oi-remove svg{width:14px;height:14px;stroke:var(--danger);}
-.add-item-btn{
-  width:100%;padding:10px;border-radius:10px;border:1px dashed var(--line);background:var(--card);
-  font-size:13px;font-weight:600;color:var(--ledger-dark);margin-bottom:14px;
-}
-:root[data-theme="dark"] .add-item-btn,@media (prefers-color-scheme:dark){.add-item-btn{color:var(--ledger);}}
-
-.btn-primary{
-  width:100%;padding:14px;border-radius:12px;border:none;background:var(--ledger);color:#FFFFFF;
-  font-size:15px;font-weight:700;margin-top:8px;
-}
-.btn-primary.danger{background:var(--danger);}
-.btn-ghost-danger{
-  width:100%;padding:12px;border-radius:12px;border:1px solid var(--danger);background:transparent;color:var(--danger);
-  font-size:13.5px;font-weight:700;margin-top:10px;
-}
-.summary-box{
-  background:var(--card-2);border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;margin:6px 0 14px;
-  font-size:13px;
-}
-.summary-box .srow{display:flex;justify-content:space-between;padding:3px 0;}
-.summary-box .srow.total{border-top:1px solid var(--line-soft);margin-top:6px;padding-top:8px;font-weight:700;}
-.summary-box .num{font-weight:600;}
-
-.type-pick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px;}
-.type-pick button{
-  padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:12.5px;font-weight:600;color:var(--ink-soft);
-}
-.type-pick button.active{background:var(--ledger);border-color:var(--ledger);color:#FFFFFF;}
-
-/* toast */
-#toast{
-  position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);
-  background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;
-  z-index:300;opacity:0;pointer-events:none;transition:all .25s ease;max-width:88%;text-align:center;
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-::-webkit-scrollbar{width:0;height:0;}
 </style>
 </head>
 <body>
-<div id="shell">
+<div id="root"></div>
+<div id="modalRoot"></div>
+<div id="toast" class="toast"></div>
 
-  <header>
-    <div class="brand">
-      <h1>Склад</h1>
-      <div class="sub" id="headerDate">—</div>
-    </div>
-    <button class="gear-btn" id="settingsBtn" aria-label="Настройки">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    </button>
-  </header>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
+  runTransaction
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
-  <main id="main">
-
-    <!-- ================= HOME ================= -->
-    <section class="view active view-wrap" id="view-home">
-      <div class="section-title">Главная</div>
-
-      <div class="period-row" id="periodRow">
-        <button class="chip active" data-period="day">День</button>
-        <button class="chip" data-period="week">Неделя</button>
-        <button class="chip" data-period="month">Месяц</button>
-      </div>
-
-      <div class="stat-hero">
-        <div class="label">Общий бюджет</div>
-        <div class="value num" id="homeBudget">0 MDL</div>
-        <div class="foot" id="homeBudgetFoot">пополнения + доходы − расходы</div>
-      </div>
-
-      <div class="stat-grid">
-        <div class="stat-card"><div class="label">Выручка</div><div class="value num pos" id="homeRevenue">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Расходы</div><div class="value num neg" id="homeExpenses">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Чистая прибыль</div><div class="value num" id="homeProfit">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Заказов</div><div class="value num" id="homeOrders">0</div></div>
-      </div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="label">Товаров в наличии</div><div class="value num" id="homeStockUnits">0 шт</div></div>
-        <div class="stat-card"><div class="label">Стоимость остатков</div><div class="value num" id="homeStockValue">0 MDL</div></div>
-      </div>
-
-      <div class="quick-row">
-        <button class="quick-btn" id="qaOrder"><span class="qicon">🧾</span>Заказ клиенту</button>
-        <button class="quick-btn" id="qaRestock"><span class="qicon">📥</span>Закупка у поставщика</button>
-        <button class="quick-btn" id="qaProduct"><span class="qicon">📦</span>Новый товар</button>
-        <button class="quick-btn" id="qaExpense"><span class="qicon">💸</span>Другой расход</button>
-      </div>
-
-      <div class="mini-title">Последние заказы</div>
-      <div id="homeRecentOrders"></div>
-    </section>
-
-    <!-- ================= PRODUCTS ================= -->
-    <section class="view view-wrap" id="view-products">
-      <div class="section-title">Товары <span class="stamp" id="productsStamp"></span></div>
-      <div id="productsList"></div>
-      <button class="fab" id="fabProduct" aria-label="Добавить товар">
-        <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
-    </section>
-
-    <!-- ================= ORDERS ================= -->
-    <section class="view view-wrap" id="view-orders">
-      <div class="section-title">Заказы <span class="stamp" id="ordersStamp"></span></div>
-      <div class="period-row" id="ordersModeRow">
-        <button class="chip active" data-mode="orders">Заказы</button>
-        <button class="chip" data-mode="clients">Клиенты</button>
-      </div>
-      <div id="ordersFilterBar" style="display:none;margin-bottom:10px;">
-        <button class="chip active" id="ordersFilterClear" style="width:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;">
-          <span id="ordersFilterLabel"></span><span style="font-weight:800;">✕</span>
-        </button>
-      </div>
-      <div id="ordersList"></div>
-      <div id="clientsList" style="display:none;"></div>
-      <button class="fab" id="fabOrder" aria-label="Добавить заказ">
-        <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
-    </section>
-
-    <!-- ================= FINANCE ================= -->
-    <section class="view view-wrap" id="view-finance">
-      <div class="section-title">Финансы</div>
-      <div class="fin-summary-grid">
-        <div class="stat-card"><div class="label">Бюджет</div><div class="value num" id="finBudget">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Чистая прибыль</div><div class="value num" id="finProfit">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Пополнения</div><div class="value num" id="finTopups">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Доходы</div><div class="value num pos" id="finIncome">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Закупки</div><div class="value num neg" id="finPurchases">0 MDL</div></div>
-        <div class="stat-card"><div class="label">Доставка + прочее</div><div class="value num neg" id="finOther">0 MDL</div></div>
-      </div>
-      <div class="mini-title">Операции</div>
-      <div class="card" id="finList" style="padding:4px 10px;"></div>
-      <button class="fab" id="fabFinance" aria-label="Добавить расход/доход">
-        <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
-    </section>
-
-  </main>
-
-  <nav id="tabbar">
-    <button class="tab-btn active" data-view="home">
-      <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-      <span>Главная</span>
-    </button>
-    <button class="tab-btn" data-view="products">
-      <svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
-      <span>Товары</span>
-    </button>
-    <button class="tab-btn" data-view="orders">
-      <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-      <span>Заказы</span>
-    </button>
-    <button class="tab-btn" data-view="finance">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.1 1.3-2 3-2s3 .7 3 1.8c0 2.2-6 1-6 3.2 0 1.1 1.3 1.8 3 1.8s3-.9 3-2"/></svg>
-      <span>Финансы</span>
-    </button>
-  </nav>
-
-</div>
-
-<!-- ================= MODALS ================= -->
-<div class="overlay" id="overlayProduct">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title"><span id="productFormTitle">Новый товар</span><button class="close" data-close>&times;</button></div>
-    <form id="productForm">
-      <input type="hidden" id="pf_id">
-      <div class="field">
-        <label>Фото товара</label>
-        <div class="photo-picker">
-          <div class="photo-preview" id="pf_photoPreview"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" fill="none"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.2"/><path d="M8 6l1.5-2h5L16 6"/></svg></div>
-          <input type="file" accept="image/*" id="pf_photoInput" style="display:none">
-          <button type="button" class="btn-secondary" id="pf_photoBtn">Выбрать фото</button>
-        </div>
-      </div>
-      <div class="field"><label>Название *</label><input type="text" id="pf_name" required placeholder="Например: Кроссовки Air"></div>
-      <div class="field-row">
-        <div class="field"><label>Категория</label><input type="text" id="pf_category" list="categoryList" placeholder="Обувь"></div>
-        <div class="field"><label>Поставщик</label><input type="text" id="pf_supplier" placeholder="ООО Поставка"></div>
-      </div>
-      <datalist id="categoryList"></datalist>
-      <div class="field-row">
-        <div class="field"><label>Размер</label><input type="text" id="pf_model" placeholder="Напр.: 42 или M"></div>
-        <div class="field"><label>Ссылка на товар у поставщика</label><input type="text" id="pf_link" placeholder="https://..."></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Количество в наличии</label><input type="number" id="pf_qty" min="0" step="1" placeholder="0" value="0"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Закупочная цена *</label><input type="number" id="pf_buy" min="0" step="0.01" required placeholder="0"></div>
-        <div class="field"><label>Цена продажи *</label><input type="number" id="pf_sell" min="0" step="0.01" required placeholder="0"></div>
-      </div>
-      <button type="submit" class="btn-primary">Сохранить товар</button>
-      <button type="button" class="btn-ghost-danger" id="pf_delete" style="display:none;">Удалить товар</button>
-    </form>
-  </div>
-</div>
-
-<div class="overlay" id="overlayRestock">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title"><span>Закупка у поставщика</span><button class="close" data-close>&times;</button></div>
-    <div class="hint" style="margin:-8px 0 14px;">Можно добавить сразу несколько товаров (разных размеров и т.п.) — каждый пополнит свой остаток, расход посчитается автоматически.</div>
-    <form id="restockForm">
-      <label style="display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin:0 0 8px;">Товары *</label>
-      <div id="restockItemsWrap"></div>
-      <button type="button" class="add-item-btn" id="addRestockItemBtn">+ добавить товар</button>
-
-      <div class="field-row">
-        <div class="field"><label>Доставка (общая)</label><input type="number" id="rf_delivery" min="0" step="0.01" placeholder="0"></div>
-        <div class="field"><label>Дата *</label><input type="date" id="rf_date" required></div>
-      </div>
-      <div class="field"><label>Заметка</label><input type="text" id="rf_note" placeholder="Необязательно"></div>
-      <div class="summary-box" id="restockSummaryBox"></div>
-      <button type="submit" class="btn-primary">Сохранить закупку</button>
-    </form>
-  </div>
-</div>
-
-<div class="overlay" id="overlayOrder">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title"><span id="orderFormTitle">Новый заказ</span><button class="close" data-close>&times;</button></div>
-    <form id="orderForm">
-      <input type="hidden" id="of_id">
-      <datalist id="clientNameList"></datalist>
-      <div class="field-row">
-        <div class="field"><label>Имя клиента *</label><input type="text" id="of_client" list="clientNameList" required placeholder="Иван Петров или выберите из списка"></div>
-        <div class="field"><label>Контакт</label><input type="text" id="of_contact" placeholder="Телефон / соцсеть"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Дата *</label><input type="date" id="of_date" required></div>
-        <div class="field"><label>Статус *</label>
-          <select id="of_status">
-            <option value="Новый">Новый</option>
-            <option value="В обработке">В обработке</option>
-            <option value="Доставлен">Доставлен</option>
-            <option value="Отменён">Отменён</option>
-          </select>
-        </div>
-      </div>
-
-      <label style="display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin:14px 0 8px;">Товары в заказе *</label>
-      <div id="orderItemsWrap"></div>
-      <button type="button" class="add-item-btn" id="addItemBtn">+ добавить товар</button>
-
-      <div class="field-row">
-        <div class="field"><label>Доставка</label><input type="number" id="of_delivery" min="0" step="0.01" placeholder="0"></div>
-        <div class="field"><label>Доп. расходы</label><input type="number" id="of_extra" min="0" step="0.01" placeholder="0"></div>
-      </div>
-      <div class="field"><label>Заметка</label><textarea id="of_note" placeholder="Необязательно"></textarea></div>
-
-      <div class="summary-box" id="orderSummaryBox"></div>
-
-      <button type="submit" class="btn-primary">Сохранить заказ</button>
-      <button type="button" class="btn-ghost-danger" id="of_delete" style="display:none;">Удалить заказ</button>
-    </form>
-  </div>
-</div>
-
-<div class="overlay" id="overlayFinance">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title"><span>Новая операция</span><button class="close" data-close>&times;</button></div>
-    <form id="financeForm">
-      <div class="field">
-        <label>Тип операции *</label>
-        <div class="type-pick" id="ff_typePick">
-          <button type="button" data-type="income" class="active">Доход</button>
-          <button type="button" data-type="expense">Расход</button>
-          <button type="button" data-type="other">Другое</button>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Сумма *</label><input type="number" id="ff_amount" min="0.01" step="0.01" required placeholder="0"></div>
-        <div class="field"><label>Дата *</label><input type="date" id="ff_date" required></div>
-      </div>
-      <div class="field"><label>Категория</label><input type="text" id="ff_category" placeholder="Например: реклама, аренда"></div>
-      <div class="field"><label>Причина / комментарий *</label><input type="text" id="ff_reason" required placeholder="На что и почему"></div>
-      <button type="submit" class="btn-primary">Сохранить операцию</button>
-    </form>
-  </div>
-</div>
-
-<div class="overlay" id="overlaySettings">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title"><span>Настройки</span><button class="close" data-close>&times;</button></div>
-
-    <div class="field"><label>Валюта</label><input type="text" value="MDL — лей" disabled style="opacity:.65;"></div>
-    <div class="hint" style="margin-top:-6px;margin-bottom:16px;">Валюта фиксирована и не может быть изменена.</div>
-
-    <div class="mini-title" style="margin-top:6px;">База данных на этом телефоне</div>
-    <div class="hint" id="st_dbinfo" style="margin-bottom:6px;"></div>
-    <div class="hint" style="margin-bottom:12px;">Чтобы перенести данные на другой телефон или сделать резервную копию — используйте экспорт и импорт файла ниже.</div>
-    <button type="button" class="btn-secondary" style="width:100%;margin-bottom:10px;" id="st_export">⬇ Экспортировать данные (файл)</button>
-    <input type="file" accept="application/json" id="st_importInput" style="display:none;">
-    <button type="button" class="btn-secondary" style="width:100%;" id="st_import">⬆ Импортировать данные (файл)</button>
-
-    <div class="mini-title" style="margin-top:22px;">Синхронизация между устройствами</div>
-    <div class="hint" style="margin-bottom:12px;">Данные будут автоматически сохраняться в приватный GitHub Gist и подтягиваться на других устройствах. Нужен GitHub Personal Access Token с правом <b>gist</b> (создаётся в GitHub → Settings → Developer settings → Personal access tokens). Поле «ID хранилища» оставьте пустым при первом подключении — оно создастся само.</div>
-    <div class="field"><label>GitHub токен (право gist)</label><input type="password" id="st_cloudToken" placeholder="ghp_..." autocomplete="off"></div>
-    <div class="field"><label>ID хранилища (Gist ID)</label><input type="text" id="st_cloudGist" placeholder="оставьте пустым при первом разе"></div>
-    <div class="hint" id="st_cloudStatus" style="margin-bottom:10px;">Не настроено</div>
-    <button type="button" class="btn-secondary" style="width:100%;margin-bottom:8px;" id="st_cloudSave">☁ Подключить и синхронизировать</button>
-    <button type="button" class="btn-ghost-danger" id="st_cloudDisable">Отключить синхронизацию на этом устройстве</button>
-
-    <div class="mini-title" style="margin-top:22px;">Аккаунт</div>
-    <button type="button" class="btn-ghost-danger" id="st_logout">Выйти</button>
-
-    <div class="mini-title" style="margin-top:22px;">Опасная зона</div>
-    <button type="button" class="btn-ghost-danger" id="st_reset">Удалить все данные и начать заново</button>
-  </div>
-</div>
-
-<div class="overlay show" id="overlayLock" style="z-index:500;">
-  <div class="sheet" style="max-height:100vh;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));">
-    <div class="sheet-handle" style="visibility:hidden;"></div>
-    <div style="text-align:center;padding:18px 4px 4px;">
-      <div style="font-size:34px;margin-bottom:10px;">📦</div>
-      <h2 style="font-size:19px;margin-bottom:6px;">Склад — вход</h2>
-      <div class="hint" style="margin-bottom:22px;">Введите пароль, чтобы открыть общий аккаунт</div>
-    </div>
-    <form id="lockForm">
-      <div class="field"><input type="password" id="lockPassword" placeholder="Пароль" autocomplete="current-password" required style="text-align:center;font-size:16px;letter-spacing:1px;"></div>
-      <div class="hint" id="lockError" style="color:var(--danger);text-align:center;min-height:16px;"></div>
-      <button type="submit" class="btn-primary">Войти</button>
-    </form>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script>
-(function(){
-"use strict";
-
-/* ============================================================
-   DATA LAYER
-============================================================ */
-const STORAGE_KEY = 'tovar_crm_data_v1';
-
-const FIN_TYPES = {
-  topup:    { label:'Пополнение', sign:+1 },
-  income:   { label:'Доход',      sign:+1 },
-  purchase: { label:'Закупка',    sign:-1 },
-  delivery: { label:'Доставка',   sign:-1 },
-  expense:  { label:'Расход',     sign:-1 },
-  other:    { label:'Другое',     sign:-1 },
+const firebaseConfig={
+  apiKey:"AIzaSyCwrm6Ykc-om45fuG_oILjHPrnVa65jaA0",
+  authDomain:"binestored.firebaseapp.com",
+  projectId:"binestored",
+  storageBucket:"binestored.firebasestorage.app",
+  messagingSenderId:"507858608397",
+  appId:"1:507858608397:web:bad5ab412d9d025be21044",
+  measurementId:"G-V0Q2PQD4GB"
 };
-const STATUSES = ['Новый','В обработке','Доставлен','Отменён'];
 
-function defaultDB(){
-  return { currency:'MDL', products:[], orders:[], finance:[] };
+const firebaseApp=initializeApp(firebaseConfig);
+const db=getFirestore(firebaseApp);
+const auth=getAuth(firebaseApp);
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+
+const state={
+  page:"dashboard",search:"",period:"week",status:"",category:"",sort:"updated",more:false,
+  products:[],orders:[],purchases:[],clients:[],transactions:[],
+  settings:{shopName:"Bine Store",currency:"MDL",dark:false,passwordHash:""},
+  user:null,loading:true
+};
+
+const navItems=[
+  ["dashboard","dashboard","Главная"],["products","package","Товары"],["orders","shopping-bag","Заказы"],["purchases","box","Закупки"],["finance","wallet","Финансы"],
+  ["clients","users","Клиенты"],["analytics","chart","Аналитика"],["settings","settings","Настройки"]
+];
+
+const icons={
+  dashboard:`<path d="M3 13h8V3H3v10Zm10 8h8V3h-8v18ZM3 21h8v-6H3v6Z"/>`,
+  package:`<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 0v9m8-4.5-8 4.5M4 7.5l8 4.5m-5 2.2 5 2.8 5-2.8"/>`,
+  shoppingBag:`<path d="M6 8V7a6 6 0 0 1 12 0v1m-2.5 0-.5-3h-6l-.5 3M5 8h14l1 12H4L5 8Zm4 4h6"/>`,
+  wallet:`<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H19a1 1 0 0 1 1 1v2H7a3 3 0 1 0 0 6h13v4a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 15.5v-9ZM20 8v4H7a2 2 0 1 1 0-4h13Zm-3 2h.01"/>`,
+  users:`<path d="M16 19c0-2.2-2-4-4.5-4S7 16.8 7 19m9-6.5a3.5 3.5 0 1 0 0-7m2 14.5c0-1.9-1.3-3.3-3.2-3.9M8.5 12.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>`,
+  chart:`<path d="M4 19V5m0 14h16M7 16v-4m4 4V8m4 8V5m4 11v-6"/>`,
+  settings:`<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0 0v3m0-14V2m7.5 10H22M2 12h3.5m12.4 6.4 2.1 2.1M5 5l2.1 2.1m9.8-2.1L19 2.9M5 19l2.1-2.1"/>`,
+  plus:`<path d="M12 5v14M5 12h14"/>`,search:`<circle cx="11" cy="11" r="6"/><path d="m16 16 5 5"/>`,
+  more:`<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>`,
+  lock:`<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>`,
+  logout:`<path d="M10 17l5-5-5-5m5 5H3m10-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/>`,
+  edit:`<path d="m4 17.5-.7 3.2 3.2-.7L19 7.5 16.5 5 4 17.5ZM15 6.5l2.5 2.5"/>`,
+  trash:`<path d="M4 7h16M9 11v6m6-6v6M7 7l1 13h8l1-13M9 4h6l1 3H8l1-3Z"/>`,
+  eye:`<path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Zm9.5 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>`,
+  download:`<path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/>`,
+  upload:`<path d="M12 21V10m0 0 4 4m-4-4-4 4M4 7V4h16v3"/>`,
+  refresh:`<path d="M20 11a8 8 0 1 0 1 4.1M20 4v6h-6"/>`,
+  filter:`<path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"/>`,
+  chevron:`<path d="m8 10 4 4 4-4"/>`,
+  cartPlus:`<path d="M3 4h2l2 11h10l2-7H6m3 12h.01M17 20h.01M14 8l2 2 4-4"/>`,
+  photo:`<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 2-2 5 5"/>`,
+  close:`<path d="m6 6 12 12M18 6 6 18"/>`,
+  check:`<path d="m5 12 4 4L19 6"/>`,
+  info:`<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>`,
+  star:`<path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/>`,
+  shield:`<path d="M12 3 19 6v5c0 4.3-2.4 7.5-7 10-4.6-2.5-7-5.7-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/>`,
+  dollar:`<path d="M12 3v18m4-15c-.8-1-2.2-1.5-4-1.5-2.4 0-4 1.2-4 3s1.6 2.7 4 3 4 1.1 4 3-1.6 3-4 3c-1.8 0-3.2-.5-4-1.5"/>`,
+  box:`<path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M8 9v8"/>`,
+  calendar:`<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>`
+};
+function icon(name,size=18,stroke=1.8){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${icons[name]||icons.info}</svg>`}
+const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const num=v=>Number(v)||0;
+const fmtMoney=v=>new Intl.NumberFormat("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2}).format(num(v))+" "+(state.settings.currency||"MDL");
+const fmtDate=v=>{if(!v)return"—";const d=v?.seconds?new Date(v.seconds*1000):new Date(v);return isNaN(d)?"—":d.toLocaleDateString("ru-RU",{day:"2-digit",month:"short",year:"numeric"})};
+const isoToday=()=>new Date().toISOString().slice(0,10);
+const uid=()=>crypto.randomUUID?.()||Date.now()+"_"+Math.random().toString(36).slice(2);
+
+function showToast(message,type="ok"){const t=$("#toast");t.className="toast show "+(type==="bad"?"bad":"ok");t.textContent=message;clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.className="toast",2800)}
+function openModal(title,subtitle,body,save,opts={}){
+  $("#modalRoot").innerHTML=`<div class="modal show" id="modal" role="dialog" aria-modal="true">
+    <div class="dialog">
+      <div class="dialog-head"><div><h2>${title}</h2><p>${subtitle||""}</p></div><button class="btn icon" onclick="closeModal()">${icon("close",17)}</button></div>
+      <div class="dialog-body">${body}</div>
+      ${opts.noSave?"":`<div class="dialog-foot"><button class="btn" onclick="closeModal()">Отмена</button><button class="btn primary" id="dialogSave">${icon("check",16)}Сохранить</button></div>`}
+    </div></div>`;
+  if(!opts.noSave)$("#dialogSave").onclick=save;
+  $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
 }
+window.closeModal=()=>$("#modalRoot").innerHTML="";
+function passwordView(first=false){
+  root.innerHTML=`<div class="login"><div class="login-orb orb1"></div><div class="login-orb orb2"></div>
+    <div class="loginbox">
+      <div class="login-brand"><div class="brandmark">${icon("box",23,1.8)}</div><div><b>${esc(state.settings.shopName||"Bine Store")}</b><small>CRM для управления магазином</small></div></div>
+      <h1>${first?"Добро пожаловать 👋":"С возвращением"}</h1>
+      <p>${first?"Создайте пароль для защиты CRM. Он хранится в Firestore в виде SHA-256 хеша.":"Введите пароль, чтобы открыть панель управления."}</p>
+      <div class="field"><label>${first?"Новый пароль":"Пароль"}</label><div class="pass-wrap"><input id="passwordInput" class="control" type="password" autocomplete="current-password" placeholder="Минимум 4 символа"><button class="eye-btn" onclick="togglePass()">${icon("eye",16)}</button></div></div>
+      ${first?`<div class="field"><label>Повторите пароль</label><input id="passwordConfirm" class="control" type="password" placeholder="Ещё раз"></div>`:""}
+      <button class="btn primary" id="loginBtn" style="width:100%;margin-top:5px" onclick="submitPassword()">${first?"Создать пароль":"Войти"}</button>
+      <div class="login-foot">Firebase Firestore · Bine Store CRM</div>
+    </div></div>`;
+  setTimeout(()=>$("#passwordInput")?.focus(),50);
+}
+window.togglePass=()=>{const x=$("#passwordInput");x.type=x.type==="password"?"text":"password"};
+window.submitPassword=async()=>{
+  const p=$("#passwordInput")?.value||"", first=!state.settings.passwordHash;
+  if(p.length<4)return showToast("Пароль должен содержать минимум 4 символа","bad");
+  if(first&&p!==$("#passwordConfirm")?.value)return showToast("Пароли не совпадают","bad");
+  const btn=$("#loginBtn");btn.disabled=true;btn.innerHTML=`<span class="spinner"></span>${first?"Создание…":"Проверка…"}`;
+  try{
+    const h=await hashText(p);
+    if(first){state.settings.passwordHash=h;await setDoc(doc(db,"settings","main"),{...state.settings},{merge:true});sessionStorage.setItem("bineUnlocked","1");await loadAll();return}
+    if(h!==state.settings.passwordHash){btn.disabled=false;btn.textContent="Войти";return showToast("Неверный пароль","bad")}
+    sessionStorage.setItem("bineUnlocked","1");await loadAll();
+  }catch(e){console.error(e);btn.disabled=false;showToast(firebaseError(e),"bad")}
+};
 
-let DB = defaultDB();
-let dbReady = false;
-
-/* ============================================================
-   DATABASE (IndexedDB)
-   Товары, заказы и финансы лежат в отдельных таблицах. При
-   сохранении записываются только изменённые записи. Данные из
-   старой версии (localStorage) переносятся автоматически при
-   первом запуске; старая копия остаётся нетронутой.
-   Формат экспорта/импорта не изменился.
-============================================================ */
-const IDB_NAME = 'tovar_crm_db';
-const COLLECTIONS = ['products','orders','finance'];
-
-const Store = (function(){
-  let idb = null;
-  let mode = 'idb';            // 'idb' | 'ls' (запасной режим, если IndexedDB недоступна)
-  let snap = freshSnap();
-  const api = { onFail:null };
-
-  function freshSnap(){
-    return { products:new Map(), orders:new Map(), finance:new Map(), meta:null, full:false };
-  }
-  function wrap(req){
-    return new Promise((res,rej)=>{ req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); });
-  }
-  function open(){
-    return new Promise((resolve,reject)=>{
-      if(!window.indexedDB){ reject(new Error('IndexedDB недоступна')); return; }
-      let req;
-      try{ req = indexedDB.open(IDB_NAME, 1); }catch(e){ reject(e); return; }
-      req.onupgradeneeded = ()=>{
-        const d = req.result;
-        COLLECTIONS.forEach(n=>{ if(!d.objectStoreNames.contains(n)) d.createObjectStore(n,{keyPath:'id'}); });
-        if(!d.objectStoreNames.contains('meta')) d.createObjectStore('meta',{keyPath:'key'});
-      };
-      req.onsuccess = ()=>resolve(req.result);
-      req.onerror = ()=>reject(req.error);
-      req.onblocked = ()=>reject(new Error('blocked'));
-    });
-  }
-
-  api.mode = ()=>mode;
-
-  api.init = async function(){
-    try{ idb = await open(); mode = 'idb'; }
-    catch(e){ console.warn('IndexedDB недоступна, работаем через localStorage', e); mode = 'ls'; }
-    return mode;
-  };
-
-  // Возвращает данные из базы или null, если база ещё не создана.
-  // При ошибке чтения бросает исключение.
-  api.load = async function(){
-    const tx = idb.transaction([...COLLECTIONS,'meta'],'readonly');
-    const res = await Promise.all([
-      wrap(tx.objectStore('meta').get('main')),
-      ...COLLECTIONS.map(n=>wrap(tx.objectStore(n).getAll()))
+async function hashText(text){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function firebaseError(e){return e?.code==="permission-denied"?"Нет доступа к Firestore. Проверьте правила базы.":e?.message||"Произошла ошибка"}
+function c(name){return collection(db,name)}
+async function readCollection(name){const snap=await getDocs(c(name));return snap.docs.map(d=>({id:d.id,...d.data()}))}
+async function loadAll(){
+  state.loading=true;renderLoading();
+  try{
+    const [products,orders,purchases,clients,transactions,settingsDoc]=await Promise.all([
+      readCollection("products"),readCollection("orders"),readCollection("purchases"),readCollection("clients"),readCollection("transactions"),getDoc(doc(db,"settings","main"))
     ]);
-    const meta = res[0];
-    if(!meta) return null;
-    const out = { currency: meta.currency || 'MDL' };
-    COLLECTIONS.forEach((n,i)=>{
-      const byId = new Map(res[i+1].map(r=>[r.id,r]));
-      const ordered = [];
-      ((meta.order && meta.order[n]) || []).forEach(id=>{      // сохраняем исходный порядок записей
-        if(byId.has(id)){ ordered.push(byId.get(id)); byId.delete(id); }
-      });
-      byId.forEach(r=>ordered.push(r));
-      out[n] = ordered;
-      const m = new Map();
-      ordered.forEach(r=>m.set(r.id, JSON.stringify(r)));
-      snap[n] = m;
-    });
-    return out;
-  };
+    state.products=products;state.orders=orders;state.purchases=purchases;state.clients=clients;state.transactions=transactions;
+    if(settingsDoc.exists())state.settings={...state.settings,...settingsDoc.data()};
+    state.loading=false;render();
+  }catch(e){state.loading=false;renderError(firebaseError(e))}
+}
+function renderLoading(){root.innerHTML=`<div class="login"><div class="loginbox"><div class="login-brand"><div class="brandmark">${icon("refresh",22)}</div><div><b>Bine Store</b><small>Загрузка CRM…</small></div></div><p>Подключаем Firestore и синхронизируем данные.</p><div class="progress"><div style="width:62%"></div></div></div></div>`}
+function renderError(msg){root.innerHTML=`<div class="login"><div class="loginbox"><div class="login-brand"><div class="brandmark">${icon("info",22)}</div><div><b>Bine Store CRM</b><small>Ошибка подключения</small></div></div><h1>Не удалось загрузить данные</h1><p>${esc(msg)}</p><button class="btn primary" style="width:100%" onclick="location.reload()">${icon("refresh",16)}Повторить</button></div></div>`}
 
-  api.save = function(d){
-    if(mode==='ls'){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-      return;
-    }
-    const tx = idb.transaction([...COLLECTIONS,'meta'],'readwrite');
-    const full = snap.full;
-    COLLECTIONS.forEach(n=>{
-      const os = tx.objectStore(n);
-      if(full) os.clear();
-      const prev = full ? new Map() : snap[n];
-      const next = new Map();
-      d[n].forEach(rec=>{
-        const json = JSON.stringify(rec);
-        next.set(rec.id, json);
-        if(prev.get(rec.id) !== json) os.put(rec);
-      });
-      prev.forEach((_,id)=>{ if(!next.has(id)) os.delete(id); });
-      snap[n] = next;
-    });
-    const order = {};
-    COLLECTIONS.forEach(n=>{ order[n] = d[n].map(r=>r.id); });
-    const metaJson = JSON.stringify({currency:d.currency, order});
-    if(full || metaJson !== snap.meta){
-      tx.objectStore('meta').put({key:'main', currency:d.currency, order});
-      snap.meta = metaJson;
-    }
-    snap.full = false;
-    const fail = ()=>{
-      snap = freshSnap();
-      snap.full = true;                 // следующее сохранение перепишет всё целиком
-      if(api.onFail) api.onFail();
-    };
-    tx.onabort = fail;
-  };
+function getStats(){
+  const nonCancelled=state.orders.filter(o=>o.status!=="Отменён");
+  const revenue=nonCancelled.reduce((a,o)=>a+num(o.total),0);
+  const cost=nonCancelled.reduce((a,o)=>a+num(o.cost),0);
+  const expenses=state.transactions.filter(t=>t.type==="Расход").reduce((a,t)=>a+num(t.amount),0);
+  const incomeManual=state.transactions.filter(t=>t.type==="Доход"&&!t.linkedOrderId).reduce((a,t)=>a+num(t.amount),0);
+  const incomeFromOrders=nonCancelled.reduce((a,o)=>a+num(o.total),0);
+  const profit=revenue-cost-expenses;
+  const stockQty=state.products.reduce((a,p)=>a+num(p.qty),0);
+  const stockValue=state.products.reduce((a,p)=>a+num(p.qty)*num(p.buyPrice),0);
+  return {revenue,cost,expenses,incomeManual,incomeFromOrders,profit,stockQty,stockValue,orders:nonCancelled.length,budget:revenue+incomeManual-expenses,products:state.products.length};
+}
+function pageHeader(title,desc,actions=""){
+  return `<div class="topbar"><div class="page-title"><h1>${title}</h1><p>${desc}</p></div><div class="top-actions">${actions}</div></div>`
+}
+function desktopSidebar(){
+  const primary=navItems.slice(0,4), secondary=navItems.slice(4);
+  return `<aside class="sidebar"><div class="brand"><div class="brandmark">${icon("box",22)}</div><div><div class="brandname">${esc(state.settings.shopName)}</div><div class="brandsub">Premium Store CRM</div></div></div>
+    <nav class="nav"><div class="nav-group">Рабочая зона</div>${primary.map(navButton).join("")}<div class="nav-group">Управление</div>${secondary.map(navButton).join("")}</nav>
+    <div class="sidebar-bottom"><div class="user-mini"><div class="avatar">B</div><div><b>${esc(state.settings.shopName)}</b><span>CRM workspace</span></div><button class="btn icon sm" style="margin-left:auto" onclick="lockApp()" title="Заблокировать">${icon("lock",15)}</button></div>
+    </div></aside>`
+}
+function navButton([id,ico,label]){return `<button class="navbtn ${state.page===id?"active":""}" onclick="go('${id}')"><span class="iconbox">${icon(ico,19)}</span>${label}</button>`}
+function mobileNav(){
+  const items=[["dashboard","dashboard","Главная"],["products","package","Товары"],["orders","shopping-bag","Заказы"],["purchases","box","Закупки"]];
+  return `<nav class="mobile-nav">${items.map(([id,ico,label])=>`<button class="${state.page===id?"active":""}" onclick="go('${id}')"><span class="m-ico">${icon(ico,20)}</span>${label}</button>`).join("")}<button class="${state.more||state.page==="more"?"active":""}" onclick="openMoreMenu()"><span class="m-ico">${icon("more",20)}</span>Ещё</button></nav>`
+}
+function render(){
+  if(!state.user)return;
+  if(!state.settings.passwordHash){passwordView(true);return}
+  if(sessionStorage.getItem("bineUnlocked")!=="1"){passwordView(false);return}
+  root.innerHTML=`<div class="app">${desktopSidebar()}<main class="main" id="main"></main>${mobileNav()}</div>`;
+  renderPage();
+}
+window.go=page=>{state.more=false;state.page=page;state.search="";state.status="";state.category="";render()};
+window.openMoreMenu=()=>{state.more=true;state.page="more";render()};
+window.lockApp=()=>{sessionStorage.removeItem("bineUnlocked");state.more=false;passwordView(false)}
+window.logout=()=>{sessionStorage.removeItem("bineUnlocked");location.reload()}
 
-  return api;
-})();
-
-Store.onFail = ()=>toast('Не удалось сохранить данные в базу', 4000);
-
-function readLegacy(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){
-    console.error('legacy read error', e);
-    return null;
+function statCard(label,value,sub,ico,accent="blue"){
+  const bg=accent==="green"?"#ecfdf5":accent==="red"?"#fef2f2":accent==="amber"?"#fffbeb":"#eff6ff";
+  const color=accent==="green"?"#059669":accent==="red"?"#dc2626":accent==="amber"?"#d97706":"#2563eb";
+  return `<div class="metric"><div class="metric-top"><div class="metric-label">${label}</div><div class="metric-icon" style="background:${bg};color:${color}">${icon(ico,17)}</div></div><div class="metric-value">${value}</div><div class="metric-sub">${sub}</div></div>`
+}
+function dashboardPage(){
+  const s=getStats(), recent=[...state.orders].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+  return pageHeader("Главная","Всё важное по магазину — в одном месте",
+    `<div class="search-global"><span class="sgicon">${icon("search",17)}</span><input class="control" placeholder="Поиск по CRM…" oninput="globalSearch(this.value)"></div><button class="btn primary" onclick="openOrder()">${icon("plus",16)}Новый заказ</button>`)
+    +`<section class="grid-metrics">${statCard("Выручка",fmtMoney(s.revenue),"по текущим заказам","dollar")}
+      ${statCard("Расходы",fmtMoney(s.expenses),"из финансов","wallet","red")}
+      ${statCard("Прибыль",fmtMoney(s.profit),"выручка − себестоимость − расходы","chart","green")}
+      ${statCard("Заказы",s.orders,"без отменённых","shoppingBag")}
+      ${statCard("Товары",s.products,"позиций в каталоге","package")}
+      ${statCard("На складе",s.stockQty,"единиц товара","box")}
+      ${statCard("Стоимость склада",fmtMoney(s.stockValue),"по закупочной цене","wallet")}
+      ${statCard("Бюджет",fmtMoney(s.budget),"заказы + доходы − расходы","star","amber")}</section>
+      <section class="layout-2">
+        <div class="panel"><div class="panel-head"><div><h2>Продажи</h2><div class="panel-sub">Динамика за выбранный период</div></div><select class="control select-small" onchange="state.period=this.value;renderPage()"><option value="week" ${state.period==="week"?"selected":""}>7 дней</option><option value="month" ${state.period==="month"?"selected":""}>30 дней</option><option value="year" ${state.period==="year"?"selected":""}>12 месяцев</option></select></div>${salesChart(state.period)}</div>
+        <div class="panel"><div class="panel-head"><div><h2>Последние заказы</h2><div class="panel-sub">${recent.length} последних</div></div><span class="section-link" onclick="go('orders')">Все заказы</span></div>${recent.length?`<div class="recent-list">${recent.map(orderCompact).join("")}</div>`:emptyState("shoppingBag","Заказов пока нет","Создайте первый заказ")}</div>
+      </section>`
+}
+function orderCompact(o){
+  return `<div class="recent-row" onclick="openOrderView('${o.id}')"><div class="order-left"><div class="order-mark">${icon("shoppingBag",16)}</div><div class="ellipsis"><b>#${esc(o.number||"—")}</b><div class="small">${esc(o.clientName||"Без клиента")} · ${fmtDate(o.date)}</div></div></div><div style="text-align:right"><div class="amount">${fmtMoney(o.total)}</div><div>${statusBadge(o.status)}</div></div></div>`
+}
+function salesChart(period){
+  const {labels,values}=aggregateSales(period), max=Math.max(...values,1), W=720,H=235,pad=32;
+  const points=values.map((v,i)=>{const x=pad+(i*(W-pad*2))/Math.max(values.length-1,1),y=H-pad-(v/max)*(H-pad*2);return [x,y]});
+  const line=points.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const area=line+` L ${points.at(-1)?.[0]||pad} ${H-pad} L ${pad} ${H-pad} Z`;
+  return `<div class="chart-wrap"><svg class="svg-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3b82f6" stop-opacity=".20"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+    <line class="chart-grid" x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}"/><line class="chart-grid" x1="${pad}" y1="${pad}" x2="${W-pad}" y2="${pad}"/><line class="chart-grid" x1="${pad}" y1="${(H)/2}" x2="${W-pad}" y2="${(H)/2}"/>
+    <path d="${area}" class="chart-area"/><path d="${line}" class="chart-line"/>${points.map((p,i)=>`<circle class="chart-dot" cx="${p[0]}" cy="${p[1]}" r="${values.length>20?2.2:3.5}"><title>${labels[i]} · ${fmtMoney(values[i])}</title></circle>`).join("")}
+    ${labels.filter((_,i)=>i===0||i===labels.length-1||i===Math.floor(labels.length/2)).map((x,j)=>`<text class="chart-tooltip" x="${j===0?pad:j===1?W/2:W-pad}" y="${H-5}" text-anchor="${j===0?"start":j===2?"end":"middle"}">${esc(x)}</text>`).join("")}</svg></div>`
+}
+function aggregateSales(period){
+  const vals=[],labels=[],now=new Date();
+  if(period==="year"){
+    for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),next=new Date(d.getFullYear(),d.getMonth()+1,1);vals.push(state.orders.filter(o=>o.status!=="Отменён"&&new Date(o.date)>=d&&new Date(o.date)<next).reduce((a,o)=>a+num(o.total),0));labels.push(d.toLocaleDateString("ru-RU",{month:"short"}))}
+  }else{
+    const days=period==="week"?7:30;
+    for(let i=days-1;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);const next=new Date(d);next.setDate(next.getDate()+1);vals.push(state.orders.filter(o=>o.status!=="Отменён"&&new Date(o.date)>=d&&new Date(o.date)<next).reduce((a,o)=>a+num(o.total),0));labels.push(d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"}))}
   }
+  return {labels,values:vals}
+}
+function emptyState(ico,title,sub=""){return `<div class="empty"><div class="empty-icon">${icon(ico,24)}</div><b>${title}</b><div>${sub}</div></div>`}
+
+function productsPage(){
+  let arr=[...state.products];
+  const q=state.search.trim().toLowerCase();
+  if(q)arr=arr.filter(p=>(p.name+" "+p.category+" "+p.supplier+" "+p.model).toLowerCase().includes(q));
+  if(state.category)arr=arr.filter(p=>p.category===state.category);
+  arr.sort((a,b)=>state.sort==="stock"?num(a.qty)-num(b.qty):state.sort==="price"?num(b.sellPrice)-num(a.sellPrice):state.sort==="name"?String(a.name).localeCompare(String(b.name)):(num(b.updatedAt)-num(a.updatedAt)));
+  const categories=[...new Set(state.products.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  return pageHeader("Товары","Каталог, остатки и закупочная стоимость",`<div class="search-global"><span class="sgicon">${icon("search",17)}</span><input class="control" placeholder="Поиск товаров…" value="${esc(state.search)}" oninput="state.search=this.value;renderPage()"></div><button class="btn primary" onclick="openProduct()">${icon("plus",16)}Добавить товар</button>`)
+    +`<div class="panel"><div class="toolbar"><div class="grow"></div><select class="control select-small" onchange="state.category=this.value;renderPage()"><option value="">Все категории</option>${categories.map(x=>`<option value="${esc(x)}" ${state.category===x?"selected":""}>${esc(x)}</option>`).join("")}</select><select class="control select-small" onchange="state.sort=this.value;renderPage()"><option value="updated" ${state.sort==="updated"?"selected":""}>Последние</option><option value="name" ${state.sort==="name"?"selected":""}>По названию</option><option value="stock" ${state.sort==="stock"?"selected":""}>Меньше остатка</option><option value="price" ${state.sort==="price"?"selected":""}>По цене</option></select></div>
+      <div class="table-wrap">${productsTable(arr)}</div><div class="mobile-list">${arr.map(productMobile).join("")||emptyState("package","Товаров пока нет","Добавьте первую позицию в каталог")}</div></div>`
+}
+function stockBadge(q){return num(q)<=0?`<span class="stock-pill stock-zero">Нет в наличии</span>`:num(q)<=2?`<span class="stock-pill stock-low">${num(q)} шт. · мало</span>`:`<span class="stock-pill stock-ok">${num(q)} шт.</span>`}
+function productsTable(arr){
+  if(!arr.length)return `<div>${emptyState("package","Ничего не найдено","Измените поиск или фильтры")}</div>`;
+  return `<table class="table"><thead><tr><th>Товар</th><th>Категория</th><th>Остаток</th><th>Закупка</th><th>Продажа</th><th>Склад</th><th></th></tr></thead><tbody>${arr.map(p=>`<tr><td><div class="product-cell">${photoThumb(p)}<div><b>${esc(p.name)}</b><div class="small">${esc(p.model||"Без модели")}</div></div></div></td><td>${esc(p.category||"—")}</td><td>${stockBadge(p.qty)}</td><td>${fmtMoney(p.buyPrice)}</td><td><b>${fmtMoney(p.sellPrice)}</b></td><td>${fmtMoney(num(p.qty)*num(p.buyPrice))}</td><td><div class="actions-inline"><button class="btn icon sm" onclick="openProductView('${p.id}')" title="Просмотр">${icon("eye",15)}</button><button class="btn icon sm" onclick="openProduct('${p.id}')" title="Изменить">${icon("edit",15)}</button><button class="btn icon sm danger" onclick="removeProduct('${p.id}')" title="Удалить">${icon("trash",15)}</button></div></td></tr>`).join("")}</tbody></table>`
+}
+function productMobile(p){
+  return `<div class="mobile-card" onclick="openProductView('${p.id}')"><div class="mc-top"><div class="mc-main">${photoThumb(p,"mc-photo")}<div class="ellipsis"><b>${esc(p.name)}</b><div class="small">${esc(p.category||"Без категории")} · ${esc(p.model||"")}</div></div></div>${stockBadge(p.qty)}</div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span class="small">Продажа</span><b>${fmtMoney(p.sellPrice)}</b></div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span class="small">Стоимость остатка</span><b>${fmtMoney(num(p.qty)*num(p.buyPrice))}</b></div>
+    <div class="actions-inline" onclick="event.stopPropagation()"><button class="btn sm" onclick="openProductView('${p.id}')">${icon("eye",14)}Открыть</button><button class="btn sm" onclick="openProduct('${p.id}')">${icon("edit",14)}Изменить</button><button class="btn sm danger" onclick="removeProduct('${p.id}')">${icon("trash",14)}</button></div></div>`
+}
+function photoThumb(p,cls="product-photo"){return p.image?`<img class="${cls}" src="${p.image}" alt="">`:`<div class="photo-placeholder ${cls}">${icon("photo",18)}</div>`}
+
+async function openProductView(id){
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  openModal(esc(p.name),`${esc(p.category||"Без категории")} · карточка товара`,`<div class="detail-grid"><div>${p.image?`<img class="preview-big" src="${p.image}" alt="">`:emptyState("photo","Фотографии нет")}</div><div class="detail-side">
+    <div class="detail-stat"><span>Остаток</span><b>${num(p.qty)} шт.</b></div><div class="detail-stat"><span>Цена продажи</span><b>${fmtMoney(p.sellPrice)}</b></div><div class="detail-stat"><span>Закупочная цена</span><b>${fmtMoney(p.buyPrice)}</b></div><div class="detail-stat"><span>Стоимость склада</span><b>${fmtMoney(num(p.qty)*num(p.buyPrice))}</b></div>
+    <div class="detail-stat"><span>Поставщик</span><b>${esc(p.supplier||"—")}</b></div><div class="detail-stat"><span>Размер / модель</span><b>${esc(p.model||"—")}</b></div>${p.link?`<a class="btn" href="${esc(p.link)}" target="_blank" rel="noopener">${icon("box",15)}Открыть у поставщика</a>`:""}</div></div>`,null,{noSave:true})
 }
 
-// Старые версии добавляли к каждому заказу запись «Себестоимость» — она дублировала закупку.
-function isOrderCostEntry(f){
-  return !!(f && f.orderId && f.type==='purchase' && f.category==='Себестоимость');
-}
-let lastClean = {n:0, sum:0};
-function cleanNote(){
-  if(!lastClean.n) return '';
-  const msg = ' Убрано дублей себестоимости: '+lastClean.n+' ('+fmt(lastClean.sum)+').';
-  lastClean = {n:0, sum:0};
-  return msg;
-}
-
-function normalize(d){
-  const out = Object.assign(defaultDB(), d);
-  out.currency = 'MDL';
-  if(Array.isArray(out.finance)){
-    const dups = out.finance.filter(isOrderCostEntry);
-    if(dups.length){
-      out.finance = out.finance.filter(f=>!isOrderCostEntry(f));
-      lastClean.n += dups.length;
-      lastClean.sum += dups.reduce((a,f)=>a+Number(f.amount||0),0);
-    }
-  }
-  COLLECTIONS.forEach(k=>{
-    if(!Array.isArray(out[k])) out[k] = [];
-    out[k] = out[k].filter(r=>r && typeof r==='object');
-    const seen = new Set();
-    out[k].forEach(r=>{
-      if(r.id==null || r.id==='' || seen.has(r.id)) r.id = uid();
-      seen.add(r.id);
-    });
-  });
-  return out;
-}
-
-function saveDB(){
-  DB.currency = 'MDL';
-  DB.updatedAt = Date.now();
-  if(!dbReady) return;
-  try{
-    Store.save(DB);
-  }catch(e){
-    console.error('save error', e);
-    toast('Не удалось сохранить данные (нет места в памяти)', 4000);
-  }
-  scheduleCloudPush();
-}
-
-/* ============================================================
-   CLOUD SYNC (между устройствами) — через приватный GitHub Gist.
-   Файл статический (GitHub Pages), поэтому своего сервера нет:
-   данные хранятся в одном приватном gist владельца токена и
-   читаются/пишутся напрямую из браузера через GitHub REST API.
-   Побеждает копия с более поздним DB.updatedAt.
-============================================================ */
-const CLOUD_KEY = 'tovar_crm_cloud_v1';
-const CLOUD_FILENAME = 'tovar-crm-data.json';
-function loadCloudConfig(){
-  try{ const raw = localStorage.getItem(CLOUD_KEY); return raw ? JSON.parse(raw) : null; }
-  catch(e){ return null; }
-}
-function saveCloudConfig(cfg){
-  try{ localStorage.setItem(CLOUD_KEY, JSON.stringify(cfg)); }catch(e){}
-}
-let cloudCfg = loadCloudConfig();
-
-async function ghApi(path, opts){
-  opts = opts || {};
-  const headers = Object.assign({
-    'Accept':'application/vnd.github+json',
-    'Authorization':'Bearer '+cloudCfg.token,
-  }, opts.headers||{});
-  const res = await fetch('https://api.github.com'+path, Object.assign({}, opts, {headers}));
-  if(!res.ok){
-    let text=''; try{ text = await res.text(); }catch(e){}
-    throw new Error('GitHub API '+res.status+': '+text.slice(0,200));
-  }
-  return res.json();
-}
-async function cloudCreateGist(){
-  const data = await ghApi('/gists', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      description:'Склад CRM — синхронизация данных (не удаляйте)',
-      public:false,
-      files:{ [CLOUD_FILENAME]: {content: JSON.stringify(DB)} }
-    })
-  });
-  return data.id;
-}
-async function cloudPull(){
-  const data = await ghApi('/gists/'+cloudCfg.gistId);
-  const file = data.files && data.files[CLOUD_FILENAME];
-  if(!file || !file.content) return null;
-  return JSON.parse(file.content);
-}
-async function cloudPush(){
-  if(!cloudCfg || !cloudCfg.token || !cloudCfg.gistId) return;
-  await ghApi('/gists/'+cloudCfg.gistId, {
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ files:{ [CLOUD_FILENAME]: {content: JSON.stringify(DB)} } })
-  });
-}
-function setCloudStatus(text){
-  const el = document.getElementById('st_cloudStatus');
-  if(el) el.textContent = text;
-}
-let cloudPushTimer = null;
-function scheduleCloudPush(){
-  if(!cloudCfg || !cloudCfg.token || !cloudCfg.gistId) return;
-  clearTimeout(cloudPushTimer);
-  cloudPushTimer = setTimeout(()=>{
-    cloudPush()
-      .then(()=> setCloudStatus('Синхронизировано: '+new Date().toLocaleTimeString('ru-RU')))
-      .catch(err=>{ console.error('cloud push error', err); setCloudStatus('Ошибка синхронизации (проверьте токен/интернет)'); });
-  }, 1500);
-}
-async function cloudSyncOnStartup(){
-  if(!cloudCfg || !cloudCfg.token || !cloudCfg.gistId) return;
-  try{
-    const remote = await cloudPull();
-    if(remote){
-      const remoteTime = Number(remote.updatedAt||0);
-      const localTime = Number(DB.updatedAt||0);
-      if(remoteTime > localTime){
-        DB = normalize(remote);
-        Store.save(DB);
-        renderAll();
-        toast('Данные обновлены из облака (с другого устройства)', 4000);
-      } else if(localTime > remoteTime){
-        await cloudPush();
-      }
-    } else {
-      await cloudPush();
-    }
-    setCloudStatus('Синхронизировано: '+new Date().toLocaleTimeString('ru-RU'));
-  }catch(e){
-    console.error('cloud sync error', e);
-    setCloudStatus('Не удалось синхронизироваться (проверьте токен/интернет)');
-  }
-}
-
-async function initData(){
-  await Store.init();
-  let loaded = null, fromLegacy = false;
-  if(Store.mode()==='ls'){
-    loaded = readLegacy();
-  } else {
+window.openProduct=id=>{
+  const p=state.products.find(x=>x.id===id)||{name:"",category:"",supplier:"",model:"",link:"",qty:0,buyPrice:0,sellPrice:0,image:""};
+  openModal(id?"Изменить товар":"Новый товар","Заполните основные данные товара",`<div class="formgrid">
+    <div class="field full"><label>Фотография товара</label><div class="image-upload"><img id="productPreview" class="image-preview" src="${p.image||""}" style="${p.image?"":"display:none"}"><div><input id="productFile" class="file-input" type="file" accept="image/*"><label class="btn sm" for="productFile">${icon("photo",14)}Загрузить фото</label></div></div></div>
+    <div class="field"><label>Название *</label><input id="p_name" class="control" value="${esc(p.name)}" placeholder="Например, Nike Tech Fleece"></div>
+    <div class="field"><label>Категория</label><input id="p_category" class="control" value="${esc(p.category)}" placeholder="Обувь, одежда…"></div>
+    <div class="field"><label>Поставщик</label><input id="p_supplier" class="control" value="${esc(p.supplier)}"></div>
+    <div class="field"><label>Размер / модель</label><input id="p_model" class="control" value="${esc(p.model)}"></div>
+    <div class="field full"><label>Ссылка на товар у поставщика</label><input id="p_link" class="control" value="${esc(p.link)}" placeholder="https://…"></div>
+    <div class="field"><label>Количество на складе *</label><input id="p_qty" type="number" min="0" step="1" class="control" value="${num(p.qty)}"></div>
+    <div class="field"><label>Закупочная цена</label><input id="p_buy" type="number" min="0" step=".01" class="control" value="${num(p.buyPrice)}"></div>
+    <div class="field"><label>Цена продажи</label><input id="p_sell" type="number" min="0" step=".01" class="control" value="${num(p.sellPrice)}"></div>
+  </div>`,async()=>{
+    const name=$("#p_name").value.trim();if(!name)return showToast("Введите название","bad");
+    let image=p.image||"";const file=$("#productFile").files[0];if(file)image=await compressImage(file);
+    const data={name,category:$("#p_category").value.trim(),supplier:$("#p_supplier").value.trim(),model:$("#p_model").value.trim(),link:$("#p_link").value.trim(),qty:Math.max(0,num($("#p_qty").value)),buyPrice:Math.max(0,num($("#p_buy").value)),sellPrice:Math.max(0,num($("#p_sell").value)),image,updatedAt:Date.now()};
     try{
-      loaded = await Store.load();
-    }catch(e){
-      console.error('db load error', e);
-      alert('Не удалось открыть базу данных. Ваши данные не тронуты.\nЗакройте приложение и откройте его снова. Пока это не получится — ничего не добавляйте.');
-      return;                            // dbReady остаётся false: сохранение заблокировано
+      if(id){await updateDoc(doc(db,"products",id),data);Object.assign(p,data)}else{const ref=await addDoc(c("products"),{...data,createdAt:Date.now()});state.products.push({id:ref.id,...data})}
+      closeModal();renderPage();showToast("Товар сохранён");
+    }catch(e){showToast(firebaseError(e),"bad")}
+  });
+  $("#productFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("#productPreview").src=await compressImage(f);$("#productPreview").style.display="block"}
+}
+async function compressImage(file){
+  return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const max=720,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));const ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL("image/jpeg",.78))};img.onerror=reject;img.src=r.result};r.onerror=reject;r.readAsDataURL(file)})
+}
+window.removeProduct=async id=>{
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  if(state.orders.some(o=>(o.items||[]).some(i=>i.productId===id)))return showToast("Товар связан с историей заказов — удаление запрещено","bad");
+  if(!confirm("Удалить товар «"+p.name+"»?"))return;
+  try{await deleteDoc(doc(db,"products",id));state.products=state.products.filter(x=>x.id!==id);renderPage();showToast("Товар удалён")}catch(e){showToast(firebaseError(e),"bad")}
+};
+
+function ordersPage(){
+ let arr=[...state.orders];const q=state.search.trim().toLowerCase();if(q)arr=arr.filter(o=>(o.number+" "+o.clientName+" "+o.status+" "+(o.items||[]).map(i=>i.name).join(" ")).toLowerCase().includes(q));if(state.status)arr=arr.filter(o=>o.status===state.status);arr.sort((a,b)=>new Date(b.date)-new Date(a.date));
+ return pageHeader("Заказы","Продажи, статусы и прибыль",`<div class="search-global"><span class="sgicon">${icon("search",17)}</span><input class="control" placeholder="Поиск заказов…" value="${esc(state.search)}" oninput="state.search=this.value;renderPage()"></div><button class="btn primary" onclick="openOrder()">${icon("plus",16)}Новый заказ</button>`)
+ +`<div class="panel"><div class="toolbar"><div class="grow"></div><select class="control select-small" onchange="state.status=this.value;renderPage()"><option value="">Все статусы</option>${["Новый","В работе","Закрыт","Отменён"].map(x=>`<option value="${x}" ${state.status===x?"selected":""}>${x}</option>`).join("")}</select></div>
+ ${ordersTable(arr)}<div class="mobile-list">${arr.map(orderMobile).join("")||emptyState("shoppingBag","Заказов нет","Создайте первый заказ")}</div></div>`
+}
+function ordersTable(arr){
+ if(!arr.length)return `<div>${emptyState("shoppingBag","Ничего не найдено","Измените поиск или фильтр")}</div>`;
+ return `<div class="table-wrap"><table class="table"><thead><tr><th>Заказ</th><th>Клиент</th><th>Дата</th><th>Статус</th><th>Сумма</th><th>Прибыль</th><th></th></tr></thead><tbody>${arr.map(o=>`<tr><td><b>#${esc(o.number)}</b><div class="small">${(o.items||[]).length} поз.</div></td><td>${esc(o.clientName||"Без клиента")}</td><td>${fmtDate(o.date)}</td><td>${statusBadge(o.status)}</td><td><b>${fmtMoney(o.total)}</b></td><td><span class="${num(o.profit)>=0?"success":"danger"}"><b>${fmtMoney(o.profit)}</b></span></td><td><div class="actions-inline"><button class="btn icon sm" onclick="openOrderView('${o.id}')">${icon("eye",15)}</button><button class="btn icon sm" onclick="openOrder('${o.id}')">${icon("edit",15)}</button><button class="btn icon sm danger" onclick="removeOrder('${o.id}')">${icon("trash",15)}</button></div></td></tr>`).join("")}</tbody></table></div>`
+}
+function statusBadge(s){const map={Новый:["badge-new","•"],"В работе":["badge-work","◐"],"Закрыт":["badge-closed","✓"],"Отменён":["badge-cancel","×"]};const [cls,mark]=map[s]||map.Новый;return `<span class="badge ${cls}">${mark} ${esc(s||"Новый")}</span>`}
+function orderMobile(o){return `<div class="mobile-card" onclick="openOrderView('${o.id}')"><div class="mc-top"><div><b>#${esc(o.number)}</b><div class="small">${esc(o.clientName||"Без клиента")} · ${fmtDate(o.date)}</div></div>${statusBadge(o.status)}</div><div style="display:flex;justify-content:space-between"><span class="small">Итого</span><b>${fmtMoney(o.total)}</b></div><div style="display:flex;justify-content:space-between"><span class="small">Прибыль</span><b class="${num(o.profit)>=0?"success":"danger"}">${fmtMoney(o.profit)}</b></div><div class="actions-inline" onclick="event.stopPropagation()"><button class="btn sm" onclick="openOrder('${o.id}')">${icon("edit",14)}Изменить</button><button class="btn sm danger" onclick="removeOrder('${o.id}')">${icon("trash",14)}</button></div></div>`}
+
+function orderFormMarkup(o){
+ const rows=(o?.items?.length?o.items:[{productId:"",qty:1,price:0}]);
+ return `<div class="formgrid">
+  <div class="field"><label>Клиент</label><select id="o_client" class="control"><option value="">Без клиента</option>${state.clients.map(c=>`<option value="${c.id}" ${o?.clientId===c.id?"selected":""}>${esc(c.name)}${c.contact?" — "+esc(c.contact):""}</option>`).join("")}</select><button class="btn sm" style="justify-self:start" type="button" onclick="openClient();">${icon("plus",14)}Добавить клиента</button></div>
+  <div class="field"><label>Дата</label><input id="o_date" type="date" class="control" value="${String(o?.date||new Date().toISOString()).slice(0,10)}"></div>
+  <div class="field"><label>Статус</label><select id="o_status" class="control">${["Новый","В работе","Закрыт","Отменён"].map(s=>`<option value="${s}" ${o?.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+  <div class="field"><label>Доставка</label><input id="o_delivery" type="number" min="0" step=".01" class="control" value="${num(o?.delivery)}"></div>
+  <div class="field"><label>Дополнительные расходы</label><input id="o_extra" type="number" min="0" step=".01" class="control" value="${num(o?.extra)}"></div>
+  <div class="field full"><label>Товары</label><div id="orderItems" class="order-items">${rows.map(orderItemRow).join("")}</div><button class="btn sm" type="button" style="margin-top:8px" onclick="addOrderItem()">${icon("plus",14)}Добавить товар</button></div>
+  <div class="field full"><label>Комментарий</label><textarea id="o_note" class="control" rows="3" placeholder="Например: доставка Nova Poshta…">${esc(o?.note||"")}</textarea></div>
+  <div class="field full"><div id="liveOrderSummary">${orderSummaryFromDom()}</div></div>
+ </div>`
+}
+function orderItemRow(i){
+ const p=state.products.find(x=>x.id===i.productId);
+ return `<div class="item-row"><select class="control oi-prod" onchange="syncOrderRow(this)"><option value="">Выберите товар</option>${state.products.map(x=>`<option value="${x.id}" ${x.id===i.productId?"selected":""}>${esc(x.name)} · ${num(x.qty)} шт.</option>`).join("")}</select><input class="control oi-qty" type="number" min="1" step="1" value="${num(i.qty)||1}" oninput="recalcOrderLive()"><input class="control oi-price" type="number" min="0" step=".01" value="${i.price!=null?num(i.price):num(p?.sellPrice)}" oninput="recalcOrderLive()"><button class="btn icon sm" type="button" onclick="this.parentElement.remove();recalcOrderLive()">${icon("trash",14)}</button></div>`
+}
+function orderSummaryFromDom(){
+ const rows=$$(".item-row"), sub=rows.reduce((a,r)=>a+num(r.querySelector(".oi-qty")?.value)*num(r.querySelector(".oi-price")?.value),0),del=num($("#o_delivery")?.value),extra=num($("#o_extra")?.value);
+ return `<div class="order-summary"><div class="summary-row"><span>Товары</span><b>${fmtMoney(sub)}</b></div><div class="summary-row"><span>Доставка</span><b>${fmtMoney(del)}</b></div><div class="summary-row"><span>Доп. расходы</span><b>${fmtMoney(extra)}</b></div><div class="summary-row total"><span>Итого</span><b>${fmtMoney(sub+del+extra)}</b></div></div>`
+}
+window.recalcOrderLive=()=>{const x=$("#liveOrderSummary");if(x)x.innerHTML=orderSummaryFromDom()}
+window.syncOrderRow=sel=>{
+ const p=state.products.find(x=>x.id===sel.value);if(!p)return;
+ const r=sel.parentElement;r.querySelector(".oi-price").value=num(p.sellPrice);recalcOrderLive()
+}
+window.addOrderItem=()=>{const c=$("#orderItems");if(!c)return;c.insertAdjacentHTML("beforeend",orderItemRow({productId:"",qty:1,price:0}));recalcOrderLive()}
+
+window.openOrder=id=>{
+  const o=state.orders.find(x=>x.id===id);
+  openModal(id?"Изменить заказ":"Новый заказ","При изменении заказа склад пересчитается автоматически.",orderFormMarkup(o),async()=>{
+    const rows=$$(".item-row").map(r=>({productId:r.querySelector(".oi-prod")?.value,qty:Math.max(0,Math.floor(num(r.querySelector(".oi-qty")?.value))),price:Math.max(0,num(r.querySelector(".oi-price")?.value))})).filter(x=>x.productId&&x.qty>0);
+    if(!rows.length)return showToast("Добавьте хотя бы один товар","bad");
+    const clientId=$("#o_client").value,client=state.clients.find(x=>x.id===clientId),status=$("#o_status").value;
+    const date=$("#o_date").value+"T12:00:00",delivery=num($("#o_delivery").value),extra=num($("#o_extra").value);
+    const subtotal=rows.reduce((a,r)=>a+r.qty*r.price,0),total=subtotal+delivery+extra;
+    const cost=rows.reduce((a,r)=>{const p=state.products.find(x=>x.id===r.productId);return a+r.qty*num(p?.buyPrice)},0);
+    const profit=total-cost-delivery-extra;
+    const data={clientId,clientName:client?.name||"Без клиента",date,status,delivery,extra,total,cost,profit,note:$("#o_note").value.trim(),items:rows.map(r=>{const p=state.products.find(x=>x.id===r.productId);return {...r,name:p?.name||"",cost:num(p?.buyPrice)}}),updatedAt:Date.now(),number:o?.number||""};
+    try{await saveOrderAtomic(o,data);closeModal();await loadAll();showToast("Заказ сохранён")}catch(e){showToast(firebaseError(e),"bad")}
+  });
+}
+async function saveOrderAtomic(oldOrder,newData){
+  const oldItems=oldOrder?.status!=="Отменён"?(oldOrder?.items||[]):[];
+  const newItems=newData.status!=="Отменён"?newData.items:[];
+  let assignedNumber=oldOrder?.number||null;
+  await runTransaction(db,async tx=>{
+    if(!oldOrder&&!assignedNumber){
+      const counterRef=doc(db,"counters","orders");
+      const counterSnap=await tx.get(counterRef);
+      const current=counterSnap.exists()?Math.max(1,num(counterSnap.data().nextNumber)):Math.max(0,...state.orders.map(x=>parseInt(x.number,10)).filter(Number.isFinite))+1;
+      assignedNumber=String(current);
+      tx.set(counterRef,{nextNumber:current+1,updatedAt:Date.now()},{merge:true});
     }
-    if(!loaded){
-      loaded = readLegacy();
-      fromLegacy = !!loaded;
+    const productIds=[...new Set([...oldItems.map(i=>i.productId),...newItems.map(i=>i.productId)])];
+    const productRefs=productIds.map(id=>doc(db,"products",id));
+    const snaps=await Promise.all(productRefs.map(r=>tx.get(r)));
+    const products=new Map(snaps.map((s,i)=>[productIds[i],{ref:productRefs[i],snap:s,data:s.exists()?s.data():null}]));
+    if(snaps.some(s=>!s.exists()))throw new Error("Один из товаров не существует");
+    const delta=new Map();
+    for(const i of oldItems)delta.set(i.productId,(delta.get(i.productId)||0)+num(i.qty));
+    for(const i of newItems)delta.set(i.productId,(delta.get(i.productId)||0)-num(i.qty));
+    for(const [pid,d] of delta){
+      const p=products.get(pid).data,after=num(p.qty)+d;
+      if(after<0)throw new Error("Недостаточно товара: "+p.name);
+      tx.update(products.get(pid).ref,{qty:after,updatedAt:Date.now()});
     }
-  }
-  DB = normalize(loaded || defaultDB());
-  dbReady = true;
-  saveDB();                              // создаёт базу / записывает перенесённые данные
-  if(fromLegacy){
-    toast('Данные перенесены в базу: товаров '+DB.products.length+', заказов '+DB.orders.length+', операций '+DB.finance.length+'.'+cleanNote(), 7000);
-  } else if(lastClean.n){
-    toast('Исправлен двойной учёт.'+cleanNote(), 7000);
-  }
+    const orderRef=oldOrder?doc(db,"orders",oldOrder.id):doc(c("orders"));
+    newData.number=assignedNumber;
+    tx.set(orderRef,newData,{merge:true});
+    const financeRef=doc(db,"transactions","order_"+orderRef.id);
+    if(newData.status==="Отменён"){
+      tx.delete(financeRef);
+    }else{
+      tx.set(financeRef,{type:"Доход",amount:newData.total,date:newData.date,category:"Продажа",description:"Заказ #"+assignedNumber,linkedOrderId:orderRef.id,updatedAt:Date.now()},{merge:true});
+    }
+  });
+}
+async function removeOrder(id){
+  const o=state.orders.find(x=>x.id===id);if(!o)return;
+  if(!confirm("Удалить заказ #"+o.number+"? Товар будет возвращён на склад."))return;
   try{
-    if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
-  }catch(e){}
-}
-
-function updateDbInfo(){
-  const el = document.getElementById('st_dbinfo');
-  if(!el) return;
-  const where = Store.mode()==='idb' ? 'IndexedDB' : 'localStorage (запасной режим)';
-  el.textContent = where+' · товаров: '+DB.products.length+' · заказов: '+DB.orders.length+' · операций: '+DB.finance.length;
-}
-
-function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-function todayStr(){ return new Date().toISOString().slice(0,10); }
-
-/* ============================================================
-   HELPERS
-============================================================ */
-function fmt(n){
-  n = Math.round((n + Number.EPSILON) * 100) / 100;
-  const s = n.toLocaleString('ru-RU', {maximumFractionDigits:2});
-  return s + ' ' + DB.currency;
-}
-function toast(msg, ms){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=>t.classList.remove('show'), ms || 2200);
-}
-function findProduct(id){ return DB.products.find(p=>p.id===id); }
-function findOrder(id){ return DB.orders.find(o=>o.id===id); }
-
-function inPeriod(dateStr, period){
-  if(!dateStr) return false;
-  const d = new Date(dateStr+'T00:00:00');
-  const now = new Date();
-  if(period==='day'){
-    return dateStr === todayStr();
-  }
-  if(period==='week'){
-    const diffDays = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 86400000);
-    return diffDays >= 0 && diffDays < 7;
-  }
-  if(period==='month'){
-    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
-  }
-  return true;
-}
-
-/* ============================================================
-   FINANCE CALCULATIONS
-============================================================ */
-// Отменённые операции нигде не учитываются в суммах
-function activeFin(){ return DB.finance.filter(f=>!f.cancelled); }
-function budgetTotal(){
-  let total = 0;
-  activeFin().forEach(f=>{ total += f.amount * (FIN_TYPES[f.type] ? FIN_TYPES[f.type].sign : 0); });
-  return total;
-}
-function sumByType(type, period){
-  return activeFin()
-    .filter(f=>f.type===type && (period ? inPeriod(f.date, period) : true))
-    .reduce((s,f)=>s+f.amount,0);
-}
-function revenue(period){ return sumByType('income', period); }
-function expenses(period){
-  return sumByType('purchase', period) + sumByType('delivery', period) + sumByType('expense', period) + sumByType('other', period);
-}
-function profit(period){ return revenue(period) - expenses(period); }
-function ordersCount(period){
-  return DB.orders.filter(o=> o.status!=='Отменён' && inPeriod(o.date, period)).length;
-}
-function stockUnits(){ return DB.products.reduce((s,p)=>s+Number(p.qty||0),0); }
-function stockValue(){ return DB.products.reduce((s,p)=>s+Number(p.qty||0)*Number(p.buyPrice||0),0); }
-
-function orderTotals(order){
-  let sell=0, buy=0;
-  (order.items||[]).forEach(it=>{ sell += it.qty*it.sellPrice; buy += it.qty*it.buyPrice; });
-  const delivery = Number(order.delivery||0);
-  const extra = Number(order.extra||0);
-  const profit = sell - buy - delivery - extra;
-  return {sell, buy, delivery, extra, profit};
-}
-
-/* ============================================================
-   ORDER <-> STOCK & FINANCE SYNC
-   Every non-cancelled order deducts stock and creates linked
-   finance entries. Editing/cancelling/deleting reverses this
-   cleanly so everything stays auto-calculated & consistent.
-============================================================ */
-function reverseOrderEffects(order){
-  if(!order || order.status==='Отменён') return;
-  (order.items||[]).forEach(it=>{
-    const p = findProduct(it.productId);
-    if(p) p.qty = Number(p.qty||0) + Number(it.qty||0);
-  });
-  DB.finance = DB.finance.filter(f=> f.orderId !== order.id);
-}
-
-function applyOrderEffects(order){
-  if(order.status==='Отменён') return;
-  (order.items||[]).forEach(it=>{
-    const p = findProduct(it.productId);
-    if(p) p.qty = Number(p.qty||0) - Number(it.qty||0);
-  });
-  const t = orderTotals(order);
-  const entries = [];
-  if(t.sell>0) entries.push({type:'income', category:'Продажа', reason:'Заказ: '+order.client, amount:t.sell});
-  // Себестоимость отдельной записью НЕ создаём: деньги на товар уже списаны при закупке.
-  if(t.delivery>0) entries.push({type:'delivery', category:'Доставка заказа', reason:'Заказ: '+order.client, amount:t.delivery});
-  if(t.extra>0) entries.push({type:'other', category:'Доп. расходы заказа', reason:'Заказ: '+order.client, amount:t.extra});
-  entries.forEach(e=>{
-    DB.finance.push(Object.assign({id:uid(), date:order.date, orderId:order.id, auto:true}, e));
-  });
-}
-
-function availableQtyFor(productId, excludeOrder){
-  const p = findProduct(productId);
-  if(!p) return 0;
-  let avail = Number(p.qty||0);
-  if(excludeOrder){
-    (excludeOrder.items||[]).forEach(it=>{
-      if(it.productId===productId) avail += Number(it.qty||0);
+    await runTransaction(db,async tx=>{
+      const oldItems=o.status!=="Отменён"?o.items||[]:[], qtyByProduct=new Map();
+      oldItems.forEach(i=>qtyByProduct.set(i.productId,(qtyByProduct.get(i.productId)||0)+num(i.qty)));
+      const productIds=[...qtyByProduct.keys()], refs=productIds.map(id=>doc(db,"products",id)), snaps=await Promise.all(refs.map(r=>tx.get(r)));
+      snaps.forEach((snap,idx)=>{if(snap.exists()){const pid=productIds[idx];tx.update(refs[idx],{qty:num(snap.data().qty)+num(qtyByProduct.get(pid)),updatedAt:Date.now()})}});
+      tx.delete(doc(db,"orders",id));tx.delete(doc(db,"transactions","order_"+id));
     });
-  }
-  return avail;
+    await loadAll();showToast("Заказ удалён, склад восстановлен")
+  }catch(e){showToast(firebaseError(e),"bad")}
+}
+async function openOrderView(id){
+ const o=state.orders.find(x=>x.id===id);if(!o)return;
+ const items=o.items||[];
+ openModal("Заказ #"+esc(o.number),`${esc(o.clientName||"Без клиента")} · ${fmtDate(o.date)}`,`<div class="kpi-row" style="margin-bottom:14px"><div class="kpi-mini"><b>${fmtMoney(o.total)}</b><span>Итого</span></div><div class="kpi-mini"><b class="${num(o.profit)>=0?"success":"danger"}">${fmtMoney(o.profit)}</b><span>Прибыль</span></div><div class="kpi-mini"><b>${statusBadge(o.status)}</b><span>Статус</span></div></div>
+ <div class="panel" style="padding:14px;margin-bottom:12px;box-shadow:none"><b style="font-size:13px">Товары</b><div class="mini-list" style="margin-top:8px">${items.map(i=>`<div class="mini-row"><div><b>${esc(i.name)}</b><div class="small">${i.qty} × ${fmtMoney(i.price)}</div></div><b>${fmtMoney(i.qty*i.price)}</b></div>`).join("")}</div></div>
+ <div class="order-summary"><div class="summary-row"><span>Товары</span><b>${fmtMoney(num(o.total)-num(o.delivery)-num(o.extra))}</b></div><div class="summary-row"><span>Доставка</span><b>${fmtMoney(o.delivery)}</b></div><div class="summary-row"><span>Доп. расходы</span><b>${fmtMoney(o.extra)}</b></div><div class="summary-row total"><span>Итого</span><b>${fmtMoney(o.total)}</b></div></div>${o.note?`<div style="margin-top:12px"><div class="small">Комментарий</div><div style="margin-top:5px">${esc(o.note)}</div></div>`:""}`,null,{noSave:true})
 }
 
-/* ============================================================
-   RENDER: NAV / VIEWS
-============================================================ */
-const views = ['home','products','orders','finance'];
-function showView(name){
-  views.forEach(v=>{
-    document.getElementById('view-'+v).classList.toggle('active', v===name);
-  });
-  document.querySelectorAll('.tab-btn').forEach(b=>{
-    b.classList.toggle('active', b.dataset.view===name);
-  });
-  renderAll();
-}
-document.querySelectorAll('.tab-btn').forEach(b=>{
-  b.addEventListener('click', ()=>showView(b.dataset.view));
-});
 
-function setHeaderDate(){
-  const d = new Date();
-  const opts = {day:'numeric', month:'long', weekday:'long'};
-  let s = d.toLocaleDateString('ru-RU', opts);
-  s = s.charAt(0).toUpperCase()+s.slice(1);
-  document.getElementById('headerDate').textContent = s;
-}
-
-/* ---------------- HOME ---------------- */
-let homePeriod = 'day';
-document.getElementById('periodRow').addEventListener('click', e=>{
-  const btn = e.target.closest('.chip');
-  if(!btn) return;
-  homePeriod = btn.dataset.period;
-  document.querySelectorAll('#periodRow .chip').forEach(c=>c.classList.toggle('active', c===btn));
-  renderHome();
-});
-
-const periodWord = {day:'за сегодня', week:'за неделю', month:'за месяц'};
-
-function renderHome(){
-  document.getElementById('homeBudget').textContent = fmt(budgetTotal());
-  const b = document.getElementById('homeBudget');
-  b.classList.toggle('neg', budgetTotal()<0);
-
-  document.getElementById('homeRevenue').textContent = fmt(revenue(homePeriod));
-  document.getElementById('homeExpenses').textContent = fmt(expenses(homePeriod));
-  const pr = profit(homePeriod);
-  const prEl = document.getElementById('homeProfit');
-  prEl.textContent = fmt(pr);
-  prEl.classList.toggle('pos', pr>=0);
-  prEl.classList.toggle('neg', pr<0);
-  document.getElementById('homeOrders').textContent = ordersCount(homePeriod) + ' ' + periodWord[homePeriod];
-  document.getElementById('homeStockUnits').textContent = stockUnits()+' шт';
-  document.getElementById('homeStockValue').textContent = fmt(stockValue());
-
-  const recentWrap = document.getElementById('homeRecentOrders');
-  const recent = [...DB.orders].sort((a,b)=> (b.date+b.createdAt).localeCompare(a.date+a.createdAt)).slice(0,3);
-  if(recent.length===0){
-    recentWrap.innerHTML = emptyState('🧾','Пока нет заказов','Добавьте первый заказ через вкладку «Заказы» или кнопку выше.');
-  } else {
-    recentWrap.innerHTML = recent.map(orderCardHTML).join('');
-  }
-}
-
-function emptyState(icon,title,text){
-  return `<div class="empty"><span class="eicon">${icon}</span><div class="etitle">${title}</div><div class="etext">${text}</div></div>`;
-}
-
-/* ---------------- PRODUCTS ---------------- */
-function renderProducts(){
-  document.getElementById('productsStamp').textContent = DB.products.length ? (stockUnits()+' шт · '+fmt(stockValue())) : '';
-  const wrap = document.getElementById('productsList');
-  if(DB.products.length===0){
-    wrap.innerHTML = emptyState('📦','Товаров пока нет','Нажмите «+», чтобы добавить первый товар: фото, цену закупки и продажи, остаток.');
-    return;
-  }
-  const sorted = [...DB.products].sort((a,b)=> a.name.localeCompare(b.name,'ru'));
-  wrap.innerHTML = sorted.map(p=>{
-    const low = Number(p.qty) <= 0;
-    return `
-    <div class="card prod-card" data-id="${p.id}">
-      <div class="prod-photo">${p.photo ? `<img src="${p.photo}" alt="">` : `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7l1.5-3h5L16 7"/><circle cx="12" cy="13.5" r="3"/></svg>`}</div>
-      <div class="prod-body">
-        <div class="prod-top">
-          <div>
-            <div class="prod-name">${esc(p.name)}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;">
-              ${p.category?`<span class="tag">${esc(p.category)}</span>`:''}
-              ${p.model?`<span class="tag tag-outline">${esc(p.model)}</span>`:''}
-            </div>
-          </div>
-          <div class="qty-badge ${low?'low':''}">${p.qty} шт</div>
-        </div>
-        <div class="prod-prices">
-          <div><span class="plabel">Закупка</span><span class="num">${fmt(p.buyPrice)}</span></div>
-          <div><span class="plabel">Продажа</span><span class="num">${fmt(p.sellPrice)}</span></div>
-          <div><span class="plabel">Остаток на сумму</span><span class="num">${fmt(p.qty*p.buyPrice)}</span></div>
-        </div>
-        <div class="prod-foot">
-          <div class="prod-supplier">${p.supplier?('Поставщик: '+esc(p.supplier)):'Поставщик не указан'}</div>
-          <div class="icon-row">
-            ${p.supplierLink?`<a class="icon-btn" href="${esc(p.supplierLink)}" target="_blank" rel="noopener" aria-label="Открыть ссылку на товар у поставщика"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5"/><path d="M19 5l-9 9"/><path d="M12 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-5"/></svg></a>`:''}
-            <button class="icon-btn restock-product" data-id="${p.id}" aria-label="Закупка у поставщика"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.2a2 2 0 002 1.8h8.2a2 2 0 002-1.8L21 8H6"/><path d="M12 11v4M10 13h4"/></svg></button>
-            <button class="icon-btn edit-product" data-id="${p.id}" aria-label="Изменить"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  wrap.querySelectorAll('.edit-product').forEach(btn=>{
-    btn.addEventListener('click', ()=> openProductForm(btn.dataset.id));
-  });
-  wrap.querySelectorAll('.restock-product').forEach(btn=>{
-    btn.addEventListener('click', ()=> openRestockForm(btn.dataset.id));
-  });
-}
-function esc(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-
-/* ---------------- ORDERS ---------------- */
-function statusClass(status){
-  return {'Новый':'status-new','В обработке':'status-progress','Доставлен':'status-done','Отменён':'status-cancel'}[status] || 'status-new';
-}
-function orderCardHTML(o){
-  const t = orderTotals(o);
-  const itemsHTML = (o.items||[]).map(it=>`<div>
-      <span>${esc(it.name)}${it.model?` <span style="color:var(--ink-faint);">(${esc(it.model)})</span>`:''} × ${it.qty}${it.supplierLink?` <a href="${esc(it.supplierLink)}" target="_blank" rel="noopener" aria-label="Ссылка на товар у поставщика" style="text-decoration:none;">🔗</a>`:''}</span>
-      <span class="num">${fmt(it.qty*it.sellPrice)}</span>
-    </div>`).join('');
-  return `
-  <div class="card" data-id="${o.id}">
-    <div class="order-top">
-      <div>
-        <div class="order-client">${esc(o.client)}</div>
-        ${o.contact?`<div class="order-contact">${esc(o.contact)}</div>`:''}
-      </div>
-      <span class="status-badge ${statusClass(o.status)}">${o.status}</span>
+function purchasesPage(){
+  let arr=[...state.purchases];
+  const q=state.search.trim().toLowerCase();
+  if(q)arr=arr.filter(x=>(x.number+" "+x.supplier+" "+x.status+" "+(x.items||[]).map(i=>i.name).join(" ")).toLowerCase().includes(q));
+  if(state.purchaseStatus)arr=arr.filter(x=>x.status===state.purchaseStatus);
+  arr.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const supplierNames=[...new Set([...state.purchases.map(x=>x.supplier),...state.products.map(x=>x.supplier)].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const received=arr.filter(x=>x.status==="Получен").reduce((a,x)=>a+num(x.total),0);
+  return pageHeader("Закупки","Заказы поставщикам и пополнение склада",`<div class="search-global"><span class="sgicon">${icon("search",17)}</span><input class="control" placeholder="Поиск закупок…" value="${esc(state.search)}" oninput="state.search=this.value;renderPage()"></div><button class="btn primary" onclick="openPurchase()">${icon("plus",16)}Новая закупка</button>`)
+   +`<div class="grid-metrics" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      ${statCard("Закупок",arr.length,"за выбранный список","box")}
+      ${statCard("Получено",arr.filter(x=>x.status==="Получен").length,"поставок на складе","check","green")}
+      ${statCard("На сумму",fmtMoney(received),"полученные закупки","wallet","amber")}
     </div>
-    <div class="order-items">${itemsHTML}</div>
-    <div class="order-totals">
-      <div class="t"><span class="plabel">Продажа</span><span class="num">${fmt(t.sell)}</span></div>
-      <div class="t"><span class="plabel">Себестоимость</span><span class="num">${fmt(t.buy)}</span></div>
-      ${t.delivery?`<div class="t"><span class="plabel">Доставка</span><span class="num">${fmt(t.delivery)}</span></div>`:''}
-      ${t.extra?`<div class="t"><span class="plabel">Доп. расходы</span><span class="num">${fmt(t.extra)}</span></div>`:''}
-      <div class="t"><span class="plabel">Прибыль</span><span class="num" style="color:${t.profit>=0?'var(--success)':'var(--danger)'}">${fmt(t.profit)}</span></div>
-    </div>
-    <div class="order-meta-row">
-      <span class="order-date">${o.date}</span>
-      <div class="icon-row">
-        <select class="status-select quick-status" data-id="${o.id}">
-          ${STATUSES.map(s=>`<option value="${s}" ${s===o.status?'selected':''}>${s}</option>`).join('')}
-        </select>
-        <button class="icon-btn edit-order" data-id="${o.id}" aria-label="Изменить"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
-      </div>
-    </div>
-  </div>`;
+    <div class="panel"><div class="toolbar"><div class="grow"></div><select class="control select-small" onchange="state.purchaseStatus=this.value;renderPage()"><option value="">Все статусы</option>${["Заказан","В пути","Получен","Отменён"].map(x=>`<option value="${x}" ${state.purchaseStatus===x?"selected":""}>${x}</option>`).join("")}</select></div>
+    ${purchaseTable(arr)}<div class="mobile-list">${arr.map(purchaseMobile).join("")||emptyState("box","Закупок пока нет","Создайте первую закупку поставщику")}</div></div>`
 }
-let ordersMode = 'orders'; // 'orders' | 'clients'
-let ordersClientFilter = null;
+function purchaseStatusBadge(s){const map={"Заказан":["badge-new","•"],"В пути":["badge-work","◐"],"Получен":["badge-closed","✓"],"Отменён":["badge-cancel","×"]};const [cls,m]=map[s]||map["Заказан"];return `<span class="badge ${cls}">${m} ${esc(s||"Заказан")}</span>`}
+function purchaseTable(arr){if(!arr.length)return `<div class="table-wrap">${emptyState("box","Ничего не найдено","Измените поиск или фильтр")}</div>`;return `<div class="table-wrap"><table class="table"><thead><tr><th>Закупка</th><th>Поставщик</th><th>Дата</th><th>Статус</th><th>Товаров</th><th>Сумма</th><th></th></tr></thead><tbody>${arr.map(x=>`<tr><td><b>#${esc(x.number)}</b></td><td>${esc(x.supplier||"—")}</td><td>${fmtDate(x.date)}</td><td>${purchaseStatusBadge(x.status)}</td><td>${(x.items||[]).reduce((a,i)=>a+num(i.qty),0)} шт.</td><td><b>${fmtMoney(x.total)}</b></td><td><div class="actions-inline"><button class="btn icon sm" onclick="openPurchaseView('${x.id}')" title="Просмотр">${icon("eye",15)}</button><button class="btn icon sm" onclick="openPurchase('${x.id}')" title="Изменить">${icon("edit",15)}</button><button class="btn icon sm danger" onclick="removePurchase('${x.id}')" title="Удалить">${icon("trash",15)}</button></div></td></tr>`).join("")}</tbody></table></div>`}
+function purchaseMobile(x){return `<div class="mobile-card" onclick="openPurchaseView('${x.id}')"><div class="mc-top"><div><b>#${esc(x.number)}</b><div class="small">${esc(x.supplier||"Без поставщика")} · ${fmtDate(x.date)}</div></div>${purchaseStatusBadge(x.status)}</div><div style="display:flex;justify-content:space-between"><span class="small">Товаров</span><b>${(x.items||[]).reduce((a,i)=>a+num(i.qty),0)} шт.</b></div><div style="display:flex;justify-content:space-between"><span class="small">Сумма закупки</span><b>${fmtMoney(x.total)}</b></div><div class="actions-inline" onclick="event.stopPropagation()"><button class="btn sm" onclick="openPurchase('${x.id}')">${icon("edit",14)}Изменить</button><button class="btn sm danger" onclick="removePurchase('${x.id}')">${icon("trash",14)}</button></div></div>`}
+function purchaseItemRow(i){const p=state.products.find(x=>x.id===i.productId);return `<div class="item-row"><select class="control pi-prod" onchange="syncPurchaseRow(this)"><option value="">Выберите товар</option>${state.products.map(x=>`<option value="${x.id}" ${x.id===i.productId?"selected":""}>${esc(x.name)} · ${num(x.qty)} шт.</option>`).join("")}</select><input class="control pi-qty" type="number" min="1" step="1" value="${num(i.qty)||1}" oninput="recalcPurchaseLive()"><input class="control pi-price" type="number" min="0" step=".01" value="${i.buyPrice!=null?num(i.buyPrice):num(p?.buyPrice)}" oninput="recalcPurchaseLive()"><button class="btn icon sm" type="button" onclick="this.parentElement.remove();recalcPurchaseLive()">${icon("trash",14)}</button></div>`}
+function purchaseFormMarkup(p){const rows=p?.items?.length?p.items:[{productId:"",qty:1,buyPrice:0}];const suppliers=[...new Set([...state.products.map(x=>x.supplier),...state.purchases.map(x=>x.supplier)].filter(Boolean))].sort((a,b)=>a.localeCompare(b));return `<div class="formgrid"><div class="field"><label>Поставщик *</label><input id="pu_supplier" list="supplierList" class="control" value="${esc(p?.supplier||"")}" placeholder="Название поставщика"><datalist id="supplierList">${suppliers.map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div><div class="field"><label>Дата заказа</label><input id="pu_date" type="date" class="control" value="${String(p?.date||new Date().toISOString()).slice(0,10)}"></div><div class="field"><label>Статус</label><select id="pu_status" class="control">${["Заказан","В пути","Получен","Отменён"].map(s=>`<option value="${s}" ${p?.status===s?"selected":""}>${s}</option>`).join("")}</select></div><div class="field full"><label>Товары</label><div id="purchaseItems" class="order-items">${rows.map(purchaseItemRow).join("")}</div><button class="btn sm" type="button" style="margin-top:8px" onclick="addPurchaseItem()">${icon("plus",14)}Добавить товар</button></div><div class="field full"><label>Комментарий</label><textarea id="pu_note" class="control" rows="3" placeholder="Номер трека, условия поставщика…">${esc(p?.note||"")}</textarea></div><div class="field full"><div id="livePurchaseSummary">${purchaseSummaryFromDom()}</div></div></div>`}
+function purchaseSummaryFromDom(){const rows=$$(".item-row").filter(r=>r.querySelector(".pi-prod"));const total=rows.reduce((a,r)=>a+num(r.querySelector(".pi-qty")?.value)*num(r.querySelector(".pi-price")?.value),0);return `<div class="order-summary"><div class="summary-row"><span>Товаров</span><b>${rows.reduce((a,r)=>a+num(r.querySelector(".pi-qty")?.value),0)} шт.</b></div><div class="summary-row total"><span>Стоимость закупки</span><b>${fmtMoney(total)}</b></div></div>`}
+window.recalcPurchaseLive=()=>{const x=$("#livePurchaseSummary");if(x)x.innerHTML=purchaseSummaryFromDom()}
+window.syncPurchaseRow=sel=>{const p=state.products.find(x=>x.id===sel.value);if(!p)return;sel.parentElement.querySelector(".pi-price").value=num(p.buyPrice);recalcPurchaseLive()}
+window.addPurchaseItem=()=>{const x=$("#purchaseItems");if(x){x.insertAdjacentHTML("beforeend",purchaseItemRow({productId:"",qty:1,buyPrice:0}));recalcPurchaseLive()}}
+window.openPurchase=id=>{const p=state.purchases.find(x=>x.id===id);openModal(id?"Изменить закупку":"Новая закупка","Заказ поставщику и автоматическое пополнение склада",purchaseFormMarkup(p),async()=>{const supplier=$("#pu_supplier").value.trim();if(!supplier)return showToast("Укажите поставщика","bad");const rows=$$(".item-row").map(r=>({productId:r.querySelector(".pi-prod")?.value,qty:Math.max(0,Math.floor(num(r.querySelector(".pi-qty")?.value))),buyPrice:Math.max(0,num(r.querySelector(".pi-price")?.value))})).filter(x=>x.productId&&x.qty>0);if(!rows.length)return showToast("Добавьте товар в закупку","bad");const data={supplier,date:$("#pu_date").value+"T12:00:00",status:$("#pu_status").value,number:p?.number||"",note:$("#pu_note").value.trim(),items:rows.map(r=>{const p=state.products.find(x=>x.id===r.productId);return {...r,name:p?.name||""}}),total:rows.reduce((a,r)=>a+r.qty*r.buyPrice,0),updatedAt:Date.now()};try{const result=await savePurchaseAtomic(p,data);if(result?.number)data.number=result.number;closeModal();await loadAll();showToast(data.status==="Получен"?"Закупка получена: склад и финансы обновлены":"Закупка №"+data.number+" сохранена")}catch(e){showToast(firebaseError(e),"bad")}})}
+async function savePurchaseAtomic(oldPurchase,newData){const oldReceived=oldPurchase?.status==="Получен",newReceived=newData.status==="Получен",oldItems=oldReceived?(oldPurchase?.items||[]):[],newItems=newReceived?(newData.items||[]):[];let assignedNumber=newData.number||null;await runTransaction(db,async tx=>{const counterRef=doc(db,"counters","purchases");const counterSnap=await tx.get(counterRef);if(!oldPurchase&&!newData.number){const current=counterSnap.exists()?Math.max(1,num(counterSnap.data().nextNumber)):Math.max(0,...state.purchases.map(x=>parseInt(x.number,10)).filter(Number.isFinite))+1;assignedNumber=String(current);tx.set(counterRef,{nextNumber:current+1,updatedAt:Date.now()},{merge:true})}const ids=[...new Set([...oldItems.map(i=>i.productId),...newItems.map(i=>i.productId)])],refs=ids.map(id=>doc(db,"products",id)),snaps=await Promise.all(refs.map(r=>tx.get(r))),products=new Map(snaps.map((s,i)=>[ids[i],{ref:refs[i],snap:s,data:s.exists()?s.data():null}]));if(snaps.some(s=>!s.exists()))throw Error("Один из товаров в закупке не существует");const delta=new Map();for(const i of oldItems)delta.set(i.productId,(delta.get(i.productId)||0)-num(i.qty));for(const i of newItems)delta.set(i.productId,(delta.get(i.productId)||0)+num(i.qty));const priceByProduct=new Map();for(const i of newItems)priceByProduct.set(i.productId,num(i.buyPrice));for(const [pid,d] of delta){const p=products.get(pid).data,after=num(p.qty)+d;if(after<0)throw Error("Нельзя отменить получение: на складе недостаточно остатка для возврата операции по "+p.name);const patch={qty:after,updatedAt:Date.now()};if(newReceived&&priceByProduct.has(pid))patch.buyPrice=priceByProduct.get(pid);tx.update(products.get(pid).ref,patch)}const ref=oldPurchase?doc(db,"purchases",oldPurchase.id):doc(c("purchases"));newData.number=assignedNumber;tx.set(ref,newData,{merge:true});const fin=doc(db,"transactions","purchase_"+ref.id);if(newReceived){tx.set(fin,{type:"Расход",amount:newData.total,date:newData.date,category:"Закупка",description:"Закупка #"+assignedNumber+" · "+newData.supplier,linkedPurchaseId:ref.id,updatedAt:Date.now()},{merge:true})}else{tx.delete(fin)}});return {number:assignedNumber}}
+async function removePurchase(id){const p=state.purchases.find(x=>x.id===id);if(!p)return;if(!confirm("Удалить закупку #"+p.number+"? Если она получена, товар будет вычтен обратно со склада."))return;try{await savePurchaseAtomic(p,{...p,status:"Отменён",items:p.items,total:p.total});await deleteDoc(doc(db,"purchases",id));await loadAll();showToast("Закупка удалена")}catch(e){showToast(firebaseError(e),"bad")}}
+async function openPurchaseView(id){const p=state.purchases.find(x=>x.id===id);if(!p)return;openModal("Закупка #"+esc(p.number),`${esc(p.supplier||"Без поставщика")} · ${fmtDate(p.date)}`,`<div class="kpi-row" style="margin-bottom:14px"><div class="kpi-mini"><b>${fmtMoney(p.total)}</b><span>Стоимость</span></div><div class="kpi-mini"><b>${(p.items||[]).reduce((a,i)=>a+num(i.qty),0)} шт.</b><span>Количество</span></div><div class="kpi-mini"><b>${purchaseStatusBadge(p.status)}</b><span>Статус</span></div></div><div class="panel" style="padding:14px;margin-bottom:12px;box-shadow:none"><b style="font-size:13px">Товары</b><div class="mini-list" style="margin-top:8px">${(p.items||[]).map(i=>`<div class="mini-row"><div><b>${esc(i.name)}</b><div class="small">${i.qty} × ${fmtMoney(i.buyPrice)}</div></div><b>${fmtMoney(i.qty*i.buyPrice)}</b></div>`).join("")}</div></div>${p.note?`<div style="margin-top:12px"><div class="small">Комментарий</div><div style="margin-top:5px">${esc(p.note)}</div></div>`:""}${p.status==="Получен"?`<div style="margin-top:13px;padding:11px 12px;border-radius:13px;background:#ecfdf5;color:#047857;font-size:11px;font-weight:750">${icon("check",14)} Закупка уже зачислена на склад и отражена в расходах.</div>`:""}`,null,{noSave:true})}
 
-document.getElementById('ordersModeRow').addEventListener('click', e=>{
-  const btn = e.target.closest('.chip');
-  if(!btn) return;
-  ordersMode = btn.dataset.mode;
-  document.querySelectorAll('#ordersModeRow .chip').forEach(c=>c.classList.toggle('active', c===btn));
-  if(ordersMode==='clients') ordersClientFilter = null;
-  renderOrders();
+function clientsPage(){
+ const q=state.search.trim().toLowerCase();let arr=[...state.clients].filter(c=>(c.name+" "+c.contact+" "+c.notes).toLowerCase().includes(q)).sort((a,b)=>num(b.totalSpent)-num(a.totalSpent));
+ return pageHeader("Клиенты","Покупатели, контакты и история",`<div class="search-global"><span class="sgicon">${icon("search",17)}</span><input class="control" placeholder="Поиск клиентов…" value="${esc(state.search)}" oninput="state.search=this.value;renderPage()"></div><button class="btn primary" onclick="openClient()">${icon("plus",16)}Добавить клиента</button>`)
+ +`<div class="panel"><div class="table-wrap">${clientsTable(arr)}</div><div class="mobile-list">${arr.map(clientMobile).join("")||emptyState("users","Клиентов пока нет","Добавьте первого клиента")}</div></div>`
+}
+function clientsTable(arr){
+ if(!arr.length)return emptyState("users","Ничего не найдено","Измените поиск");
+ return `<table class="table"><thead><tr><th>Клиент</th><th>Контакт</th><th>Заказов</th><th>Покупки</th><th>Заметки</th><th></th></tr></thead><tbody>${arr.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td>${esc(c.contact||"—")}</td><td>${num(c.orderCount)}</td><td><b>${fmtMoney(c.totalSpent)}</b></td><td>${esc(c.notes||"—")}</td><td><div class="actions-inline"><button class="btn icon sm" onclick="openClient('${c.id}')">${icon("edit",15)}</button><button class="btn icon sm danger" onclick="removeClient('${c.id}')">${icon("trash",15)}</button></div></td></tr>`).join("")}</tbody></table>`
+}
+function clientMobile(c){return `<div class="mobile-card"><div class="mc-top"><div><b>${esc(c.name)}</b><div class="small">${esc(c.contact||"Нет контакта")}</div></div><b>${fmtMoney(c.totalSpent)}</b></div><div style="display:flex;justify-content:space-between"><span class="small">Заказов</span><b>${num(c.orderCount)}</b></div>${c.notes?`<div class="small">${esc(c.notes)}</div>`:""}<div class="actions-inline"><button class="btn sm" onclick="openClient('${c.id}')">${icon("edit",14)}Изменить</button><button class="btn sm danger" onclick="removeClient('${c.id}')">${icon("trash",14)}</button></div></div>`}
+window.openClient=id=>{
+ const client=state.clients.find(x=>x.id===id)||{name:"",contact:"",notes:""};
+ openModal(id?"Изменить клиента":"Новый клиент","Контактные данные покупателя",`<div class="formgrid"><div class="field"><label>Имя *</label><input id="c_name" class="control" value="${esc(client.name)}" placeholder="Имя клиента"></div><div class="field"><label>Телефон / Telegram / ID</label><input id="c_contact" class="control" value="${esc(client.contact)}" placeholder="@username · +373…"></div><div class="field full"><label>Заметки</label><textarea id="c_notes" class="control" rows="4">${esc(client.notes)}</textarea></div></div>`,async()=>{
+   const name=$("#c_name").value.trim();if(!name)return showToast("Введите имя","bad");
+   const data={name,contact:$("#c_contact").value.trim(),notes:$("#c_notes").value.trim(),orderCount:num(client.orderCount),totalSpent:num(client.totalSpent),updatedAt:Date.now()};
+   try{if(id){await updateDoc(doc(db,"clients",id),data);Object.assign(client,data)}else{const r=await addDoc(collection(db,"clients"),data);state.clients.push({id:r.id,...data})}closeModal();renderPage();showToast("Клиент сохранён")}catch(e){showToast(firebaseError(e),"bad")}
+ })
+}
+window.removeClient=async id=>{const c=state.clients.find(x=>x.id===id);if(!c)return;if(state.orders.some(o=>o.clientId===id))return showToast("У клиента есть заказы — удаление запрещено","bad");if(!confirm("Удалить клиента?"))return;try{await deleteDoc(doc(db,"clients",id));state.clients=state.clients.filter(x=>x.id!==id);renderPage();showToast("Клиент удалён")}catch(e){showToast(firebaseError(e),"bad")}};
+
+function financePage(){
+ let arr=[...state.transactions].sort((a,b)=>new Date(b.date)-new Date(a.date));
+ const periodDays=state.period==="week"?7:state.period==="month"?30:state.period==="year"?365:99999,min=Date.now()-periodDays*864e5;
+ if(state.period!=="all")arr=arr.filter(x=>new Date(x.date).getTime()>=min);
+ const inc=arr.filter(x=>x.type==="Доход").reduce((a,x)=>a+num(x.amount),0),exp=arr.filter(x=>x.type==="Расход").reduce((a,x)=>a+num(x.amount),0);
+ return pageHeader("Финансы","Доходы, расходы и движение денег",`<button class="btn primary" onclick="openTransaction()">${icon("plus",16)}Новая операция</button>`)
+ +`<div class="grid-metrics" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="metric">${metricInline("Доходы",fmtMoney(inc),"wallet","green")}</div><div class="metric">${metricInline("Расходы",fmtMoney(exp),"wallet","red")}</div><div class="metric">${metricInline("Результат",fmtMoney(inc-exp),"chart",inc-exp>=0?"green":"red")}</div></div>
+ <div class="panel"><div class="toolbar"><div class="grow"></div><select class="control select-small" onchange="state.period=this.value;renderPage()"><option value="week" ${state.period==="week"?"selected":""}>7 дней</option><option value="month" ${state.period==="month"?"selected":""}>30 дней</option><option value="year" ${state.period==="year"?"selected":""}>Год</option><option value="all" ${state.period==="all"?"selected":""}>Всё время</option></select></div>
+ <div class="table-wrap">${financeTable(arr)}</div><div class="mobile-list">${arr.map(financeMobile).join("")||emptyState("wallet","Операций нет","Добавьте доход или расход")}</div></div>`
+}
+function metricInline(label,val,ico,accent){const c=accent==="red"?"var(--red)":accent==="green"?"var(--green)":"var(--brand)";return `<div class="metric-top"><div class="metric-label">${label}</div><div class="metric-icon" style="color:${c};background:${accent==="red"?"#fef2f2":"#ecfdf5"}">${icon(ico,17)}</div></div><div class="metric-value">${val}</div><div class="metric-sub">за выбранный период</div>`}
+function financeTable(arr){if(!arr.length)return emptyState("wallet","Нет операций","Измените период");return `<table class="table"><thead><tr><th>Тип</th><th>Сумма</th><th>Дата</th><th>Категория</th><th>Описание</th><th>Связь</th><th></th></tr></thead><tbody>${arr.map(t=>`<tr><td>${t.type==="Доход"?`<span class="badge badge-closed">Доход</span>`:t.type==="Расход"?`<span class="badge badge-cancel">Расход</span>`:`<span class="badge badge-work">Другое</span>`}</td><td><b class="${t.type==="Расход"?"danger":"success"}">${t.type==="Расход"?"−":"+"}${fmtMoney(t.amount)}</b></td><td>${fmtDate(t.date)}</td><td>${esc(t.category||"—")}</td><td>${esc(t.description||"—")}</td><td>${t.linkedOrderId?`#${esc((state.orders.find(o=>o.id===t.linkedOrderId)?.number)||"—")}`:"—"}</td><td>${t.linkedOrderId?"":`<button class="btn icon sm danger" onclick="removeTransaction('${t.id}')">${icon("trash",15)}</button>`}</td></tr>`).join("")}</tbody></table>`}
+function financeMobile(t){return `<div class="mobile-card"><div class="mc-top"><div><b>${esc(t.category||t.type)}</b><div class="small">${fmtDate(t.date)}</div></div><b class="${t.type==="Расход"?"danger":"success"}">${t.type==="Расход"?"−":"+"}${fmtMoney(t.amount)}</b></div><div class="small">${esc(t.description||"Без описания")}${t.linkedOrderId?" · заказ #"+esc(state.orders.find(o=>o.id===t.linkedOrderId)?.number||"—"):""}</div>${t.linkedOrderId?"":`<button class="btn sm danger" onclick="removeTransaction('${t.id}')">${icon("trash",14)}Удалить</button>`}</div>`}
+window.openTransaction=()=>{
+ openModal("Новая операция","Ручная запись движения денег",`<div class="formgrid"><div class="field"><label>Тип</label><select id="t_type" class="control"><option>Доход</option><option>Расход</option><option>Другое</option></select></div><div class="field"><label>Сумма</label><input id="t_amount" type="number" min="0" step=".01" class="control" placeholder="0"></div><div class="field"><label>Дата</label><input id="t_date" type="date" class="control" value="${isoToday()}"></div><div class="field"><label>Категория</label><input id="t_cat" class="control" placeholder="Реклама, доставка…"></div><div class="field full"><label>Описание</label><textarea id="t_desc" class="control" rows="4"></textarea></div></div>`,async()=>{
+   const amount=num($("#t_amount").value);if(amount<=0)return showToast("Введите сумму","bad");
+   const data={type:$("#t_type").value,amount,date:$("#t_date").value+"T12:00:00",category:$("#t_cat").value.trim(),description:$("#t_desc").value.trim(),createdAt:Date.now()};
+   try{const r=await addDoc(c("transactions"),data);state.transactions.push({id:r.id,...data});closeModal();renderPage();showToast("Операция добавлена")}catch(e){showToast(firebaseError(e),"bad")}
+ })
+}
+window.removeTransaction=async id=>{const t=state.transactions.find(x=>x.id===id);if(!t||t.linkedOrderId)return;if(!confirm("Удалить операцию?"))return;try{await deleteDoc(doc(db,"transactions",id));state.transactions=state.transactions.filter(x=>x.id!==id);renderPage();showToast("Операция удалена")}catch(e){showToast(firebaseError(e),"bad")}};
+
+function analyticsPage(){
+ const s=getStats(), valid=state.orders.filter(o=>o.status!=="Отменён"),avg=s.orders?s.revenue/s.orders:0;
+ const top={};valid.forEach(o=>(o.items||[]).forEach(i=>top[i.name]=(top[i.name]||0)+num(i.qty)));
+ const tops=Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,7),low=state.products.filter(p=>num(p.qty)<=2).sort((a,b)=>num(a.qty)-num(b.qty));
+ return pageHeader("Аналитика","Продажи, товары и ключевые показатели")
+ +`<div class="grid-metrics">${statCard("Продажи",fmtMoney(s.revenue),"оборот заказов","dollar")}${statCard("Расходы",fmtMoney(s.expenses),"ручные расходы","wallet","red")}${statCard("Прибыль",fmtMoney(s.profit),"после себестоимости","chart","green")}${statCard("Средний чек",fmtMoney(avg),"выручка / заказы","star")}</div>
+ <div class="layout-2"><div class="panel"><div class="panel-head"><div><h2>График продаж</h2><div class="panel-sub">Сегодня / неделя / месяц / год</div></div><select class="control select-small" onchange="state.period=this.value;renderPage()"><option value="day" ${state.period==="day"?"selected":""}>Сегодня</option><option value="week" ${state.period==="week"?"selected":""}>Неделя</option><option value="month" ${state.period==="month"?"selected":""}>Месяц</option><option value="year" ${state.period==="year"?"selected":""}>Год</option></select></div>${salesChart(state.period==="day"?"week":state.period)}</div>
+ <div class="panel"><div class="panel-head"><div><h2>Самые продаваемые</h2><div class="panel-sub">По количеству единиц</div></div></div>${tops.length?`<div class="mini-list">${tops.map((x,i)=>{const max=tops[0][1]||1;return `<div class="mini-row"><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:10px"><span class="ellipsis">${i+1}. ${esc(x[0])}</span><b>${x[1]} шт.</b></div><div class="progress" style="margin-top:6px"><div style="width:${x[1]/max*100}%"></div></div></div></div>`}).join("")}</div>`:emptyState("chart","Пока мало данных","Продажи появятся здесь")}</div></div>
+ <div class="panel"><div class="panel-head"><div><h2>Низкий остаток</h2><div class="panel-sub">2 шт. и меньше</div></div><span class="section-link" onclick="go('products')">Открыть склад</span></div>${low.length?`<div class="mini-list">${low.slice(0,8).map(p=>`<div class="mini-row"><div><b>${esc(p.name)}</b><div class="small">${esc(p.category||"Без категории")}</div></div>${stockBadge(p.qty)}</div>`).join("")}</div>`:emptyState("package","Всё спокойно","Критичных остатков нет")}</div>`
+}
+function settingsPage(){
+ return pageHeader("Настройки","Магазин, резервные копии и безопасность")
+ +`<div class="panel"><div class="panel-head"><div><h2>Основное</h2><div class="panel-sub">Персонализация рабочей среды</div></div></div><div class="formgrid"><div class="field"><label>Название магазина</label><input id="shopNameSetting" class="control" value="${esc(state.settings.shopName)}"></div><div class="field"><label>Валюта</label><select id="currencySetting" class="control"><option value="MDL" selected>MDL — молдавский лей</option></select></div><div class="field full"><button class="btn primary" style="justify-self:start" onclick="saveSettings()">${icon("check",15)}Сохранить настройки</button></div></div></div>
+ <div class="panel"><div class="panel-head"><div><h2>Данные и резервные копии</h2><div class="panel-sub">Полный экспорт или восстановление Firestore</div></div></div><div class="settings-list">
+   <div class="setting"><div class="setting-info"><b>Экспорт JSON</b><span>Все товары, заказы, клиенты, финансы и настройки.</span></div><button class="btn" onclick="exportJSON()">${icon("download",15)}Экспорт</button></div>
+   <div class="setting"><div class="setting-info"><b>Импорт JSON</b><span>Загрузите ранее сохранённую резервную копию.</span></div><button class="btn" onclick="$('#importJson').click()">${icon("upload",15)}Импорт</button><input id="importJson" class="file-input" type="file" accept=".json,application/json" onchange="importJSON(event)"></div>
+   <div class="setting"><div class="setting-info"><b>Обновить данные</b><span>Полностью повторно синхронизировать CRM с Firestore.</span></div><button class="btn" onclick="loadAll()">${icon("refresh",15)}Синхронизировать</button></div>
+ </div></div>
+ <div class="panel"><div class="panel-head"><div><h2>Безопасность</h2><div class="panel-sub">Защита доступа к CRM</div></div></div><div class="settings-list">
+   <div class="setting"><div class="setting-info"><b>Изменить пароль</b><span>Новый пароль сразу используется на этом устройстве.</span></div><button class="btn" onclick="changePassword()">${icon("shield",15)}Изменить</button></div>
+   <div class="setting"><div class="setting-info"><b>Заблокировать приложение</b><span>Выйти из текущей сессии без удаления данных.</span></div><button class="btn" onclick="lockApp()">${icon("lock",15)}Заблокировать</button></div>
+   <div class="setting"><div class="setting-info"><b>Выйти</b><span>Перезагрузить авторизацию CRM.</span></div><button class="btn" onclick="logout()">${icon("logout",15)}Выйти</button></div>
+ </div></div>
+ <div class="panel"><div class="panel-head"><div><h2>Опасная зона</h2><div class="panel-sub danger">Действия необратимы после удаления.</div></div></div><button class="btn danger" onclick="wipeAll()">${icon("trash",15)}Очистить все данные</button></div>
+ <div class="panel"><div class="panel-head"><div><h2>О приложении</h2><div class="panel-sub">Bine Store CRM v2.0 · Firebase Firestore</div></div><span class="badge badge-closed">${icon("shield",12)}Защищено паролем</span></div><div class="small">Фотографии товаров хранятся в Firestore после автоматического сжатия. CRM рассчитана на работу с крупным каталогом и историей заказов, при этом клиент загружает только необходимые данные для текущего экрана.</div></div>`
+}
+async function saveSettings(){const shopName=$("#shopNameSetting").value.trim()||"Bine Store";state.settings.shopName=shopName;state.settings.currency="MDL";try{await setDoc(doc(db,"settings","main"),state.settings,{merge:true});render();showToast("Настройки сохранены")}catch(e){showToast(firebaseError(e),"bad")}}
+window.changePassword=async()=>{openModal("Изменить пароль","После сохранения новый пароль будет использоваться при следующем входе.",`<div class="formgrid"><div class="field"><label>Новый пароль</label><input id="np1" type="password" class="control"></div><div class="field"><label>Повторите пароль</label><input id="np2" type="password" class="control"></div></div>`,async()=>{const a=$("#np1").value,b=$("#np2").value;if(a.length<4)return showToast("Минимум 4 символа","bad");if(a!==b)return showToast("Пароли не совпадают","bad");try{state.settings.passwordHash=await hashText(a);await setDoc(doc(db,"settings","main"),{passwordHash:state.settings.passwordHash},{merge:true});closeModal();showToast("Пароль изменён")}catch(e){showToast(firebaseError(e),"bad")}})}
+window.exportJSON=()=>{const data={version:2,exportedAt:new Date().toISOString(),settings:state.settings,products:state.products,orders:state.orders,purchases:state.purchases,clients:state.clients,transactions:state.transactions};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bine-store-crm-backup-"+isoToday()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);showToast("Резервная копия готова")}
+window.importJSON=async e=>{const file=e.target.files[0];if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.products)||!Array.isArray(d.orders)||!Array.isArray(d.clients)||!Array.isArray(d.transactions))throw Error("Неподдерживаемый формат JSON");if(!confirm("Импорт добавит данные к существующей базе. Продолжить?"))return;for(const [name,arr] of Object.entries({products:d.products,orders:d.orders,purchases:d.purchases||[],clients:d.clients,transactions:d.transactions})){for(const item of arr){const copy={...item},id=copy.id||uid();delete copy.id;await setDoc(doc(db,name,id),copy,{merge:true})}}if(d.settings){state.settings={...state.settings,...d.settings};await setDoc(doc(db,"settings","main"),state.settings,{merge:true})}await loadAll();showToast("Импорт завершён")}catch(x){showToast(x.message||"Ошибка импорта","bad")}e.target.value=""}
+window.wipeAll=async()=>{if(!confirm("Удалить ВСЕ товары, заказы, клиентов и финансовые операции? Это нельзя отменить."))return;if(!confirm("Последнее предупреждение. Продолжить очистку?"))return;try{for(const [name,arr] of Object.entries({products:state.products,orders:state.orders,purchases:state.purchases,clients:state.clients,transactions:state.transactions})){for(const x of arr)await deleteDoc(doc(db,name,x.id))}await loadAll();showToast("Все данные удалены")}catch(e){showToast(firebaseError(e),"bad")}}
+
+function morePage(){
+  return pageHeader("Ещё","Дополнительные разделы CRM")+`<div class="more-cards">
+    <div class="more-card" onclick="go('finance')"><div class="more-icon">${icon("wallet",20)}</div><h3>Финансы</h3><p>Доходы, расходы, бюджет и автоматические операции по заказам.</p></div>
+    <div class="more-card" onclick="go('clients')"><div class="more-icon">${icon("users",20)}</div><h3>Клиенты</h3><p>Контакты, количество заказов, сумма покупок и заметки.</p></div>
+    <div class="more-card" onclick="go('analytics')"><div class="more-icon">${icon("chart",20)}</div><h3>Аналитика</h3><p>Продажи, средний чек, популярные товары и остатки.</p></div>
+    <div class="more-card" onclick="go('settings')"><div class="more-icon">${icon("settings",20)}</div><h3>Настройки</h3><p>Название магазина, резервные копии, пароль и очистка.</p></div>
+  </div>`
+}
+
+function globalSearch(q){
+  const value=(q||"").trim();
+  if(!value){go("dashboard");return}
+  const needle=value.toLowerCase();
+  const inProducts=state.products.some(p=>(p.name+" "+p.category+" "+p.supplier+" "+p.model).toLowerCase().includes(needle));
+  const inOrders=state.orders.some(o=>(o.number+" "+o.clientName+" "+o.status).toLowerCase().includes(needle));
+  const inPurchases=state.purchases.some(o=>(o.number+" "+o.supplier+" "+o.status+" "+(o.items||[]).map(i=>i.name).join(" ")).toLowerCase().includes(needle));
+  state.page=inProducts?"products":inOrders?"orders":inPurchases?"purchases":"clients";
+  state.more=false;state.search=value;state.status="";state.category="";render();
+}
+function renderPage(){
+ const m=$("#main");if(!m)return;
+ if(state.page==="dashboard")m.innerHTML=dashboardPage();
+ else if(state.page==="products")m.innerHTML=productsPage();
+ else if(state.page==="orders")m.innerHTML=ordersPage();
+ else if(state.page==="purchases")m.innerHTML=purchasesPage();
+ else if(state.page==="clients")m.innerHTML=clientsPage();
+ else if(state.page==="finance")m.innerHTML=financePage();
+ else if(state.page==="analytics")m.innerHTML=analyticsPage();
+ else if(state.page==="settings")m.innerHTML=settingsPage();
+ else if(state.page==="more")m.innerHTML=morePage();
+}
+
+window.filterProductQuick=()=>{};
+// The UI uses inline event attributes. In an ES module top-level names are not global,
+// so make every UI handler and shared state explicitly available on window.
+Object.assign(window,{
+  state,$,$$,
+  showToast,openModal,loadAll,renderPage,globalSearch,
+  openProductView,openOrderView,removeOrder,
+  openPurchaseView,removePurchase,
+  saveSettings,
+  icon,esc,num,fmtMoney,fmtDate,isoToday,
+  firebaseError
 });
-document.getElementById('ordersFilterClear').addEventListener('click', ()=>{
-  ordersClientFilter = null;
-  renderOrders();
-});
-
-function clientKey(name){ return (name||'').trim().toLowerCase(); }
-
-function clientStats(){
-  const map = new Map();
-  DB.orders.forEach(o=>{
-    const key = clientKey(o.client);
-    if(!key) return;
-    if(!map.has(key)) map.set(key, {name:o.client, contact:o.contact||'', orders:0, revenue:0, profit:0, lastDate:o.date});
-    const c = map.get(key);
-    c.orders += 1;
-    if(o.contact) c.contact = o.contact;
-    if(o.date > c.lastDate) c.lastDate = o.date;
-    if(o.status!=='Отменён'){
-      const t = orderTotals(o);
-      c.revenue += t.sell;
-      c.profit += t.profit;
-    }
-  });
-  return [...map.values()].sort((a,b)=> b.lastDate.localeCompare(a.lastDate));
+async function boot(){
+ try{
+   await signInAnonymously(auth);
+ }catch(e){console.error(e);renderError("Firebase Authentication не подключён. Включите Anonymous Authentication в Firebase Console.");}
 }
-
-function clientCardHTML(c){
-  return `
-  <div class="card client-card" data-name="${esc(c.name)}">
-    <div class="client-top">
-      <div>
-        <div class="client-name">${esc(c.name)}</div>
-        ${c.contact?`<div class="client-contact">${esc(c.contact)}</div>`:''}
-      </div>
-      <svg class="client-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-    </div>
-    <div class="client-stats">
-      <div class="t"><span class="plabel">Заказов</span><span class="num">${c.orders}</span></div>
-      <div class="t"><span class="plabel">Выручка</span><span class="num">${fmt(c.revenue)}</span></div>
-      <div class="t"><span class="plabel">Прибыль</span><span class="num" style="color:${c.profit>=0?'var(--success)':'var(--danger)'}">${fmt(c.profit)}</span></div>
-      <div class="t"><span class="plabel">Последний заказ</span><span class="num">${c.lastDate}</span></div>
-    </div>
-  </div>`;
-}
-
-function renderOrders(){
-  const ordersWrap = document.getElementById('ordersList');
-  const clientsWrap = document.getElementById('clientsList');
-  const filterBar = document.getElementById('ordersFilterBar');
-
-  ordersWrap.style.display = ordersMode==='orders' ? 'block' : 'none';
-  clientsWrap.style.display = ordersMode==='clients' ? 'block' : 'none';
-
-  if(ordersMode==='clients'){
-    filterBar.style.display = 'none';
-    document.getElementById('ordersStamp').textContent = '';
-    const clients = clientStats();
-    if(clients.length===0){
-      clientsWrap.innerHTML = emptyState('👤','Клиентов пока нет','Клиенты появятся здесь автоматически после первого заказа.');
-      return;
-    }
-    clientsWrap.innerHTML = clients.map(clientCardHTML).join('');
-    clientsWrap.querySelectorAll('.client-card').forEach(el=>{
-      el.addEventListener('click', ()=>{
-        ordersClientFilter = el.dataset.name;
-        ordersMode = 'orders';
-        document.querySelectorAll('#ordersModeRow .chip').forEach(c=>c.classList.toggle('active', c.dataset.mode==='orders'));
-        renderOrders();
-      });
-    });
-    return;
-  }
-
-  if(ordersClientFilter){
-    filterBar.style.display = 'block';
-    document.getElementById('ordersFilterLabel').textContent = ordersClientFilter;
-  } else {
-    filterBar.style.display = 'none';
-  }
-
-  const filtered = ordersClientFilter
-    ? DB.orders.filter(o=> clientKey(o.client)===clientKey(ordersClientFilter))
-    : DB.orders;
-
-  document.getElementById('ordersStamp').textContent = filtered.length ? (filtered.length+' всего') : '';
-  if(filtered.length===0){
-    ordersWrap.innerHTML = ordersClientFilter
-      ? emptyState('🧾','Заказов не найдено','У этого клиента пока нет заказов.')
-      : emptyState('🧾','Заказов пока нет','Нажмите «+», чтобы оформить первый заказ: клиент, товары, доставка и статус.');
-    return;
-  }
-  const sorted = [...filtered].sort((a,b)=> (b.date+b.createdAt).localeCompare(a.date+a.createdAt));
-  ordersWrap.innerHTML = sorted.map(orderCardHTML).join('');
-  ordersWrap.querySelectorAll('.edit-order').forEach(btn=> btn.addEventListener('click', ()=>openOrderForm(btn.dataset.id)));
-  ordersWrap.querySelectorAll('.quick-status').forEach(sel=>{
-    sel.addEventListener('change', ()=>{
-      const order = findOrder(sel.dataset.id);
-      if(!order) return;
-      const newStatus = sel.value;
-      if(newStatus===order.status) return;
-      reverseOrderEffects(order);
-      order.status = newStatus;
-      applyOrderEffects(order);
-      saveDB();
-      renderAll();
-      toast('Статус обновлён: '+newStatus);
-    });
-  });
-}
-
-/* ---------------- FINANCE ---------------- */
-function renderFinance(){
-  document.getElementById('finBudget').textContent = fmt(budgetTotal());
-  document.getElementById('finProfit').textContent = fmt(profit(null));
-  document.getElementById('finTopups').textContent = fmt(sumByType('topup'));
-  document.getElementById('finIncome').textContent = fmt(sumByType('income'));
-  document.getElementById('finPurchases').textContent = fmt(sumByType('purchase'));
-  document.getElementById('finOther').textContent = fmt(sumByType('delivery')+sumByType('expense')+sumByType('other'));
-
-  const wrap = document.getElementById('finList');
-  if(DB.finance.length===0){
-    wrap.innerHTML = emptyState('💰','Операций пока нет','Пополнения, доходы и расходы появятся здесь — вручную или автоматически из заказов.');
-    return;
-  }
-  const sorted = [...DB.finance].sort((a,b)=> (b.date+(b.id||'')).localeCompare(a.date+(a.id||'')));
-  wrap.innerHTML = sorted.map(f=>{
-    const sign = FIN_TYPES[f.type].sign;
-    const linkedProduct = f.productId ? findProduct(f.productId) : null;
-    return `<div class="fin-row ${f.cancelled?'cancelled':''}">
-      <div class="fin-left">
-        <span class="fin-dot ${f.type}"></span>
-        <div class="fin-text">
-          <div class="fin-reason">${esc(f.reason)}</div>
-          <div class="fin-meta">${f.category?esc(f.category)+' · ':''}${FIN_TYPES[f.type].label} · ${f.date}${f.cancelled?'<span class="fin-tag">Отменена</span>':''}</div>
-          <button type="button" class="fin-act" data-id="${f.id}">${f.cancelled?'Вернуть':'Отменить'}</button>
-        </div>
-      </div>
-      ${linkedProduct&&linkedProduct.supplierLink?`<a href="${esc(linkedProduct.supplierLink)}" target="_blank" rel="noopener" class="icon-btn" aria-label="Ссылка на товар у поставщика" style="width:26px;height:26px;margin-left:6px;flex:0 0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5"/><path d="M19 5l-9 9"/><path d="M12 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-5"/></svg></a>`:''}
-      <div class="fin-amount ${sign>0?'plus':'minus'}">${sign>0?'+':'−'}${fmt(f.amount).replace('-','')}</div>
-    </div>`;
-  }).join('');
-}
-
-document.getElementById('finList').addEventListener('click', e=>{
-  const b = e.target.closest('.fin-act');
-  if(b) toggleFinance(b.dataset.id);
-});
-
-/* Отмена / восстановление операции.
-   - обычная операция: просто помечается отменённой (в суммах не учитывается);
-   - закупка: дополнительно откатывает остаток товара и цену закупки;
-   - операция из заказа: отменяет заказ целиком (склад + все его операции). */
-function toggleFinance(id){
-  const f = DB.finance.find(x=>x.id===id);
-  if(!f) return;
-  const p = f.productId ? findProduct(f.productId) : null;
-
-  if(!f.cancelled){
-    const order = f.orderId ? findOrder(f.orderId) : null;
-    if(order){
-      if(!confirm('Эта операция создана заказом клиента «'+order.client+'».\n\nОтменить заказ целиком? Товары вернутся на склад, все связанные операции уйдут из финансов. Заказ останется в списке со статусом «Отменён» — вернуть его можно сменой статуса.')) return;
-      reverseOrderEffects(order);
-      order.status = 'Отменён';
-      saveDB(); renderAll();
-      toast('Заказ отменён: склад и финансы обновлены');
-      return;
-    }
-    if(f.restockId){
-      const qty = Number(f.qty||0);
-      let msg;
-      if(qty>0 && p){
-        const after = Number(p.qty||0) - qty;
-        msg = 'Отменить закупку «'+p.name+'»?\n\nСумма '+fmt(f.amount)+' вернётся в бюджет, остаток уменьшится на '+qty+' шт (станет '+after+' шт).'
-            + (after<0 ? '\n\nВнимание: остаток уйдёт в минус — часть этого товара уже продана.' : '');
-      } else {
-        msg = 'Отменить закупку?\n\nСумма '+fmt(f.amount)+' вернётся в бюджет. Остаток товара НЕ изменится: в этой записи не сохранено количество. При необходимости поправьте остаток в карточке товара.';
-      }
-      if(!confirm(msg)) return;
-      if(qty>0 && p){
-        p.qty = Number(p.qty||0) - qty;
-        f.stockReverted = true;
-        if(f.prevBuyPrice!=null && Number(p.buyPrice)===Number(f.unitCost)){
-          p.buyPrice = f.prevBuyPrice;
-          f.priceReverted = true;
-        }
-      }
-    }
-    f.cancelled = true;
-    f.cancelledAt = Date.now();
-    saveDB(); renderAll();
-    toast('Операция отменена');
-  } else {
-    if(f.restockId && p){
-      if(f.stockReverted) p.qty = Number(p.qty||0) + Number(f.qty||0);
-      if(f.priceReverted) p.buyPrice = f.unitCost;
-    }
-    delete f.stockReverted;
-    delete f.priceReverted;
-    delete f.cancelled;
-    delete f.cancelledAt;
-    saveDB(); renderAll();
-    toast('Операция восстановлена');
-  }
-}
-
-function renderAll(){
-  renderHome();
-  renderProducts();
-  renderOrders();
-  renderFinance();
-  refreshCategoryList();
-  refreshClientNameList();
-}
-
-/* ============================================================
-   PRODUCT FORM
-============================================================ */
-const overlayProduct = document.getElementById('overlayProduct');
-let pf_photoData = null;
-
-function openOverlay(el){ el.classList.add('show'); document.body.style.overflow='hidden'; }
-function closeOverlay(el){ el.classList.remove('show'); document.body.style.overflow=''; }
-
-document.querySelectorAll('[data-close]').forEach(b=>{
-  b.addEventListener('click', ()=> closeOverlay(b.closest('.overlay')));
-});
-document.querySelectorAll('.overlay').forEach(ov=>{
-  if(ov.id==='overlayLock') return; // lock screen can only be closed by entering the correct password
-  ov.addEventListener('click', e=>{ if(e.target===ov) closeOverlay(ov); });
-});
-
-function refreshCategoryList(){
-  const dl = document.getElementById('categoryList');
-  const cats = [...new Set(DB.products.map(p=>p.category).filter(Boolean))];
-  dl.innerHTML = cats.map(c=>`<option value="${esc(c)}">`).join('');
-}
-
-function refreshClientNameList(){
-  const dl = document.getElementById('clientNameList');
-  if(!dl) return;
-  const seen = new Set();
-  const names = [];
-  DB.orders.forEach(o=>{
-    const key = clientKey(o.client);
-    if(!key || seen.has(key)) return;
-    seen.add(key);
-    names.push(o.client);
-  });
-  names.sort((a,b)=>a.localeCompare(b,'ru'));
-  dl.innerHTML = names.map(n=>`<option value="${esc(n)}">`).join('');
-}
-
-// Когда клиент выбран (или вручную введено имя существующего клиента) —
-// подставляем его последний контакт, если поле контакта ещё пустое.
-document.getElementById('of_client').addEventListener('input', e=>{
-  const contactField = document.getElementById('of_contact');
-  if(contactField.value.trim()) return;
-  const key = clientKey(e.target.value);
-  if(!key) return;
-  const match = [...DB.orders].reverse().find(o=>clientKey(o.client)===key && o.contact);
-  if(match) contactField.value = match.contact;
-});
-
-function openProductForm(id){
-  const form = document.getElementById('productForm');
-  form.reset();
-  pf_photoData = null;
-  document.getElementById('pf_photoPreview').innerHTML = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.2"/><path d="M8 6l1.5-2h5L16 6"/></svg>`;
-  if(id){
-    const p = findProduct(id);
-    document.getElementById('productFormTitle').textContent = 'Изменить товар';
-    document.getElementById('pf_id').value = p.id;
-    document.getElementById('pf_name').value = p.name;
-    document.getElementById('pf_category').value = p.category||'';
-    document.getElementById('pf_supplier').value = p.supplier||'';
-    document.getElementById('pf_model').value = p.model||'';
-    document.getElementById('pf_link').value = p.supplierLink||'';
-    document.getElementById('pf_qty').value = p.qty;
-    document.getElementById('pf_buy').value = p.buyPrice;
-    document.getElementById('pf_sell').value = p.sellPrice;
-    if(p.photo){
-      pf_photoData = p.photo;
-      document.getElementById('pf_photoPreview').innerHTML = `<img src="${p.photo}">`;
-    }
-    document.getElementById('pf_delete').style.display='block';
-  } else {
-    document.getElementById('productFormTitle').textContent = 'Новый товар';
-    document.getElementById('pf_id').value = '';
-    document.getElementById('pf_delete').style.display='none';
-  }
-  openOverlay(overlayProduct);
-}
-document.getElementById('pf_photoBtn').addEventListener('click', ()=> document.getElementById('pf_photoInput').click());
-document.getElementById('pf_photoInput').addEventListener('change', async e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+onAuthStateChanged(auth,async user=>{
+  if(!user)return;state.user=user;
   try{
-    const dataUrl = await compressImage(file, 320, 0.72);
-    pf_photoData = dataUrl;
-    document.getElementById('pf_photoPreview').innerHTML = `<img src="${dataUrl}">`;
-  }catch(err){
-    console.error(err);
-    toast('Не удалось загрузить фото');
-  }
+    const snap=await getDoc(doc(db,"settings","main"));
+    if(snap.exists())state.settings={...state.settings,...snap.data()};
+    if(state.settings.dark){document.documentElement.dataset.theme="dark"}else{delete document.documentElement.dataset.theme}
+    if(sessionStorage.getItem("bineUnlocked")==="1"&&state.settings.passwordHash)await loadAll();else{state.loading=false;state.settings.passwordHash?passwordView(false):passwordView(true)}
+  }catch(e){renderError(firebaseError(e))}
 });
-function compressImage(file, maxDim, quality){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = e=>{
-      const img = new Image();
-      img.onload = ()=>{
-        let w=img.width, h=img.height;
-        if(w>h){ if(w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; } }
-        else { if(h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; } }
-        const canvas = document.createElement('canvas');
-        canvas.width=w; canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-document.getElementById('productForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  const id = document.getElementById('pf_id').value;
-  const data = {
-    name: document.getElementById('pf_name').value.trim(),
-    category: document.getElementById('pf_category').value.trim(),
-    supplier: document.getElementById('pf_supplier').value.trim(),
-    model: document.getElementById('pf_model').value.trim(),
-    supplierLink: document.getElementById('pf_link').value.trim(),
-    qty: Number(document.getElementById('pf_qty').value||0),
-    buyPrice: Number(document.getElementById('pf_buy').value||0),
-    sellPrice: Number(document.getElementById('pf_sell').value||0),
-    photo: pf_photoData,
-  };
-  if(!data.name){ toast('Введите название товара'); return; }
-  if(id){
-    const p = findProduct(id);
-    Object.assign(p, data);
-    toast('Товар обновлён');
-  } else {
-    DB.products.push(Object.assign({id:uid(), createdAt:Date.now()}, data));
-    toast('Товар добавлен');
-  }
-  saveDB();
-  closeOverlay(overlayProduct);
-  renderAll();
-});
-document.getElementById('pf_delete').addEventListener('click', ()=>{
-  const id = document.getElementById('pf_id').value;
-  if(!id) return;
-  const usedInOrders = DB.orders.some(o=>(o.items||[]).some(it=>it.productId===id));
-  const msg = usedInOrders
-    ? 'Этот товар использован в заказах. Удалить его из каталога? История заказов не изменится.'
-    : 'Удалить этот товар?';
-  if(!confirm(msg)) return;
-  DB.products = DB.products.filter(p=>p.id!==id);
-  saveDB();
-  closeOverlay(overlayProduct);
-  renderAll();
-  toast('Товар удалён');
-});
-
-/* ============================================================
-   ORDER FORM
-============================================================ */
-const overlayOrder = document.getElementById('overlayOrder');
-let orderItemsState = []; // {rowId, productId, qty, buyPrice, sellPrice}
-let editingOrderOriginal = null;
-
-function productOptionsHTML(selectedId){
-  if(DB.products.length===0) return `<option value="">Нет товаров — добавьте их на вкладке «Товары»</option>`;
-  return DB.products.map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${esc(p.name)} (${p.qty} шт)</option>`).join('');
-}
-
-function renderOrderItemsRows(){
-  const wrap = document.getElementById('orderItemsWrap');
-  if(orderItemsState.length===0){
-    wrap.innerHTML = `<div class="hint" style="margin-bottom:10px;">Добавьте хотя бы один товар</div>`;
-  } else {
-    wrap.innerHTML = orderItemsState.map(row=>{
-      const p = findProduct(row.productId);
-      const infoParts = [];
-      if(p && p.model) infoParts.push('Размер: '+esc(p.model));
-      if(p && p.supplier) infoParts.push(esc(p.supplier));
-      const info = infoParts.join(' · ');
-      return `
-      <div class="order-item-row" data-row="${row.rowId}">
-        <div class="oi-product">
-          <select class="oi-select-product">${productOptionsHTML(row.productId)}</select>
-        </div>
-        ${(info || (p&&p.supplierLink)) ? `<div class="oi-product" style="flex:1 1 100%;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:-4px;">
-          <span class="fin-meta">${info}</span>
-          ${p&&p.supplierLink?`<a href="${esc(p.supplierLink)}" target="_blank" rel="noopener" class="icon-btn" aria-label="Открыть товар у поставщика" style="width:26px;height:26px;"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5"/><path d="M19 5l-9 9"/><path d="M12 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-5"/></svg></a>`:''}
-        </div>`:''}
-        <div class="oi-qty"><input type="number" min="1" step="1" class="oi-qty-input" value="${row.qty}" placeholder="Кол-во"></div>
-        <div class="oi-price"><input type="number" min="0" step="0.01" class="oi-sell-input" value="${row.sellPrice}" placeholder="Цена"></div>
-        <button type="button" class="oi-remove" aria-label="Удалить"><svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-      </div>
-    `;}).join('');
-  }
-  wrap.querySelectorAll('.order-item-row').forEach(rowEl=>{
-    const rowId = rowEl.dataset.row;
-    const row = orderItemsState.find(r=>r.rowId===rowId);
-    rowEl.querySelector('.oi-select-product').addEventListener('change', e=>{
-      row.productId = e.target.value;
-      const p = findProduct(row.productId);
-      row.buyPrice = p ? Number(p.buyPrice) : 0;
-      row.sellPrice = p ? Number(p.sellPrice) : 0;
-      renderOrderItemsRows();
-      updateOrderSummary();
-    });
-    rowEl.querySelector('.oi-qty-input').addEventListener('input', e=>{
-      row.qty = Math.max(1, Number(e.target.value||1));
-      updateOrderSummary();
-    });
-    rowEl.querySelector('.oi-sell-input').addEventListener('input', e=>{
-      row.sellPrice = Number(e.target.value||0);
-      updateOrderSummary();
-    });
-    rowEl.querySelector('.oi-remove').addEventListener('click', ()=>{
-      orderItemsState = orderItemsState.filter(r=>r.rowId!==rowId);
-      renderOrderItemsRows();
-      updateOrderSummary();
-    });
-  });
-}
-
-document.getElementById('addItemBtn').addEventListener('click', ()=>{
-  if(DB.products.length===0){ toast('Сначала добавьте товары на вкладке «Товары»'); return; }
-  const first = DB.products[0];
-  orderItemsState.push({rowId:uid(), productId:first.id, qty:1, buyPrice:Number(first.buyPrice), sellPrice:Number(first.sellPrice)});
-  renderOrderItemsRows();
-  updateOrderSummary();
-});
-
-function updateOrderSummary(){
-  let sell=0, buy=0;
-  orderItemsState.forEach(r=>{ sell += r.qty*r.sellPrice; buy += r.qty*(r.buyPrice||0); });
-  const delivery = Number(document.getElementById('of_delivery').value||0);
-  const extra = Number(document.getElementById('of_extra').value||0);
-  const profitVal = sell - buy - delivery - extra;
-  document.getElementById('orderSummaryBox').innerHTML = `
-    <div class="srow"><span>Сумма продажи</span><span class="num">${fmt(sell)}</span></div>
-    <div class="srow"><span>Себестоимость</span><span class="num">${fmt(buy)}</span></div>
-    <div class="srow"><span>Доставка + доп. расходы</span><span class="num">${fmt(delivery+extra)}</span></div>
-    <div class="srow total"><span>Прибыль</span><span class="num" style="color:${profitVal>=0?'var(--success)':'var(--danger)'}">${fmt(profitVal)}</span></div>
-  `;
-}
-document.getElementById('of_delivery').addEventListener('input', updateOrderSummary);
-document.getElementById('of_extra').addEventListener('input', updateOrderSummary);
-
-function openOrderForm(id){
-  const form = document.getElementById('orderForm');
-  form.reset();
-  document.getElementById('of_date').value = todayStr();
-  orderItemsState = [];
-  editingOrderOriginal = null;
-
-  if(id){
-    const o = findOrder(id);
-    editingOrderOriginal = JSON.parse(JSON.stringify(o));
-    document.getElementById('orderFormTitle').textContent = 'Изменить заказ';
-    document.getElementById('of_id').value = o.id;
-    document.getElementById('of_client').value = o.client;
-    document.getElementById('of_contact').value = o.contact||'';
-    document.getElementById('of_date').value = o.date;
-    document.getElementById('of_status').value = o.status;
-    document.getElementById('of_delivery').value = o.delivery||'';
-    document.getElementById('of_extra').value = o.extra||'';
-    document.getElementById('of_note').value = o.note||'';
-    orderItemsState = (o.items||[]).map(it=>({rowId:uid(), productId:it.productId, qty:it.qty, buyPrice:it.buyPrice, sellPrice:it.sellPrice}));
-    document.getElementById('of_delete').style.display='block';
-  } else {
-    document.getElementById('orderFormTitle').textContent = 'Новый заказ';
-    document.getElementById('of_id').value = '';
-    document.getElementById('of_delete').style.display='none';
-    if(DB.products.length>0){
-      const first = DB.products[0];
-      orderItemsState.push({rowId:uid(), productId:first.id, qty:1, buyPrice:Number(first.buyPrice), sellPrice:Number(first.sellPrice)});
-    }
-  }
-  renderOrderItemsRows();
-  updateOrderSummary();
-  openOverlay(overlayOrder);
-}
-
-document.getElementById('orderForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  const client = document.getElementById('of_client').value.trim();
-  if(!client){ toast('Введите имя клиента'); return; }
-  if(orderItemsState.length===0){ toast('Добавьте хотя бы один товар'); return; }
-  for(const r of orderItemsState){
-    if(!r.productId || !findProduct(r.productId)){ toast('Выберите товар в каждой строке'); return; }
-  }
-
-  const id = document.getElementById('of_id').value;
-  const isEdit = !!id;
-  const newOrder = {
-    id: id || uid(),
-    createdAt: isEdit ? editingOrderOriginal.createdAt : Date.now(),
-    client,
-    contact: document.getElementById('of_contact').value.trim(),
-    date: document.getElementById('of_date').value || todayStr(),
-    status: document.getElementById('of_status').value,
-    delivery: Number(document.getElementById('of_delivery').value||0),
-    extra: Number(document.getElementById('of_extra').value||0),
-    note: document.getElementById('of_note').value.trim(),
-    items: orderItemsState.map(r=>({
-      productId: r.productId,
-      name: findProduct(r.productId).name,
-      model: findProduct(r.productId).model||'',
-      supplierLink: findProduct(r.productId).supplierLink||'',
-      qty: Number(r.qty||1),
-      buyPrice: Number(r.buyPrice||0),
-      sellPrice: Number(r.sellPrice||0),
-    })),
-  };
-
-  // stock availability check (simulate: restore old order's stock first, then check new demand)
-  const shortages = [];
-  newOrder.items.forEach(it=>{
-    const avail = availableQtyFor(it.productId, isEdit ? editingOrderOriginal : null);
-    if(newOrder.status!=='Отменён' && it.qty > avail){
-      shortages.push(findProduct(it.productId).name + ' (доступно '+avail+', нужно '+it.qty+')');
-    }
-  });
-  if(shortages.length){
-    const proceed = confirm('Недостаточно остатка:\n' + shortages.join('\n') + '\n\nВсё равно сохранить заказ (остаток уйдёт в минус)?');
-    if(!proceed) return;
-  }
-
-  if(isEdit){
-    reverseOrderEffects(editingOrderOriginal);
-    const idx = DB.orders.findIndex(o=>o.id===id);
-    DB.orders[idx] = newOrder;
-    applyOrderEffects(newOrder);
-    toast('Заказ обновлён');
-  } else {
-    DB.orders.push(newOrder);
-    applyOrderEffects(newOrder);
-    toast('Заказ добавлен');
-  }
-  saveDB();
-  closeOverlay(overlayOrder);
-  renderAll();
-});
-
-document.getElementById('of_delete').addEventListener('click', ()=>{
-  const id = document.getElementById('of_id').value;
-  if(!id) return;
-  if(!confirm('Удалить этот заказ? Остаток товара будет возвращён на склад.')) return;
-  const order = findOrder(id);
-  reverseOrderEffects(order);
-  DB.orders = DB.orders.filter(o=>o.id!==id);
-  saveDB();
-  closeOverlay(overlayOrder);
-  renderAll();
-  toast('Заказ удалён');
-});
-
-/* ============================================================
-   RESTOCK FORM (закупка у поставщика: пополняет остаток товара
-   и одновременно создаёт расход в финансах — одно действие)
-============================================================ */
-const overlayRestock = document.getElementById('overlayRestock');
-let restockItemsState = []; // {rowId, productId, qty, cost}
-
-function restockRowInfoHTML(p){
-  if(!p) return '';
-  const infoParts = [];
-  if(p.supplier) infoParts.push(esc(p.supplier));
-  if(p.model) infoParts.push('Размер: '+esc(p.model));
-  infoParts.push('В наличии: '+p.qty+' шт');
-  const info = infoParts.join(' · ');
-  return `<div class="oi-product" style="flex:1 1 100%;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:-4px;">
-      <span class="fin-meta">${info}</span>
-      ${p.supplierLink?`<a href="${esc(p.supplierLink)}" target="_blank" rel="noopener" class="icon-btn" aria-label="Открыть товар у поставщика" style="width:26px;height:26px;"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5"/><path d="M19 5l-9 9"/><path d="M12 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-5"/></svg></a>`:''}
-    </div>`;
-}
-
-function renderRestockItemsRows(){
-  const wrap = document.getElementById('restockItemsWrap');
-  if(restockItemsState.length===0){
-    wrap.innerHTML = `<div class="hint" style="margin-bottom:10px;">Добавьте хотя бы один товар</div>`;
-  } else {
-    wrap.innerHTML = restockItemsState.map(row=>{
-      const p = findProduct(row.productId);
-      return `
-      <div class="order-item-row" data-row="${row.rowId}">
-        <div class="oi-product">
-          <select class="ri-select-product">${productOptionsHTML(row.productId)}</select>
-        </div>
-        ${restockRowInfoHTML(p)}
-        <div class="oi-qty"><input type="number" min="1" step="1" class="ri-qty-input" value="${row.qty}" placeholder="Кол-во"></div>
-        <div class="oi-price"><input type="number" min="0" step="0.01" class="ri-cost-input" value="${row.cost}" placeholder="Цена за шт"></div>
-        <button type="button" class="oi-remove" aria-label="Удалить"><svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-      </div>`;
-    }).join('');
-  }
-  wrap.querySelectorAll('.order-item-row').forEach(rowEl=>{
-    const rowId = rowEl.dataset.row;
-    const row = restockItemsState.find(r=>r.rowId===rowId);
-    rowEl.querySelector('.ri-select-product').addEventListener('change', e=>{
-      row.productId = e.target.value;
-      const p = findProduct(row.productId);
-      row.cost = p ? Number(p.buyPrice||0) : 0;
-      renderRestockItemsRows();
-      updateRestockSummary();
-    });
-    rowEl.querySelector('.ri-qty-input').addEventListener('input', e=>{
-      row.qty = Math.max(1, Number(e.target.value||1));
-      updateRestockSummary();
-    });
-    rowEl.querySelector('.ri-cost-input').addEventListener('input', e=>{
-      row.cost = Number(e.target.value||0);
-      updateRestockSummary();
-    });
-    rowEl.querySelector('.oi-remove').addEventListener('click', ()=>{
-      restockItemsState = restockItemsState.filter(r=>r.rowId!==rowId);
-      renderRestockItemsRows();
-      updateRestockSummary();
-    });
-  });
-}
-
-document.getElementById('addRestockItemBtn').addEventListener('click', ()=>{
-  if(DB.products.length===0){ toast('Сначала добавьте товары на вкладке «Товары»'); return; }
-  const first = DB.products[0];
-  restockItemsState.push({rowId:uid(), productId:first.id, qty:1, cost:Number(first.buyPrice||0)});
-  renderRestockItemsRows();
-  updateRestockSummary();
-});
-
-function updateRestockSummary(){
-  let goods = 0;
-  restockItemsState.forEach(r=>{ goods += r.qty*r.cost; });
-  const delivery = Number(document.getElementById('rf_delivery').value||0);
-  const total = goods + delivery;
-  document.getElementById('restockSummaryBox').innerHTML = `
-    <div class="srow"><span>Товары × количество</span><span class="num">${fmt(goods)}</span></div>
-    <div class="srow"><span>Доставка</span><span class="num">${fmt(delivery)}</span></div>
-    <div class="srow total"><span>Итого расход</span><span class="num">${fmt(total)}</span></div>
-  `;
-}
-document.getElementById('rf_delivery').addEventListener('input', updateRestockSummary);
-
-function openRestockForm(productId){
-  if(DB.products.length===0){ toast('Сначала добавьте товар на вкладке «Товары»'); return; }
-  const form = document.getElementById('restockForm');
-  form.reset();
-  document.getElementById('rf_date').value = todayStr();
-  const first = findProduct(productId) || DB.products[0];
-  restockItemsState = [{rowId:uid(), productId:first.id, qty:1, cost:Number(first.buyPrice||0)}];
-  renderRestockItemsRows();
-  updateRestockSummary();
-  openOverlay(overlayRestock);
-}
-
-document.getElementById('restockForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  if(restockItemsState.length===0){ toast('Добавьте хотя бы один товар'); return; }
-  for(const r of restockItemsState){
-    if(!r.productId || !findProduct(r.productId)){ toast('Выберите товар в каждой строке'); return; }
-    if(!r.qty || r.qty<=0){ toast('Количество должно быть больше 0'); return; }
-    if(r.cost<0){ toast('Цена не может быть отрицательной'); return; }
-  }
-  const delivery = Number(document.getElementById('rf_delivery').value||0);
-  const date = document.getElementById('rf_date').value || todayStr();
-  const note = document.getElementById('rf_note').value.trim();
-  const restockId = uid();
-
-  restockItemsState.forEach(r=>{
-    const p = findProduct(r.productId);
-    const prevBuyPrice = Number(p.buyPrice||0);
-    p.qty = Number(p.qty||0) + r.qty;
-    p.buyPrice = r.cost;
-    const reasonParts = ['Закупка: '+p.name];
-    if(p.model) reasonParts.push('(Размер: '+p.model+')');
-    if(note) reasonParts.push('— '+note);
-    DB.finance.push({
-      id: uid(),
-      type: 'purchase',
-      category: 'Закупка склада',
-      reason: reasonParts.join(' '),
-      amount: r.qty*r.cost,
-      date,
-      restockId,
-      productId: p.id,
-      qty: r.qty,           // нужны, чтобы можно было отменить закупку вместе с остатком
-      unitCost: r.cost,
-      prevBuyPrice,
-      auto: true,
-    });
-  });
-  if(delivery>0){
-    DB.finance.push({
-      id: uid(),
-      type: 'delivery',
-      category: 'Доставка закупки',
-      reason: 'Доставка закупки'+(note?(' — '+note):''),
-      amount: delivery,
-      date,
-      restockId,
-      auto: true,
-    });
-  }
-  saveDB();
-  closeOverlay(overlayRestock);
-  renderAll();
-  toast('Закупка сохранена: остаток и финансы обновлены');
-});
-
-/* ============================================================
-   FINANCE FORM
-============================================================ */
-const overlayFinance = document.getElementById('overlayFinance');
-let ff_type = 'income';
-document.getElementById('ff_typePick').addEventListener('click', e=>{
-  const btn = e.target.closest('button');
-  if(!btn) return;
-  ff_type = btn.dataset.type;
-  document.querySelectorAll('#ff_typePick button').forEach(b=>b.classList.toggle('active', b===btn));
-});
-function openFinanceForm(defaultType){
-  document.getElementById('financeForm').reset();
-  document.getElementById('ff_date').value = todayStr();
-  ff_type = defaultType || 'income';
-  document.querySelectorAll('#ff_typePick button').forEach(b=>b.classList.toggle('active', b.dataset.type===ff_type));
-  openOverlay(overlayFinance);
-}
-document.getElementById('financeForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  const amount = Number(document.getElementById('ff_amount').value||0);
-  const reason = document.getElementById('ff_reason').value.trim();
-  if(amount<=0){ toast('Введите сумму больше 0'); return; }
-  if(!reason){ toast('Укажите причину операции'); return; }
-  DB.finance.push({
-    id: uid(),
-    type: ff_type,
-    category: document.getElementById('ff_category').value.trim(),
-    reason,
-    amount,
-    date: document.getElementById('ff_date').value || todayStr(),
-    auto:false,
-  });
-  saveDB();
-  closeOverlay(overlayFinance);
-  renderAll();
-  toast('Операция добавлена');
-});
-
-/* ============================================================
-   FABs + QUICK ACTIONS
-============================================================ */
-document.getElementById('fabProduct').addEventListener('click', ()=>openProductForm(null));
-document.getElementById('fabOrder').addEventListener('click', ()=>openOrderForm(null));
-document.getElementById('fabFinance').addEventListener('click', ()=>openFinanceForm('expense'));
-document.getElementById('qaOrder').addEventListener('click', ()=>openOrderForm(null));
-document.getElementById('qaRestock').addEventListener('click', ()=>openRestockForm(null));
-document.getElementById('qaProduct').addEventListener('click', ()=>openProductForm(null));
-document.getElementById('qaExpense').addEventListener('click', ()=>openFinanceForm('expense'));
-
-/* ============================================================
-   SETTINGS
-============================================================ */
-const overlaySettings = document.getElementById('overlaySettings');
-document.getElementById('settingsBtn').addEventListener('click', ()=>{
-  updateDbInfo();
-  document.getElementById('st_cloudToken').value = cloudCfg ? (cloudCfg.token||'') : '';
-  document.getElementById('st_cloudGist').value = cloudCfg ? (cloudCfg.gistId||'') : '';
-  setCloudStatus(cloudCfg && cloudCfg.gistId ? 'Настроено · ID: '+cloudCfg.gistId : 'Не настроено');
-  openOverlay(overlaySettings);
-});
-document.getElementById('st_cloudSave').addEventListener('click', async ()=>{
-  const token = document.getElementById('st_cloudToken').value.trim();
-  let gistId = document.getElementById('st_cloudGist').value.trim();
-  if(!token){ toast('Введите GitHub токен'); return; }
-  cloudCfg = {token, gistId};
-  setCloudStatus('Подключение…');
-  try{
-    if(!gistId){
-      gistId = await cloudCreateGist();
-      cloudCfg.gistId = gistId;
-      document.getElementById('st_cloudGist').value = gistId;
-      toast('Хранилище создано, данные сохранены в облако');
-    } else {
-      const remote = await cloudPull();
-      if(remote){
-        const remoteTime = Number(remote.updatedAt||0);
-        const localTime = Number(DB.updatedAt||0);
-        if(remoteTime > localTime){
-          DB = normalize(remote);
-          Store.save(DB);
-          renderAll();
-          toast('Загружены данные из облака');
-        } else {
-          await cloudPush();
-          toast('Текущие данные отправлены в облако');
-        }
-      } else {
-        await cloudPush();
-      }
-    }
-    saveCloudConfig(cloudCfg);
-    setCloudStatus('Синхронизировано: '+new Date().toLocaleTimeString('ru-RU'));
-  }catch(err){
-    console.error(err);
-    setCloudStatus('Ошибка: проверьте токен и подключение к интернету');
-    toast('Не удалось подключиться к GitHub');
-  }
-});
-document.getElementById('st_cloudDisable').addEventListener('click', ()=>{
-  if(!cloudCfg){ toast('Синхронизация и так не настроена'); return; }
-  if(!confirm('Отключить синхронизацию на этом устройстве? Данные в облаке останутся, но это устройство перестанет их обновлять и получать.')) return;
-  cloudCfg = null;
-  try{ localStorage.removeItem(CLOUD_KEY); }catch(e){}
-  document.getElementById('st_cloudToken').value='';
-  document.getElementById('st_cloudGist').value='';
-  setCloudStatus('Не настроено');
-  toast('Синхронизация отключена');
-});
-document.getElementById('st_logout').addEventListener('click', ()=>{
-  if(!confirm('Выйти из аккаунта на этом телефоне?')) return;
-  localStorage.removeItem(UNLOCK_KEY);
-  closeOverlay(overlaySettings);
-  showLock();
-});
-document.getElementById('st_export').addEventListener('click', ()=>{
-  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'crm-export-' + todayStr() + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url), 2000);
-  toast('Файл экспортирован');
-});
-document.getElementById('st_import').addEventListener('click', ()=>{
-  document.getElementById('st_importInput').click();
-});
-document.getElementById('st_importInput').addEventListener('change', e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev=>{
-    try{
-      const parsed = JSON.parse(ev.target.result);
-      if(!parsed || !Array.isArray(parsed.products) || !Array.isArray(parsed.orders) || !Array.isArray(parsed.finance)){
-        toast('Файл повреждён или в неверном формате');
-        return;
-      }
-      if(!confirm('Заменить текущие данные на этом телефоне данными из файла? Текущие данные будут потеряны.')) return;
-      DB = normalize(parsed);
-      saveDB();
-      renderAll();
-      closeOverlay(overlaySettings);
-      toast('Данные импортированы: товаров '+DB.products.length+', заказов '+DB.orders.length+', операций '+DB.finance.length+'.'+cleanNote(), 6000);
-    }catch(err){
-      console.error(err);
-      toast('Не удалось прочитать файл');
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-document.getElementById('st_reset').addEventListener('click', ()=>{
-  if(!confirm('Удалить ВСЕ данные (товары, заказы, финансы)? Это необратимо.')) return;
-  if(!confirm('Точно удалить всё? Действие нельзя отменить.')) return;
-  DB = defaultDB();
-  saveDB();
-  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}   // старая копия тоже удаляется
-  renderAll();
-  closeOverlay(overlaySettings);
-  toast('Все данные удалены');
-});
-
-/* ============================================================
-   LOCK SCREEN (single shared account, password-only)
-   NOTE: this is a simple shared-password gate, not real
-   security — anyone with the file can read the password in
-   the page source. It only keeps casual/accidental access out.
-============================================================ */
-const APP_PASSWORD = 'rorosazd';
-const UNLOCK_KEY = 'tovar_crm_unlocked_v1';
-const overlayLock = document.getElementById('overlayLock');
-
-function showLock(){ overlayLock.classList.add('show'); }
-function hideLock(){ overlayLock.classList.remove('show'); }
-
-document.getElementById('lockForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  const val = document.getElementById('lockPassword').value;
-  if(val === APP_PASSWORD){
-    localStorage.setItem(UNLOCK_KEY, 'yes');
-    document.getElementById('lockError').textContent = '';
-    document.getElementById('lockPassword').value = '';
-    hideLock();
-  } else {
-    document.getElementById('lockError').textContent = 'Неверный пароль';
-  }
-});
-
-if(localStorage.getItem(UNLOCK_KEY) === 'yes'){ hideLock(); }
-
-/* ============================================================
-   INIT
-============================================================ */
-setHeaderDate();
-initData().then(()=>{
-  renderAll();
-  return cloudSyncOnStartup();
-}).then(()=>{
-  renderAll();
-}).catch(err=>{
-  console.error('init error', err);
-  alert('Ошибка запуска: '+(err && err.message ? err.message : err));
-});
-
-})();
+boot();
 </script>
 </body>
 </html>
