@@ -534,20 +534,25 @@ window.openOrder=id=>{
 async function saveOrderAtomic(oldOrder,newData){
   const oldItems=oldOrder?.status!=="Отменён"?(oldOrder?.items||[]):[];
   const newItems=newData.status!=="Отменён"?newData.items:[];
-  let assignedNumber=oldOrder?.number||null;
-  await runTransaction(db,async tx=>{
-    if(!oldOrder&&!assignedNumber){
-      const counterRef=doc(db,"counters","orders");
-      const counterSnap=await tx.get(counterRef);
-      const current=counterSnap.exists()?Math.max(1,num(counterSnap.data().nextNumber)):Math.max(0,...state.orders.map(x=>parseInt(x.number,10)).filter(Number.isFinite))+1;
-      assignedNumber=String(current);
-      tx.set(counterRef,{nextNumber:current+1,updatedAt:Date.now()},{merge:true});
+  const result=await runTransaction(db,async tx=>{
+    let assignedNumber=oldOrder?.number||null;
+    let counterRef=null;
+    let counterSnap=null;
+    if(!oldOrder){
+      counterRef=doc(db,"counters","orders");
+      counterSnap=await tx.get(counterRef);
     }
     const productIds=[...new Set([...oldItems.map(i=>i.productId),...newItems.map(i=>i.productId)])];
     const productRefs=productIds.map(id=>doc(db,"products",id));
     const snaps=await Promise.all(productRefs.map(r=>tx.get(r)));
-    const products=new Map(snaps.map((s,i)=>[productIds[i],{ref:productRefs[i],snap:s,data:s.exists()?s.data():null}]));
-    if(snaps.some(s=>!s.exists()))throw new Error("Один из товаров не существует");
+    const products=new Map(snaps.map((snap,i)=>[productIds[i],{ref:productRefs[i],snap,data:snap.exists()?snap.data():null}]));
+    if(snaps.some(snap=>!snap.exists()))throw new Error("Один из товаров не существует");
+    if(!oldOrder){
+      const current=counterSnap?.exists()
+        ? Math.max(1,num(counterSnap.data().nextNumber))
+        : Math.max(0,...state.orders.map(x=>parseInt(x.number,10)).filter(Number.isFinite))+1;
+      assignedNumber=String(current);
+    }
     const delta=new Map();
     for(const i of oldItems)delta.set(i.productId,(delta.get(i.productId)||0)+num(i.qty));
     for(const i of newItems)delta.set(i.productId,(delta.get(i.productId)||0)-num(i.qty));
@@ -555,6 +560,9 @@ async function saveOrderAtomic(oldOrder,newData){
       const p=products.get(pid).data,after=num(p.qty)+d;
       if(after<0)throw new Error("Недостаточно товара: "+p.name);
       tx.update(products.get(pid).ref,{qty:after,updatedAt:Date.now()});
+    }
+    if(counterRef){
+      tx.set(counterRef,{nextNumber:num(assignedNumber)+1,updatedAt:Date.now()},{merge:true});
     }
     const orderRef=oldOrder?doc(db,"orders",oldOrder.id):doc(c("orders"));
     newData.number=assignedNumber;
@@ -565,7 +573,9 @@ async function saveOrderAtomic(oldOrder,newData){
     }else{
       tx.set(financeRef,{type:"Доход",amount:newData.total,date:newData.date,category:"Продажа",description:"Заказ #"+assignedNumber,linkedOrderId:orderRef.id,updatedAt:Date.now()},{merge:true});
     }
+    return assignedNumber;
   });
+  newData.number=result;
 }
 async function removeOrder(id){
   const o=state.orders.find(x=>x.id===id);if(!o)return;
@@ -617,7 +627,59 @@ window.recalcPurchaseLive=()=>{const x=$("#livePurchaseSummary");if(x)x.innerHTM
 window.syncPurchaseRow=sel=>{const p=state.products.find(x=>x.id===sel.value);if(!p)return;sel.parentElement.querySelector(".pi-price").value=num(p.buyPrice);recalcPurchaseLive()}
 window.addPurchaseItem=()=>{const x=$("#purchaseItems");if(x){x.insertAdjacentHTML("beforeend",purchaseItemRow({productId:"",qty:1,buyPrice:0}));recalcPurchaseLive()}}
 window.openPurchase=id=>{const p=state.purchases.find(x=>x.id===id);openModal(id?"Изменить закупку":"Новая закупка","Заказ поставщику и автоматическое пополнение склада",purchaseFormMarkup(p),async()=>{const supplier=$("#pu_supplier").value.trim();if(!supplier)return showToast("Укажите поставщика","bad");const rows=$$(".item-row").map(r=>({productId:r.querySelector(".pi-prod")?.value,qty:Math.max(0,Math.floor(num(r.querySelector(".pi-qty")?.value))),buyPrice:Math.max(0,num(r.querySelector(".pi-price")?.value))})).filter(x=>x.productId&&x.qty>0);if(!rows.length)return showToast("Добавьте товар в закупку","bad");const data={supplier,date:$("#pu_date").value+"T12:00:00",status:$("#pu_status").value,number:p?.number||"",note:$("#pu_note").value.trim(),items:rows.map(r=>{const p=state.products.find(x=>x.id===r.productId);return {...r,name:p?.name||""}}),total:rows.reduce((a,r)=>a+r.qty*r.buyPrice,0),updatedAt:Date.now()};try{const result=await savePurchaseAtomic(p,data);if(result?.number)data.number=result.number;closeModal();await loadAll();showToast(data.status==="Получен"?"Закупка получена: склад и финансы обновлены":"Закупка №"+data.number+" сохранена")}catch(e){showToast(firebaseError(e),"bad")}})}
-async function savePurchaseAtomic(oldPurchase,newData){const oldReceived=oldPurchase?.status==="Получен",newReceived=newData.status==="Получен",oldItems=oldReceived?(oldPurchase?.items||[]):[],newItems=newReceived?(newData.items||[]):[];let assignedNumber=newData.number||null;await runTransaction(db,async tx=>{const counterRef=doc(db,"counters","purchases");const counterSnap=await tx.get(counterRef);if(!oldPurchase&&!newData.number){const current=counterSnap.exists()?Math.max(1,num(counterSnap.data().nextNumber)):Math.max(0,...state.purchases.map(x=>parseInt(x.number,10)).filter(Number.isFinite))+1;assignedNumber=String(current);tx.set(counterRef,{nextNumber:current+1,updatedAt:Date.now()},{merge:true})}const ids=[...new Set([...oldItems.map(i=>i.productId),...newItems.map(i=>i.productId)])],refs=ids.map(id=>doc(db,"products",id)),snaps=await Promise.all(refs.map(r=>tx.get(r))),products=new Map(snaps.map((s,i)=>[ids[i],{ref:refs[i],snap:s,data:s.exists()?s.data():null}]));if(snaps.some(s=>!s.exists()))throw Error("Один из товаров в закупке не существует");const delta=new Map();for(const i of oldItems)delta.set(i.productId,(delta.get(i.productId)||0)-num(i.qty));for(const i of newItems)delta.set(i.productId,(delta.get(i.productId)||0)+num(i.qty));const priceByProduct=new Map();for(const i of newItems)priceByProduct.set(i.productId,num(i.buyPrice));for(const [pid,d] of delta){const p=products.get(pid).data,after=num(p.qty)+d;if(after<0)throw Error("Нельзя отменить получение: на складе недостаточно остатка для возврата операции по "+p.name);const patch={qty:after,updatedAt:Date.now()};if(newReceived&&priceByProduct.has(pid))patch.buyPrice=priceByProduct.get(pid);tx.update(products.get(pid).ref,patch)}const ref=oldPurchase?doc(db,"purchases",oldPurchase.id):doc(c("purchases"));newData.number=assignedNumber;tx.set(ref,newData,{merge:true});const fin=doc(db,"transactions","purchase_"+ref.id);if(newReceived){tx.set(fin,{type:"Расход",amount:newData.total,date:newData.date,category:"Закупка",description:"Закупка #"+assignedNumber+" · "+newData.supplier,linkedPurchaseId:ref.id,updatedAt:Date.now()},{merge:true})}else{tx.delete(fin)}});return {number:assignedNumber}}
+async function savePurchaseAtomic(oldPurchase,newData){
+  const oldReceived=oldPurchase?.status==="Получен";
+  const newReceived=newData.status==="Получен";
+  const oldItems=oldReceived?(oldPurchase?.items||[]):[];
+  const newItems=newReceived?(newData.items||[]):[];
+  const result=await runTransaction(db,async tx=>{
+    let assignedNumber=oldPurchase?.number||null;
+    let counterRef=null;
+    let counterSnap=null;
+    if(!oldPurchase){
+      counterRef=doc(db,"counters","purchases");
+      counterSnap=await tx.get(counterRef);
+    }
+    const ids=[...new Set([...oldItems.map(i=>i.productId),...newItems.map(i=>i.productId)])];
+    const refs=ids.map(id=>doc(db,"products",id));
+    const snaps=await Promise.all(refs.map(r=>tx.get(r)));
+    const products=new Map(snaps.map((snap,i)=>[ids[i],{ref:refs[i],snap,data:snap.exists()?snap.data():null}]));
+    if(snaps.some(snap=>!snap.exists()))throw Error("Один из товаров в закупке не существует");
+    if(!oldPurchase){
+      const current=counterSnap?.exists()
+        ? Math.max(1,num(counterSnap.data().nextNumber))
+        : Math.max(0,...state.purchases.map(x=>parseInt(x.number,10)).filter(Number.isFinite))+1;
+      assignedNumber=String(current);
+    }
+    const delta=new Map();
+    for(const i of oldItems)delta.set(i.productId,(delta.get(i.productId)||0)-num(i.qty));
+    for(const i of newItems)delta.set(i.productId,(delta.get(i.productId)||0)+num(i.qty));
+    const priceByProduct=new Map();
+    for(const i of newItems)priceByProduct.set(i.productId,num(i.buyPrice));
+    for(const [pid,d] of delta){
+      const p=products.get(pid).data,after=num(p.qty)+d;
+      if(after<0)throw Error("Нельзя отменить получение: на складе недостаточно остатка для возврата операции по "+p.name);
+      const patch={qty:after,updatedAt:Date.now()};
+      if(newReceived&&priceByProduct.has(pid))patch.buyPrice=priceByProduct.get(pid);
+      tx.update(products.get(pid).ref,patch);
+    }
+    if(counterRef){
+      tx.set(counterRef,{nextNumber:num(assignedNumber)+1,updatedAt:Date.now()},{merge:true});
+    }
+    const ref=oldPurchase?doc(db,"purchases",oldPurchase.id):doc(c("purchases"));
+    newData.number=assignedNumber;
+    tx.set(ref,newData,{merge:true});
+    const fin=doc(db,"transactions","purchase_"+ref.id);
+    if(newReceived){
+      tx.set(fin,{type:"Расход",amount:newData.total,date:newData.date,category:"Закупка",description:"Закупка #"+assignedNumber+" · "+newData.supplier,linkedPurchaseId:ref.id,updatedAt:Date.now()},{merge:true});
+    }else{
+      tx.delete(fin);
+    }
+    return assignedNumber;
+  });
+  newData.number=result;
+  return {number:result};
+}
 async function removePurchase(id){const p=state.purchases.find(x=>x.id===id);if(!p)return;if(!confirm("Удалить закупку #"+p.number+"? Если она получена, товар будет вычтен обратно со склада."))return;try{await savePurchaseAtomic(p,{...p,status:"Отменён",items:p.items,total:p.total});await deleteDoc(doc(db,"purchases",id));await loadAll();showToast("Закупка удалена")}catch(e){showToast(firebaseError(e),"bad")}}
 async function openPurchaseView(id){const p=state.purchases.find(x=>x.id===id);if(!p)return;openModal("Закупка #"+esc(p.number),`${esc(p.supplier||"Без поставщика")} · ${fmtDate(p.date)}`,`<div class="kpi-row" style="margin-bottom:14px"><div class="kpi-mini"><b>${fmtMoney(p.total)}</b><span>Стоимость</span></div><div class="kpi-mini"><b>${(p.items||[]).reduce((a,i)=>a+num(i.qty),0)} шт.</b><span>Количество</span></div><div class="kpi-mini"><b>${purchaseStatusBadge(p.status)}</b><span>Статус</span></div></div><div class="panel" style="padding:14px;margin-bottom:12px;box-shadow:none"><b style="font-size:13px">Товары</b><div class="mini-list" style="margin-top:8px">${(p.items||[]).map(i=>`<div class="mini-row"><div><b>${esc(i.name)}</b><div class="small">${i.qty} × ${fmtMoney(i.buyPrice)}</div></div><b>${fmtMoney(i.qty*i.buyPrice)}</b></div>`).join("")}</div></div>${p.note?`<div style="margin-top:12px"><div class="small">Комментарий</div><div style="margin-top:5px">${esc(p.note)}</div></div>`:""}${p.status==="Получен"?`<div style="margin-top:13px;padding:11px 12px;border-radius:13px;background:#ecfdf5;color:#047857;font-size:11px;font-weight:750">${icon("check",14)} Закупка уже зачислена на склад и отражена в расходах.</div>`:""}`,null,{noSave:true})}
 
