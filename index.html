@@ -342,7 +342,7 @@ function getStats(){
   const cost=finished.reduce((a,o)=>a+num(o.cost),0);
   const expenses=state.transactions.filter(t=>t.type==="Расход").reduce((a,t)=>a+num(t.amount),0);
   const incomeManual=state.transactions.filter(t=>t.type==="Доход"&&!t.linkedOrderId).reduce((a,t)=>a+num(t.amount),0);
-  const incomeFromOrders=nonCancelled.reduce((a,o)=>a+num(o.total),0);
+  const incomeFromOrders=finished.reduce((a,o)=>a+num(o.total),0);
   const profit=revenue-cost-expenses;
   const stockQty=state.products.reduce((a,p)=>a+num(p.qty),0);
   const stockValue=state.products.reduce((a,p)=>a+num(p.qty)*num(p.buyPrice),0);
