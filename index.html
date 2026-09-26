@@ -121,7 +121,7 @@ textarea.control{height:auto;padding-top:11px;padding-bottom:11px;resize:vertica
 .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .field{display:grid;gap:6px}.field.full{grid-column:1/-1}
 .field label{font-size:11px;color:#667085;font-weight:800}
-.dialog-note{font-size:11px;color:var(--muted);line-height:1.5}
+.dialog-note{font-size:11px;color:var(--muted);line-height:1.5}.dialog-note .success,.dialog-note .warning{display:inline-flex;align-items:center;gap:5px}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.48);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
 .modal.show{display:flex}
 .dialog{width:min(800px,100%);max-height:min(90vh,900px);overflow:auto;background:#fff;border:1px solid rgba(255,255,255,.7);
@@ -280,7 +280,7 @@ function openModal(title,subtitle,body,save,opts={}){
   if(!opts.noSave)$("#dialogSave").onclick=save;
   $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
 }
-window.closeModal=()=>$("#modalRoot").innerHTML="";
+window.closeModal=()=>{window.__editingOrder=null;$("#modalRoot").innerHTML=""};
 function passwordView(first=false){
   root.innerHTML=`<div class="login"><div class="login-orb orb1"></div><div class="login-orb orb2"></div>
     <div class="loginbox">
@@ -326,17 +326,27 @@ async function loadAll(){
 function renderLoading(){root.innerHTML=`<div class="login"><div class="loginbox"><div class="login-brand"><div class="brandmark">${icon("refresh",22)}</div><div><b>Bine Store</b><small>Загрузка CRM…</small></div></div><p>Подключаем Firestore и синхронизируем данные.</p><div class="progress"><div style="width:62%"></div></div></div></div>`}
 function renderError(msg){root.innerHTML=`<div class="login"><div class="loginbox"><div class="login-brand"><div class="brandmark">${icon("info",22)}</div><div><b>Bine Store CRM</b><small>Ошибка подключения</small></div></div><h1>Не удалось загрузить данные</h1><p>${esc(msg)}</p><button class="btn primary" style="width:100%" onclick="location.reload()">${icon("refresh",16)}Повторить</button></div></div>`}
 
+function isOrderCompleted(status){return status==="Выполнен"||status==="Закрыт"}
+function orderInventoryReady(order, rows){
+  const needed=new Map();
+  (rows||[]).forEach(i=>needed.set(i.productId,(needed.get(i.productId)||0)+num(i.qty)));
+  if(order&&isOrderCompleted(order.status)) (order.items||[]).forEach(i=>needed.set(i.productId,(needed.get(i.productId)||0)-num(i.qty)));
+  for(const [pid,qty] of needed){if(num(qty)<=0)continue;const product=state.products.find(p=>p.id===pid);if(!product||num(product.qty)<qty)return false;}
+  return true;
+}
+function completedOrders(){return state.orders.filter(o=>isOrderCompleted(o.status))}
+
 function getStats(){
-  const nonCancelled=state.orders.filter(o=>o.status!=="Отменён");
-  const revenue=nonCancelled.reduce((a,o)=>a+num(o.total),0);
-  const cost=nonCancelled.reduce((a,o)=>a+num(o.cost),0);
+  const finished=completedOrders();
+  const revenue=finished.reduce((a,o)=>a+num(o.total),0);
+  const cost=finished.reduce((a,o)=>a+num(o.cost),0);
   const expenses=state.transactions.filter(t=>t.type==="Расход").reduce((a,t)=>a+num(t.amount),0);
   const incomeManual=state.transactions.filter(t=>t.type==="Доход"&&!t.linkedOrderId).reduce((a,t)=>a+num(t.amount),0);
   const incomeFromOrders=nonCancelled.reduce((a,o)=>a+num(o.total),0);
   const profit=revenue-cost-expenses;
   const stockQty=state.products.reduce((a,p)=>a+num(p.qty),0);
   const stockValue=state.products.reduce((a,p)=>a+num(p.qty)*num(p.buyPrice),0);
-  return {revenue,cost,expenses,incomeManual,incomeFromOrders,profit,stockQty,stockValue,orders:nonCancelled.length,budget:revenue+incomeManual-expenses,products:state.products.length};
+  return {revenue,cost,expenses,incomeManual,incomeFromOrders,profit,stockQty,stockValue,orders:finished.length,budget:revenue+incomeManual-expenses,products:state.products.length};
 }
 function pageHeader(title,desc,actions=""){
   return `<div class="topbar"><div class="page-title"><h1>${title}</h1><p>${desc}</p></div><div class="top-actions">${actions}</div></div>`
@@ -403,10 +413,10 @@ function salesChart(period){
 function aggregateSales(period){
   const vals=[],labels=[],now=new Date();
   if(period==="year"){
-    for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),next=new Date(d.getFullYear(),d.getMonth()+1,1);vals.push(state.orders.filter(o=>o.status!=="Отменён"&&new Date(o.date)>=d&&new Date(o.date)<next).reduce((a,o)=>a+num(o.total),0));labels.push(d.toLocaleDateString("ru-RU",{month:"short"}))}
+    for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),next=new Date(d.getFullYear(),d.getMonth()+1,1);vals.push(completedOrders().filter(o=>new Date(o.date)>=d&&new Date(o.date)<next).reduce((a,o)=>a+num(o.total),0));labels.push(d.toLocaleDateString("ru-RU",{month:"short"}))}
   }else{
     const days=period==="week"?7:30;
-    for(let i=days-1;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);const next=new Date(d);next.setDate(next.getDate()+1);vals.push(state.orders.filter(o=>o.status!=="Отменён"&&new Date(o.date)>=d&&new Date(o.date)<next).reduce((a,o)=>a+num(o.total),0));labels.push(d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"}))}
+    for(let i=days-1;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);const next=new Date(d);next.setDate(next.getDate()+1);vals.push(completedOrders().filter(o=>new Date(o.date)>=d&&new Date(o.date)<next).reduce((a,o)=>a+num(o.total),0));labels.push(d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"}))}
   }
   return {labels,values:vals}
 }
@@ -477,16 +487,16 @@ window.removeProduct=async id=>{
 };
 
 function ordersPage(){
- let arr=[...state.orders];const q=state.search.trim().toLowerCase();if(q)arr=arr.filter(o=>(o.number+" "+o.clientName+" "+o.status+" "+(o.items||[]).map(i=>i.name).join(" ")).toLowerCase().includes(q));if(state.status)arr=arr.filter(o=>o.status===state.status);arr.sort((a,b)=>new Date(b.date)-new Date(a.date));
+ let arr=[...state.orders];const q=state.search.trim().toLowerCase();if(q)arr=arr.filter(o=>(o.number+" "+o.clientName+" "+o.status+" "+(o.items||[]).map(i=>i.name).join(" ")).toLowerCase().includes(q));if(state.status)arr=arr.filter(o=>state.status==="Выполнен"?isOrderCompleted(o.status):o.status===state.status);arr.sort((a,b)=>new Date(b.date)-new Date(a.date));
  return pageHeader("Заказы","Продажи, статусы и прибыль",`<div class="search-global"><span class="sgicon">${icon("search",17)}</span><input class="control" placeholder="Поиск заказов…" value="${esc(state.search)}" oninput="state.search=this.value;renderPage()"></div><button class="btn primary" onclick="openOrder()">${icon("plus",16)}Новый заказ</button>`)
- +`<div class="panel"><div class="toolbar"><div class="grow"></div><select class="control select-small" onchange="state.status=this.value;renderPage()"><option value="">Все статусы</option>${["Новый","В работе","Закрыт","Отменён"].map(x=>`<option value="${x}" ${state.status===x?"selected":""}>${x}</option>`).join("")}</select></div>
+ +`<div class="panel"><div class="toolbar"><div class="grow"></div><select class="control select-small" onchange="state.status=this.value;renderPage()"><option value="">Все статусы</option>${["Новый","В работе","Выполнен","Отменён"].map(x=>`<option value="${x}" ${state.status===x?"selected":""}>${x}</option>`).join("")}</select></div>
  ${ordersTable(arr)}<div class="mobile-list">${arr.map(orderMobile).join("")||emptyState("shoppingBag","Заказов нет","Создайте первый заказ")}</div></div>`
 }
 function ordersTable(arr){
  if(!arr.length)return `<div>${emptyState("shoppingBag","Ничего не найдено","Измените поиск или фильтр")}</div>`;
  return `<div class="table-wrap"><table class="table"><thead><tr><th>Заказ</th><th>Клиент</th><th>Дата</th><th>Статус</th><th>Сумма</th><th>Прибыль</th><th></th></tr></thead><tbody>${arr.map(o=>`<tr><td><b>#${esc(o.number)}</b><div class="small">${(o.items||[]).length} поз.</div></td><td>${esc(o.clientName||"Без клиента")}</td><td>${fmtDate(o.date)}</td><td>${statusBadge(o.status)}</td><td><b>${fmtMoney(o.total)}</b></td><td><span class="${num(o.profit)>=0?"success":"danger"}"><b>${fmtMoney(o.profit)}</b></span></td><td><div class="actions-inline"><button class="btn icon sm" onclick="openOrderView('${o.id}')">${icon("eye",15)}</button><button class="btn icon sm" onclick="openOrder('${o.id}')">${icon("edit",15)}</button><button class="btn icon sm danger" onclick="removeOrder('${o.id}')">${icon("trash",15)}</button></div></td></tr>`).join("")}</tbody></table></div>`
 }
-function statusBadge(s){const map={Новый:["badge-new","•"],"В работе":["badge-work","◐"],"Закрыт":["badge-closed","✓"],"Отменён":["badge-cancel","×"]};const [cls,mark]=map[s]||map.Новый;return `<span class="badge ${cls}">${mark} ${esc(s||"Новый")}</span>`}
+function statusBadge(s){const normalized=isOrderCompleted(s)?"Выполнен":s;const map={Новый:["badge-new","•"],"В работе":["badge-work","◐"],"Выполнен":["badge-closed","✓"],"Отменён":["badge-cancel","×"]};const [cls,mark]=map[normalized]||map.Новый;return `<span class="badge ${cls}">${mark} ${esc(normalized||"Новый")}</span>`}
 function orderMobile(o){return `<div class="mobile-card" onclick="openOrderView('${o.id}')"><div class="mc-top"><div><b>#${esc(o.number)}</b><div class="small">${esc(o.clientName||"Без клиента")} · ${fmtDate(o.date)}</div></div>${statusBadge(o.status)}</div><div style="display:flex;justify-content:space-between"><span class="small">Итого</span><b>${fmtMoney(o.total)}</b></div><div style="display:flex;justify-content:space-between"><span class="small">Прибыль</span><b class="${num(o.profit)>=0?"success":"danger"}">${fmtMoney(o.profit)}</b></div><div class="actions-inline" onclick="event.stopPropagation()"><button class="btn sm" onclick="openOrder('${o.id}')">${icon("edit",14)}Изменить</button><button class="btn sm danger" onclick="removeOrder('${o.id}')">${icon("trash",14)}</button></div></div>`}
 
 function orderFormMarkup(o){
@@ -494,7 +504,7 @@ function orderFormMarkup(o){
  return `<div class="formgrid">
   <div class="field"><label>Клиент</label><select id="o_client" class="control"><option value="">Без клиента</option>${state.clients.map(c=>`<option value="${c.id}" ${o?.clientId===c.id?"selected":""}>${esc(c.name)}${c.contact?" — "+esc(c.contact):""}</option>`).join("")}</select><button class="btn sm" style="justify-self:start" type="button" onclick="openClient();">${icon("plus",14)}Добавить клиента</button></div>
   <div class="field"><label>Дата</label><input id="o_date" type="date" class="control" value="${String(o?.date||new Date().toISOString()).slice(0,10)}"></div>
-  <div class="field"><label>Статус</label><select id="o_status" class="control">${["Новый","В работе","Закрыт","Отменён"].map(s=>`<option value="${s}" ${o?.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+  <div class="field"><label>Статус</label><select id="o_status" class="control">${["Новый","В работе","Выполнен","Отменён"].map(s=>`<option value="${s}" ${((s==="Выполнен"&&isOrderCompleted(o?.status))||s===o?.status)?"selected":""} ${s==="Выполнен"&&!orderInventoryReady(o,rows)?"disabled":""}>${s}</option>`).join("")}</select><div id="completionHint" class="dialog-note"></div></div>
   <div class="field"><label>Доставка</label><input id="o_delivery" type="number" min="0" step=".01" class="control" value="${num(o?.delivery)}"></div>
   <div class="field"><label>Дополнительные расходы</label><input id="o_extra" type="number" min="0" step=".01" class="control" value="${num(o?.extra)}"></div>
   <div class="field full"><label>Товары</label><div id="orderItems" class="order-items">${rows.map(orderItemRow).join("")}</div><button class="btn sm" type="button" style="margin-top:8px" onclick="addOrderItem()">${icon("plus",14)}Добавить товар</button></div>
@@ -504,7 +514,7 @@ function orderFormMarkup(o){
 }
 function orderItemRow(i){
  const p=state.products.find(x=>x.id===i.productId);
- return `<div class="item-row"><select class="control oi-prod" onchange="syncOrderRow(this)"><option value="">Выберите товар</option>${state.products.map(x=>`<option value="${x.id}" ${x.id===i.productId?"selected":""}>${esc(x.name)} · ${num(x.qty)} шт.</option>`).join("")}</select><input class="control oi-qty" type="number" min="1" step="1" value="${num(i.qty)||1}" oninput="recalcOrderLive()"><input class="control oi-price" type="number" min="0" step=".01" value="${i.price!=null?num(i.price):num(p?.sellPrice)}" oninput="recalcOrderLive()"><button class="btn icon sm" type="button" onclick="this.parentElement.remove();recalcOrderLive()">${icon("trash",14)}</button></div>`
+ return `<div class="item-row"><select class="control oi-prod" onchange="syncOrderRow(this);updateCompletionState()"><option value="">Выберите товар</option>${state.products.map(x=>`<option value="${x.id}" ${x.id===i.productId?"selected":""}>${esc(x.name)} · ${num(x.qty)} шт.</option>`).join("")}</select><input class="control oi-qty" type="number" min="1" step="1" value="${num(i.qty)||1}" oninput="recalcOrderLive();updateCompletionState()"><input class="control oi-price" type="number" min="0" step=".01" value="${i.price!=null?num(i.price):num(p?.sellPrice)}" oninput="recalcOrderLive()"><button class="btn icon sm" type="button" onclick="this.parentElement.remove();recalcOrderLive();updateCompletionState()">${icon("trash",14)}</button></div>`
 }
 function orderSummaryFromDom(){
  const rows=$$(".item-row"), sub=rows.reduce((a,r)=>a+num(r.querySelector(".oi-qty")?.value)*num(r.querySelector(".oi-price")?.value),0),del=num($("#o_delivery")?.value),extra=num($("#o_extra")?.value);
@@ -516,24 +526,35 @@ window.syncOrderRow=sel=>{
  const r=sel.parentElement;r.querySelector(".oi-price").value=num(p.sellPrice);recalcOrderLive()
 }
 window.addOrderItem=()=>{const c=$("#orderItems");if(!c)return;c.insertAdjacentHTML("beforeend",orderItemRow({productId:"",qty:1,price:0}));recalcOrderLive()}
+window.updateCompletionState=()=>{
+ const select=$("#o_status"),hint=$("#completionHint");if(!select)return;
+ const rows=$$(".item-row").map(r=>({productId:r.querySelector(".oi-prod")?.value,qty:Math.max(0,Math.floor(num(r.querySelector(".oi-qty")?.value)))})).filter(x=>x.productId&&x.qty>0);
+ const ready=orderInventoryReady(window.__editingOrder||null,rows);
+ const opt=[...select.options].find(x=>x.value==="Выполнен");if(opt)opt.disabled=!ready;
+ if(hint)hint.innerHTML=ready?`<span class="success">${icon("check",13)} В наличии</span>`:`<span class="warning">${icon("box",13)} Недостаточно на складе</span>`;
+ if(select.value==="Выполнен"&&!ready)select.value="В работе";
+};
 
 window.openOrder=id=>{
   const o=state.orders.find(x=>x.id===id);
-  openModal(id?"Изменить заказ":"Новый заказ","При изменении заказа склад пересчитается автоматически.",orderFormMarkup(o),async()=>{
+  window.__editingOrder=o||null;
+  openModal(id?"Изменить заказ":"Новый заказ","Заказ можно сохранить до поступления товара.",orderFormMarkup(o),async()=>{
     const rows=$$(".item-row").map(r=>({productId:r.querySelector(".oi-prod")?.value,qty:Math.max(0,Math.floor(num(r.querySelector(".oi-qty")?.value))),price:Math.max(0,num(r.querySelector(".oi-price")?.value))})).filter(x=>x.productId&&x.qty>0);
     if(!rows.length)return showToast("Добавьте хотя бы один товар","bad");
     const clientId=$("#o_client").value,client=state.clients.find(x=>x.id===clientId),status=$("#o_status").value;
+    if(status==="Выполнен"&&!orderInventoryReady(o,rows))return showToast("Нельзя выполнить заказ: товара пока недостаточно на складе","bad");
     const date=$("#o_date").value+"T12:00:00",delivery=num($("#o_delivery").value),extra=num($("#o_extra").value);
     const subtotal=rows.reduce((a,r)=>a+r.qty*r.price,0),total=subtotal+delivery+extra;
     const cost=rows.reduce((a,r)=>{const p=state.products.find(x=>x.id===r.productId);return a+r.qty*num(p?.buyPrice)},0);
     const profit=total-cost-delivery-extra;
     const data={clientId,clientName:client?.name||"Без клиента",date,status,delivery,extra,total,cost,profit,note:$("#o_note").value.trim(),items:rows.map(r=>{const p=state.products.find(x=>x.id===r.productId);return {...r,name:p?.name||"",cost:num(p?.buyPrice)}}),updatedAt:Date.now(),number:o?.number||""};
-    try{await saveOrderAtomic(o,data);closeModal();await loadAll();showToast("Заказ сохранён")}catch(e){showToast(firebaseError(e),"bad")}
+    try{await saveOrderAtomic(o,data);window.__editingOrder=null;closeModal();await loadAll();showToast("Заказ сохранён")}catch(e){showToast(firebaseError(e),"bad")}
   });
+  setTimeout(()=>window.updateCompletionState?.(),0);
 }
 async function saveOrderAtomic(oldOrder,newData){
-  const oldItems=oldOrder?.status!=="Отменён"?(oldOrder?.items||[]):[];
-  const newItems=newData.status!=="Отменён"?newData.items:[];
+  const oldItems=isOrderCompleted(oldOrder?.status)?(oldOrder?.items||[]):[];
+  const newItems=isOrderCompleted(newData.status)?newData.items:[];
   const result=await runTransaction(db,async tx=>{
     let assignedNumber=oldOrder?.number||null;
     let counterRef=null;
@@ -568,10 +589,10 @@ async function saveOrderAtomic(oldOrder,newData){
     newData.number=assignedNumber;
     tx.set(orderRef,newData,{merge:true});
     const financeRef=doc(db,"transactions","order_"+orderRef.id);
-    if(newData.status==="Отменён"){
-      tx.delete(financeRef);
-    }else{
+    if(isOrderCompleted(newData.status)){
       tx.set(financeRef,{type:"Доход",amount:newData.total,date:newData.date,category:"Продажа",description:"Заказ #"+assignedNumber,linkedOrderId:orderRef.id,updatedAt:Date.now()},{merge:true});
+    }else{
+      tx.delete(financeRef);
     }
     return assignedNumber;
   });
@@ -579,10 +600,11 @@ async function saveOrderAtomic(oldOrder,newData){
 }
 async function removeOrder(id){
   const o=state.orders.find(x=>x.id===id);if(!o)return;
-  if(!confirm("Удалить заказ #"+o.number+"? Товар будет возвращён на склад."))return;
+  const completed=isOrderCompleted(o.status);
+  if(!confirm("Удалить заказ #"+o.number+"?"+(completed?" Товар будет возвращён на склад.":"")))return;
   try{
     await runTransaction(db,async tx=>{
-      const oldItems=o.status!=="Отменён"?o.items||[]:[], qtyByProduct=new Map();
+      const oldItems=completed?o.items||[]:[], qtyByProduct=new Map();
       oldItems.forEach(i=>qtyByProduct.set(i.productId,(qtyByProduct.get(i.productId)||0)+num(i.qty)));
       const productIds=[...qtyByProduct.keys()], refs=productIds.map(id=>doc(db,"products",id)), snaps=await Promise.all(refs.map(r=>tx.get(r)));
       snaps.forEach((snap,idx)=>{if(snap.exists()){const pid=productIds[idx];tx.update(refs[idx],{qty:num(snap.data().qty)+num(qtyByProduct.get(pid)),updatedAt:Date.now()})}});
@@ -726,7 +748,7 @@ window.openTransaction=()=>{
 window.removeTransaction=async id=>{const t=state.transactions.find(x=>x.id===id);if(!t||t.linkedOrderId)return;if(!confirm("Удалить операцию?"))return;try{await deleteDoc(doc(db,"transactions",id));state.transactions=state.transactions.filter(x=>x.id!==id);renderPage();showToast("Операция удалена")}catch(e){showToast(firebaseError(e),"bad")}};
 
 function analyticsPage(){
- const s=getStats(), valid=state.orders.filter(o=>o.status!=="Отменён"),avg=s.orders?s.revenue/s.orders:0;
+ const s=getStats(), valid=completedOrders(),avg=s.orders?s.revenue/s.orders:0;
  const top={};valid.forEach(o=>(o.items||[]).forEach(i=>top[i.name]=(top[i.name]||0)+num(i.qty)));
  const tops=Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,7),low=state.products.filter(p=>num(p.qty)<=2).sort((a,b)=>num(a.qty)-num(b.qty));
  return pageHeader("Аналитика","Продажи, товары и ключевые показатели")
