@@ -187,6 +187,111 @@ textarea.control{height:auto;padding-top:11px;padding-bottom:11px;resize:vertica
   .mobile-nav button{background:transparent;color:#98a2b3;border-radius:12px;font-size:9px;font-weight:760;display:grid;place-items:center;gap:3px}.mobile-nav button.active{color:var(--brand);background:#eff6ff}.mobile-nav .m-ico{width:21px;height:21px}
   .setting{align-items:flex-start}.setting .btn{flex:none}.detail-grid{grid-template-columns:1fr}
 }
+
+/* ===== DARK THEME ===== */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --ink:#f8fafc;--muted:#94a3b8;--bg:#080f1d;--card:#0f172a;--line:#233047;--soft:#111b2d;--soft-blue:#142a55;
+  --green:#34d399;--green-soft:#052e2b;--amber:#fbbf24;--amber-soft:#2d2508;--red:#f87171;--red-soft:#351012;
+  --shadow:0 16px 45px rgba(0,0,0,.27);--shadow-lg:0 30px 90px rgba(0,0,0,.48)
+}
+html[data-theme="dark"] body{
+  background:radial-gradient(circle at 5% 0%,rgba(37,99,235,.13),transparent 31%),var(--bg);color:var(--ink)
+}
+html[data-theme="dark"] .sidebar{background:rgba(10,18,33,.94);border-right-color:var(--line)}
+html[data-theme="dark"] .brand{border-bottom-color:var(--line)}
+html[data-theme="dark"] .navbtn{color:#94a3b8}
+html[data-theme="dark"] .navbtn:hover{background:#111c2e;color:#f8fafc}
+html[data-theme="dark"] .navbtn.active{background:linear-gradient(90deg,#172b52,#12203a);color:#60a5fa}
+html[data-theme="dark"] .nav-group{color:#64748b}
+html[data-theme="dark"] .sidebar-bottom{border-top-color:var(--line)}
+html[data-theme="dark"] .btn{background:#111a2b;color:#f8fafc;border-color:#334155}
+html[data-theme="dark"] .btn.primary{background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-color:#2563eb;color:#fff}
+html[data-theme="dark"] .btn.danger{background:#111a2b;color:#fca5a5;border-color:#5b232a}
+html[data-theme="dark"] .control{background:#0c1627;color:#f8fafc;border-color:#334155}
+html[data-theme="dark"] .control:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(59,130,246,.16)}
+html[data-theme="dark"] .control::placeholder{color:#64748b}
+html[data-theme="dark"] .panel,html[data-theme="dark"] .metric,html[data-theme="dark"] .more-card,html[data-theme="dark"] .setting{background:rgba(15,23,42,.96);border-color:var(--line)}
+html[data-theme="dark"] .table-wrap{border-color:var(--line)}
+html[data-theme="dark"] .table th{background:#0b1424;color:#64748b}
+html[data-theme="dark"] .table td,html[data-theme="dark"] .table th{border-bottom-color:#1e2a3d}
+html[data-theme="dark"] .recent-row:hover,html[data-theme="dark"] .mini-row:hover{background:#0d1728}
+html[data-theme="dark"] .order-mark,html[data-theme="dark"] .metric-icon,html[data-theme="dark"] .more-icon,html[data-theme="dark"] .avatar{background:#142a55}
+html[data-theme="dark"] .photo-placeholder{background:linear-gradient(145deg,#172238,#0d1625);color:#64748b}
+html[data-theme="dark"] .image-upload,html[data-theme="dark"] .order-summary,html[data-theme="dark"] .kpi-mini{background:#0b1424;border-color:var(--line)}
+html[data-theme="dark"] .image-upload{border-color:#475569}
+html[data-theme="dark"] .dialog{background:#0f172a;border-color:#2a3850}
+html[data-theme="dark"] .dialog-head{background:rgba(15,23,42,.97);border-bottom-color:var(--line)}
+html[data-theme="dark"] .dialog-foot{border-top-color:var(--line)}
+html[data-theme="dark"] .preview-big{background:#0b1424}
+html[data-theme="dark"] .empty .empty-icon{background:#142033;color:#64748b}
+html[data-theme="dark"] .progress{background:#1b293c}
+html[data-theme="dark"] .chart-grid{stroke:#243147}
+html[data-theme="dark"] .chart-dot{fill:#0b1424}
+html[data-theme="dark"] .mobile-nav{background:rgba(10,18,33,.96);border-top-color:var(--line)}
+html[data-theme="dark"] .mobile-nav button{color:#64748b}
+html[data-theme="dark"] .mobile-nav button.active{color:#60a5fa;background:#142a55}
+html[data-theme="dark"] .setting{background:#0b1424}
+html[data-theme="dark"] .login{background:radial-gradient(circle at 12% 20%,rgba(59,130,246,.16),transparent 30%),radial-gradient(circle at 88% 80%,rgba(99,102,241,.12),transparent 30%),#060d19}
+html[data-theme="dark"] .loginbox{background:rgba(15,23,42,.93);border-color:#26354c;box-shadow:0 30px 90px rgba(0,0,0,.43)}
+html[data-theme="dark"] .login-foot{color:#64748b}
+
+
+/* ===== PURE BLACK THEME ===== */
+html[data-theme="black"]{
+  color-scheme:dark;
+  --ink:#f5f5f5;--muted:#8d8d8d;--bg:#030303;--card:#0a0a0a;--line:#1b1b1b;--soft:#0d0d0d;--soft-blue:#101827;
+  --green:#34d399;--green-soft:#052e2b;--amber:#fbbf24;--amber-soft:#261d05;--red:#f87171;--red-soft:#2b0909;
+  --shadow:0 18px 50px rgba(0,0,0,.52);--shadow-lg:0 35px 100px rgba(0,0,0,.72)
+}
+html[data-theme="black"] body{background:radial-gradient(circle at 5% 0%,rgba(37,99,235,.08),transparent 30%),#030303;color:var(--ink)}
+html[data-theme="black"] .sidebar{background:rgba(4,4,4,.97);border-right-color:#171717}
+html[data-theme="black"] .brand{border-bottom-color:#181818}
+html[data-theme="black"] .navbtn{color:#858585}
+html[data-theme="black"] .navbtn:hover{background:#0b0b0b;color:#fff}
+html[data-theme="black"] .navbtn.active{background:linear-gradient(90deg,#0d182b,#0a111c);color:#60a5fa;box-shadow:inset 3px 0 #2563eb}
+html[data-theme="black"] .nav-group{color:#505050}
+html[data-theme="black"] .sidebar-bottom{border-top-color:#181818}
+html[data-theme="black"] .btn{background:#0b0b0b;color:#f5f5f5;border-color:#242424}
+html[data-theme="black"] .btn:hover{box-shadow:0 12px 28px rgba(0,0,0,.55)}
+html[data-theme="black"] .btn.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);border-color:#2563eb;color:#fff}
+html[data-theme="black"] .btn.danger{background:#0b0b0b;color:#f87171;border-color:#481618}
+html[data-theme="black"] .control{background:#070707;color:#f5f5f5;border-color:#242424}
+html[data-theme="black"] .control::placeholder{color:#505050}
+html[data-theme="black"] .control:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.14)}
+html[data-theme="black"] .panel,html[data-theme="black"] .metric,html[data-theme="black"] .more-card,html[data-theme="black"] .setting{background:#090909;border-color:#1b1b1b}
+html[data-theme="black"] .table-wrap{border-color:#1b1b1b}
+html[data-theme="black"] .table th{background:#070707;color:#555}
+html[data-theme="black"] .table td,html[data-theme="black"] .table th{border-bottom-color:#171717}
+html[data-theme="black"] .recent-row:hover,html[data-theme="black"] .mini-row:hover{background:#0d0d0d}
+html[data-theme="black"] .order-mark,html[data-theme="black"] .metric-icon,html[data-theme="black"] .more-icon{background:#101827}
+html[data-theme="black"] .avatar{background:#111827;color:#93c5fd}
+html[data-theme="black"] .photo-placeholder{background:#101010;color:#555}
+html[data-theme="black"] .image-upload,html[data-theme="black"] .order-summary,html[data-theme="black"] .kpi-mini{background:#070707;border-color:#1b1b1b}
+html[data-theme="black"] .image-upload{border-color:#393939}
+html[data-theme="black"] .dialog{background:#090909;border-color:#252525}
+html[data-theme="black"] .dialog-head{background:rgba(9,9,9,.98);border-bottom-color:#1b1b1b}
+html[data-theme="black"] .dialog-foot{border-top-color:#1b1b1b}
+html[data-theme="black"] .preview-big{background:#070707}
+html[data-theme="black"] .empty .empty-icon{background:#101010;color:#555}
+html[data-theme="black"] .progress{background:#191919}
+html[data-theme="black"] .chart-grid{stroke:#191919}
+html[data-theme="black"] .chart-dot{fill:#070707}
+html[data-theme="black"] .mobile-nav{background:rgba(4,4,4,.98);border-top-color:#191919}
+html[data-theme="black"] .mobile-nav button{color:#555}
+html[data-theme="black"] .mobile-nav button.active{color:#60a5fa;background:#0d182b}
+html[data-theme="black"] .login{background:radial-gradient(circle at 12% 20%,rgba(37,99,235,.10),transparent 30%),radial-gradient(circle at 88% 80%,rgba(99,102,241,.08),transparent 30%),#020202}
+html[data-theme="black"] .loginbox{background:rgba(9,9,9,.96);border-color:#1b1b1b}
+html[data-theme="black"] .login-foot{color:#555}
+html[data-theme="black"] .setting-info span,html[data-theme="black"] .panel-sub,html[data-theme="black"] .small{color:#8d8d8d}
+html[data-theme="black"] .stock-ok{background:#052e2b;color:#6ee7b7}
+html[data-theme="black"] .stock-low{background:#261d05;color:#fcd34d}
+html[data-theme="black"] .stock-zero{background:#2b0909;color:#fca5a5}
+html[data-theme="black"] .badge-new{background:#0e1b35;color:#93c5fd}
+html[data-theme="black"] .badge-work{background:#261d05;color:#fcd34d}
+html[data-theme="black"] .badge-closed{background:#052e2b;color:#6ee7b7}
+html[data-theme="black"] .badge-cancel{background:#2b0909;color:#fca5a5}
+
 </style>
 </head>
 <body>
@@ -221,7 +326,7 @@ const $$=s=>[...document.querySelectorAll(s)];
 const state={
   page:"dashboard",search:"",period:"week",status:"",category:"",sort:"updated",more:false,
   products:[],orders:[],purchases:[],clients:[],transactions:[],
-  settings:{shopName:"Bine Store",currency:"MDL",dark:false,passwordHash:""},
+  settings:{shopName:"Bine Store",currency:"MDL",theme:"light",dark:false,passwordHash:""},
   user:null,loading:true
 };
 
@@ -364,6 +469,7 @@ function mobileNav(){
   return `<nav class="mobile-nav">${items.map(([id,ico,label])=>`<button class="${state.page===id?"active":""}" onclick="go('${id}')"><span class="m-ico">${icon(ico,20)}</span>${label}</button>`).join("")}<button class="${state.more||state.page==="more"?"active":""}" onclick="openMoreMenu()"><span class="m-ico">${icon("more",20)}</span>Ещё</button></nav>`
 }
 function render(){
+  applyTheme();
   if(!state.user)return;
   if(!state.settings.passwordHash){passwordView(true);return}
   if(sessionStorage.getItem("bineUnlocked")!=="1"){passwordView(false);return}
@@ -759,7 +865,7 @@ function analyticsPage(){
 }
 function settingsPage(){
  return pageHeader("Настройки","Магазин, резервные копии и безопасность")
- +`<div class="panel"><div class="panel-head"><div><h2>Основное</h2><div class="panel-sub">Персонализация рабочей среды</div></div></div><div class="formgrid"><div class="field"><label>Название магазина</label><input id="shopNameSetting" class="control" value="${esc(state.settings.shopName)}"></div><div class="field"><label>Валюта</label><select id="currencySetting" class="control"><option value="MDL" selected>MDL — молдавский лей</option></select></div><div class="field full"><button class="btn primary" style="justify-self:start" onclick="saveSettings()">${icon("check",15)}Сохранить настройки</button></div></div></div>
+ +`<div class="panel"><div class="panel-head"><div><h2>Основное</h2><div class="panel-sub">Персонализация рабочей среды</div></div></div><div class="formgrid"><div class="field"><label>Название магазина</label><input id="shopNameSetting" class="control" value="${esc(state.settings.shopName)}"></div><div class="field"><label>Валюта</label><select id="currencySetting" class="control"><option value="MDL" selected>MDL — молдавский лей</option></select></div><div class="field full"><div class="setting"><div class="setting-info"><b>Тема оформления</b><span>Светлая, тёмная или полностью чёрная.</span></div><select class="control" style="max-width:190px" onchange="setTheme(this.value)"><option value="light" ${getTheme()==="light"?"selected":""}>Светлая</option><option value="dark" ${getTheme()==="dark"?"selected":""}>Тёмная</option><option value="black" ${getTheme()==="black"?"selected":""}>Чёрная</option></select></div></div><div class="field full"><button class="btn primary" style="justify-self:start" onclick="saveSettings()">${icon("check",15)}Сохранить настройки</button></div></div></div>
  <div class="panel"><div class="panel-head"><div><h2>Данные и резервные копии</h2><div class="panel-sub">Полный экспорт или восстановление Firestore</div></div></div><div class="settings-list">
    <div class="setting"><div class="setting-info"><b>Экспорт JSON</b><span>Все товары, заказы, клиенты, финансы и настройки.</span></div><button class="btn" onclick="exportJSON()">${icon("download",15)}Экспорт</button></div>
    <div class="setting"><div class="setting-info"><b>Импорт JSON</b><span>Загрузите ранее сохранённую резервную копию.</span></div><button class="btn" onclick="$('#importJson').click()">${icon("upload",15)}Импорт</button><input id="importJson" class="file-input" type="file" accept=".json,application/json" onchange="importJSON(event)"></div>
@@ -773,7 +879,38 @@ function settingsPage(){
  <div class="panel"><div class="panel-head"><div><h2>Опасная зона</h2><div class="panel-sub danger">Действия необратимы после удаления.</div></div></div><button class="btn danger" onclick="wipeAll()">${icon("trash",15)}Очистить все данные</button></div>
  <div class="panel"><div class="panel-head"><div><h2>О приложении</h2><div class="panel-sub">Bine Store CRM v2.0 · Firebase Firestore</div></div><span class="badge badge-closed">${icon("shield",12)}Защищено паролем</span></div><div class="small">Фотографии товаров хранятся в Firestore после автоматического сжатия. CRM рассчитана на работу с крупным каталогом и историей заказов, при этом клиент загружает только необходимые данные для текущего экрана.</div></div>`
 }
-async function saveSettings(){const shopName=$("#shopNameSetting").value.trim()||"Bine Store";state.settings.shopName=shopName;state.settings.currency="MDL";try{await setDoc(doc(db,"settings","main"),state.settings,{merge:true});render();showToast("Настройки сохранены")}catch(e){showToast(firebaseError(e),"bad")}}
+function getTheme(){
+  return state.settings.theme || (state.settings.dark ? "dark" : "light");
+}
+window.setTheme=async theme=>{
+  if(!["light","dark","black"].includes(theme))theme="light";
+  const previous=getTheme();
+  state.settings.theme=theme;
+  state.settings.dark=theme==="dark";
+  applyTheme();
+  try{
+    await setDoc(doc(db,"settings","main"),{theme,dark:state.settings.dark},{merge:true});
+    render();
+    showToast(theme==="black"?"Чёрная тема включена":theme==="dark"?"Тёмная тема включена":"Светлая тема включена");
+  }catch(e){
+    state.settings.theme=previous;
+    state.settings.dark=previous==="dark";
+    applyTheme();
+    showToast(firebaseError(e),"bad");
+  }
+};
+window.toggleTheme=async()=>{
+  const current=getTheme();
+  const next=current==="light"?"dark":current==="dark"?"black":"light";
+  await setTheme(next);
+};
+function applyTheme(){
+  const theme=getTheme();
+  if(theme==="light")delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme=theme;
+  document.documentElement.style.colorScheme=theme==="light"?"light":"dark";
+}
+async function saveSettings(){const shopName=$("#shopNameSetting").value.trim()||"Bine Store";state.settings.shopName=shopName;state.settings.currency="MDL";state.settings.theme=getTheme();state.settings.dark=state.settings.theme==="dark";try{await setDoc(doc(db,"settings","main"),state.settings,{merge:true});applyTheme();render();showToast("Настройки сохранены")}catch(e){showToast(firebaseError(e),"bad")}}
 window.changePassword=async()=>{openModal("Изменить пароль","После сохранения новый пароль будет использоваться при следующем входе.",`<div class="formgrid"><div class="field"><label>Новый пароль</label><input id="np1" type="password" class="control"></div><div class="field"><label>Повторите пароль</label><input id="np2" type="password" class="control"></div></div>`,async()=>{const a=$("#np1").value,b=$("#np2").value;if(a.length<4)return showToast("Минимум 4 символа","bad");if(a!==b)return showToast("Пароли не совпадают","bad");try{state.settings.passwordHash=await hashText(a);await setDoc(doc(db,"settings","main"),{passwordHash:state.settings.passwordHash},{merge:true});closeModal();showToast("Пароль изменён")}catch(e){showToast(firebaseError(e),"bad")}})}
 window.exportJSON=()=>{const data={version:2,exportedAt:new Date().toISOString(),settings:state.settings,products:state.products,orders:state.orders,purchases:state.purchases,clients:state.clients,transactions:state.transactions};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bine-store-crm-backup-"+isoToday()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);showToast("Резервная копия готова")}
 window.importJSON=async e=>{const file=e.target.files[0];if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.products)||!Array.isArray(d.orders)||!Array.isArray(d.clients)||!Array.isArray(d.transactions))throw Error("Неподдерживаемый формат JSON");if(!confirm("Импорт добавит данные к существующей базе. Продолжить?"))return;for(const [name,arr] of Object.entries({products:d.products,orders:d.orders,purchases:d.purchases||[],clients:d.clients,transactions:d.transactions})){for(const item of arr){const copy={...item},id=copy.id||uid();delete copy.id;await setDoc(doc(db,name,id),copy,{merge:true})}}if(d.settings){state.settings={...state.settings,...d.settings};await setDoc(doc(db,"settings","main"),state.settings,{merge:true})}await loadAll();showToast("Импорт завершён")}catch(x){showToast(x.message||"Ошибка импорта","bad")}e.target.value=""}
@@ -819,7 +956,8 @@ Object.assign(window,{
   showToast,openModal,loadAll,renderPage,globalSearch,
   openProductView,openOrderView,removeOrder,
   openPurchaseView,removePurchase,
-  saveSettings,
+  saveSettings,toggleTheme,setTheme,
+  applyTheme,getTheme,
   icon,esc,num,fmtMoney,fmtDate,isoToday,
   firebaseError
 });
@@ -833,7 +971,8 @@ onAuthStateChanged(auth,async user=>{
   try{
     const snap=await getDoc(doc(db,"settings","main"));
     if(snap.exists())state.settings={...state.settings,...snap.data()};
-    if(state.settings.dark){document.documentElement.dataset.theme="dark"}else{delete document.documentElement.dataset.theme}
+    if(!state.settings.theme)state.settings.theme=state.settings.dark?"dark":"light";
+    applyTheme()
     if(sessionStorage.getItem("bineUnlocked")==="1"&&state.settings.passwordHash)await loadAll();else{state.loading=false;state.settings.passwordHash?passwordView(false):passwordView(true)}
   }catch(e){renderError(firebaseError(e))}
 });
