@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#f4f7fb" id="themeColorMeta">
 <meta name="color-scheme" content="light">
 <title>Bine Store CRM</title>
 <style>
@@ -291,6 +291,57 @@ html[data-theme="black"] .badge-new{background:#0e1b35;color:#93c5fd}
 html[data-theme="black"] .badge-work{background:#261d05;color:#fcd34d}
 html[data-theme="black"] .badge-closed{background:#052e2b;color:#6ee7b7}
 html[data-theme="black"] .badge-cancel{background:#2b0909;color:#fca5a5}
+
+
+/* COMPLETE THEME OVERRIDES */
+html[data-theme="dark"] .mobile-card,
+html[data-theme="dark"] .detail-stat,
+html[data-theme="dark"] .chip,
+html[data-theme="dark"] .category-chips .chip,
+html[data-theme="dark"] .kpi-mini,
+html[data-theme="dark"] .search-global input,
+html[data-theme="dark"] .select-small,
+html[data-theme="dark"] .order-items .item-row,
+html[data-theme="dark"] .mc-main,
+html[data-theme="dark"] .recent-row{background:#0f172a;color:var(--ink)}
+html[data-theme="dark"] .chip.active{background:#172554;border-color:#31579d;color:#93c5fd}
+html[data-theme="dark"] .detail-stat{border-color:#263244}
+html[data-theme="dark"] .section-link{color:#60a5fa}
+html[data-theme="dark"] .label,
+html[data-theme="dark"] label{color:#cbd5e1}
+html[data-theme="dark"] select option{background:#0f172a;color:#f8fafc}
+html[data-theme="dark"] .modal{background:rgba(0,0,0,.68)}
+html[data-theme="dark"] .mc-main b,
+html[data-theme="dark"] .recent-row b,
+html[data-theme="dark"] .mini-row b{color:#f8fafc}
+html[data-theme="dark"] .panel-sub,
+html[data-theme="dark"] .small{color:#94a3b8}
+
+html[data-theme="black"] .mobile-card,
+html[data-theme="black"] .detail-stat,
+html[data-theme="black"] .chip,
+html[data-theme="black"] .category-chips .chip,
+html[data-theme="black"] .kpi-mini,
+html[data-theme="black"] .search-global input,
+html[data-theme="black"] .select-small,
+html[data-theme="black"] .order-items .item-row,
+html[data-theme="black"] .mc-main,
+html[data-theme="black"] .recent-row{background:#080808;color:#f5f5f5}
+html[data-theme="black"] .chip.active{background:#0d182b;border-color:#263f68;color:#93c5fd}
+html[data-theme="black"] .detail-stat{border-color:#1c1c1c}
+html[data-theme="black"] .section-link{color:#60a5fa}
+html[data-theme="black"] label{color:#d4d4d4}
+html[data-theme="black"] select option{background:#080808;color:#f5f5f5}
+html[data-theme="black"] .modal{background:rgba(0,0,0,.82)}
+html[data-theme="black"] .mc-main b,
+html[data-theme="black"] .recent-row b,
+html[data-theme="black"] .mini-row b{color:#fff}
+html[data-theme="black"] .panel-sub,
+html[data-theme="black"] .small{color:#8d8d8d}
+html[data-theme="black"] .topbar .search-global .control{background:#080808;border-color:#222;color:#fff}
+html[data-theme="black"] .mobile-card{box-shadow:0 10px 30px rgba(0,0,0,.25)}
+html[data-theme="black"] .table tr:hover td{background:#0d0d0d}
+html[data-theme="dark"] .table tr:hover td{background:#111c2e}
 
 </style>
 </head>
@@ -909,6 +960,7 @@ function applyTheme(){
   if(theme==="light")delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme=theme;
   document.documentElement.style.colorScheme=theme==="light"?"light":"dark";
+  const meta=document.getElementById("themeColorMeta"); if(meta)meta.content=theme==="black"?"#030303":theme==="dark"?"#0b1220":"#f4f7fb";
 }
 async function saveSettings(){const shopName=$("#shopNameSetting").value.trim()||"Bine Store";state.settings.shopName=shopName;state.settings.currency="MDL";state.settings.theme=getTheme();state.settings.dark=state.settings.theme==="dark";try{await setDoc(doc(db,"settings","main"),state.settings,{merge:true});applyTheme();render();showToast("Настройки сохранены")}catch(e){showToast(firebaseError(e),"bad")}}
 window.changePassword=async()=>{openModal("Изменить пароль","После сохранения новый пароль будет использоваться при следующем входе.",`<div class="formgrid"><div class="field"><label>Новый пароль</label><input id="np1" type="password" class="control"></div><div class="field"><label>Повторите пароль</label><input id="np2" type="password" class="control"></div></div>`,async()=>{const a=$("#np1").value,b=$("#np2").value;if(a.length<4)return showToast("Минимум 4 символа","bad");if(a!==b)return showToast("Пароли не совпадают","bad");try{state.settings.passwordHash=await hashText(a);await setDoc(doc(db,"settings","main"),{passwordHash:state.settings.passwordHash},{merge:true});closeModal();showToast("Пароль изменён")}catch(e){showToast(firebaseError(e),"bad")}})}
