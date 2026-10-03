@@ -167,8 +167,12 @@ textarea.control{height:auto;padding-top:11px;padding-bottom:11px;resize:vertica
 .scroll-x{overflow-x:auto}
 .mini-list{display:grid;gap:8px}.mini-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px}.mini-row:hover{background:#f8fafc}
 .progress{height:8px;background:#edf1f6;border-radius:999px;overflow:hidden}.progress > div{height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:999px}
+.priority{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:850}.priority.high{background:#fef2f2;color:#b91c1c}.priority.medium{background:#fffbeb;color:#b45309}.priority.low{background:#ecfdf5;color:#047857}
+.table tr.overdue td:first-child{box-shadow:inset 3px 0 var(--red)}
+.mobile-card.overdue{border-color:#fecaca;box-shadow:0 8px 24px rgba(220,38,38,.08)}
+.goals-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.goal-card{border:1px solid var(--line);border-radius:18px;padding:17px;background:var(--soft);display:grid;gap:11px}.goal-card.done{background:var(--green-soft);border-color:#bbf7d0}.goal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.goal-type{text-transform:uppercase;letter-spacing:.08em;font-size:9px;font-weight:850;color:var(--brand);margin-bottom:4px}.goal-card h3{margin:0 0 4px;font-size:16px;letter-spacing:-.02em}.goal-stats{display:flex;align-items:baseline;gap:7px}.goal-stats b{font-size:22px;letter-spacing:-.03em}.goal-stats span{font-size:11px;color:var(--muted)}.goal-stats strong{margin-left:auto;font-size:16px;color:var(--brand)}.goal-progress{height:10px}.goal-bottom{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px}.goal-card.done .goal-stats strong{color:var(--green)}
 .success{color:var(--green)}.danger{color:var(--red)}.warning{color:var(--amber)}.muted{color:var(--muted)}.hide{display:none!important}
-@media(max-width:1180px){.grid-metrics{grid-template-columns:repeat(2,1fr)}.layout-2{grid-template-columns:1fr}.more-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:1180px){.grid-metrics{grid-template-columns:repeat(2,1fr)}.layout-2{grid-template-columns:1fr}.more-cards{grid-template-columns:1fr 1fr}.goals-grid{grid-template-columns:1fr}}
 @media(max-width:760px){
   .sidebar{display:none}.main{margin:0;padding:16px 13px 92px}
   .topbar{align-items:flex-start;margin-bottom:18px}.page-title h1{font-size:23px}.page-title p{font-size:11px;margin-top:6px}
@@ -316,6 +320,7 @@ html[data-theme="dark"] .recent-row b,
 html[data-theme="dark"] .mini-row b{color:#f8fafc}
 html[data-theme="dark"] .panel-sub,
 html[data-theme="dark"] .small{color:#94a3b8}
+html[data-theme="dark"] .goal-card{background:#0b1424;border-color:#263244}html[data-theme="dark"] .goal-card.done{background:#0b211d;border-color:#174f3d}html[data-theme="dark"] .priority.high{background:#2b1417;color:#fca5a5}html[data-theme="dark"] .priority.medium{background:#2c220a;color:#fcd34d}html[data-theme="dark"] .priority.low{background:#08241e;color:#6ee7b7}html[data-theme="dark"] .mobile-card.overdue{border-color:#5b232a}
 
 html[data-theme="black"] .mobile-card,
 html[data-theme="black"] .detail-stat,
@@ -338,6 +343,7 @@ html[data-theme="black"] .recent-row b,
 html[data-theme="black"] .mini-row b{color:#fff}
 html[data-theme="black"] .panel-sub,
 html[data-theme="black"] .small{color:#8d8d8d}
+html[data-theme="black"] .goal-card{background:#070707;border-color:#1b1b1b}html[data-theme="black"] .goal-card.done{background:#07150f;border-color:#174b35}html[data-theme="black"] .priority.high{background:#2b0909;color:#fca5a5}html[data-theme="black"] .priority.medium{background:#261d05;color:#fcd34d}html[data-theme="black"] .priority.low{background:#052e2b;color:#6ee7b7}html[data-theme="black"] .mobile-card.overdue{border-color:#481618}
 html[data-theme="black"] .topbar .search-global .control{background:#080808;border-color:#222;color:#fff}
 html[data-theme="black"] .mobile-card{box-shadow:0 10px 30px rgba(0,0,0,.25)}
 html[data-theme="black"] .table tr:hover td{background:#0d0d0d}
@@ -376,14 +382,15 @@ const $$=s=>[...document.querySelectorAll(s)];
 
 const state={
   page:"dashboard",search:"",period:"week",status:"",category:"",sort:"updated",more:false,
-  products:[],orders:[],purchases:[],clients:[],transactions:[],
+  products:[],orders:[],purchases:[],clients:[],transactions:[],tasks:[],goals:[],
+  taskStatus:"",goalStatus:"",
   settings:{shopName:"Bine Store",currency:"MDL",theme:"light",dark:false,passwordHash:""},
   user:null,loading:true
 };
 
 const navItems=[
   ["dashboard","dashboard","Главная"],["products","package","Товары"],["orders","shopping-bag","Заказы"],["purchases","box","Закупки"],["finance","wallet","Финансы"],
-  ["clients","users","Клиенты"],["analytics","chart","Аналитика"],["settings","settings","Настройки"]
+  ["clients","users","Клиенты"],["tasks","calendar","Задачи"],["goals","star","Цели"],["analytics","chart","Аналитика"],["settings","settings","Настройки"]
 ];
 
 const icons={
@@ -415,7 +422,9 @@ const icons={
   shield:`<path d="M12 3 19 6v5c0 4.3-2.4 7.5-7 10-4.6-2.5-7-5.7-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/>`,
   dollar:`<path d="M12 3v18m4-15c-.8-1-2.2-1.5-4-1.5-2.4 0-4 1.2-4 3s1.6 2.7 4 3 4 1.1 4 3-1.6 3-4 3c-1.8 0-3.2-.5-4-1.5"/>`,
   box:`<path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M8 9v8"/>`,
-  calendar:`<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>`
+  calendar:`<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>`,
+  list:`<path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>`,
+  target:`<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>`
 };
 function icon(name,size=18,stroke=1.8){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${icons[name]||icons.info}</svg>`}
 const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
@@ -471,10 +480,11 @@ async function readCollection(name){const snap=await getDocs(c(name));return sna
 async function loadAll(){
   state.loading=true;renderLoading();
   try{
-    const [products,orders,purchases,clients,transactions,settingsDoc]=await Promise.all([
-      readCollection("products"),readCollection("orders"),readCollection("purchases"),readCollection("clients"),readCollection("transactions"),getDoc(doc(db,"settings","main"))
+    const [products,orders,purchases,clients,transactions,tasks,goals,settingsDoc]=await Promise.all([
+      readCollection("products"),readCollection("orders"),readCollection("purchases"),readCollection("clients"),readCollection("transactions"),
+      readCollection("tasks"),readCollection("goals"),getDoc(doc(db,"settings","main"))
     ]);
-    state.products=products;state.orders=orders;state.purchases=purchases;state.clients=clients;state.transactions=transactions;
+    state.products=products;state.orders=orders;state.purchases=purchases;state.clients=clients;state.transactions=transactions;state.tasks=tasks;state.goals=goals;
     if(settingsDoc.exists())state.settings={...state.settings,...settingsDoc.data()};
     state.loading=false;render();
   }catch(e){state.loading=false;renderError(firebaseError(e))}
@@ -914,6 +924,117 @@ function analyticsPage(){
  <div class="panel"><div class="panel-head"><div><h2>Самые продаваемые</h2><div class="panel-sub">По количеству единиц</div></div></div>${tops.length?`<div class="mini-list">${tops.map((x,i)=>{const max=tops[0][1]||1;return `<div class="mini-row"><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:10px"><span class="ellipsis">${i+1}. ${esc(x[0])}</span><b>${x[1]} шт.</b></div><div class="progress" style="margin-top:6px"><div style="width:${x[1]/max*100}%"></div></div></div></div>`}).join("")}</div>`:emptyState("chart","Пока мало данных","Продажи появятся здесь")}</div></div>
  <div class="panel"><div class="panel-head"><div><h2>Низкий остаток</h2><div class="panel-sub">2 шт. и меньше</div></div><span class="section-link" onclick="go('products')">Открыть склад</span></div>${low.length?`<div class="mini-list">${low.slice(0,8).map(p=>`<div class="mini-row"><div><b>${esc(p.name)}</b><div class="small">${esc(p.category||"Без категории")}</div></div>${stockBadge(p.qty)}</div>`).join("")}</div>`:emptyState("package","Всё спокойно","Критичных остатков нет")}</div>`
 }
+function taskStatusBadge(status){
+  if(status==="Выполнено") return `<span class="badge badge-closed">${icon("check",12)}Выполнено</span>`;
+  if(status==="В работе") return `<span class="badge badge-work">${icon("refresh",12)}В работе</span>`;
+  return `<span class="badge badge-new">${icon("calendar",12)}Запланировано</span>`;
+}
+function priorityBadge(priority){
+  if(priority==="Высокий") return `<span class="priority high">Высокий</span>`;
+  if(priority==="Средний") return `<span class="priority medium">Средний</span>`;
+  return `<span class="priority low">Низкий</span>`;
+}
+function taskDueClass(task){
+  if(!task.dueDate||task.status==="Выполнено")return "";
+  const d=new Date(task.dueDate+"T23:59:59"), now=new Date();
+  if(isNaN(d))return "";
+  return d<now?"overdue":"";
+}
+function taskLinkText(task){
+  if(!task.linkType)return "";
+  const source=task.linkType==="order"?state.orders:task.linkType==="client"?state.clients:state.purchases;
+  const x=source.find(v=>v.id===task.linkId);
+  if(!x)return "Связь не найдена";
+  if(task.linkType==="order")return `Заказ #${esc(x.number||"—")}`;
+  if(task.linkType==="client")return `Клиент: ${esc(x.name||x.clientName||"—")}`;
+  return `Закупка #${esc(x.number||"—")}`;
+}
+function goalPeriodDates(goal){
+  const start=goal.startDate?new Date(goal.startDate+"T00:00:00"):new Date("2000-01-01T00:00:00");
+  const end=goal.endDate?new Date(goal.endDate+"T23:59:59"):new Date("2999-12-31T23:59:59");
+  return {start,end};
+}
+function dateInRange(value,start,end){
+  const d=value?.seconds?new Date(value.seconds*1000):new Date(value||"");
+  return !isNaN(d)&&d>=start&&d<=end;
+}
+function goalProgress(goal){
+  const {start,end}=goalPeriodDates(goal);
+  let value=0;
+  switch(goal.type){
+    case "revenue":
+      value=completedOrders().filter(o=>dateInRange(o.date,start,end)).reduce((a,o)=>a+num(o.total),0);break;
+    case "profit":
+      value=completedOrders().filter(o=>dateInRange(o.date,start,end)).reduce((a,o)=>a+num(o.total)-num(o.cost),0)
+        -state.transactions.filter(t=>t.type==="Расход"&&!t.linkedOrderId&&dateInRange(t.date,start,end)).reduce((a,t)=>a+num(t.amount),0);break;
+    case "orders":
+      value=completedOrders().filter(o=>dateInRange(o.date,start,end)).length;break;
+    case "clients":
+      value=state.clients.filter(c=>dateInRange(c.createdAt||c.date,start,end)).length;break;
+    case "items":
+      value=completedOrders().filter(o=>dateInRange(o.date,start,end)).reduce((a,o)=>a+(o.items||[]).reduce((q,i)=>q+num(i.qty),0),0);break;
+    default:value=num(goal.current||0);
+  }
+  const target=Math.max(num(goal.target),1);
+  return {value,target,percent:Math.max(0,Math.min(100,(value/target)*100))};
+}
+function goalTypeLabel(type){return ({revenue:"Выручка",profit:"Прибыль",orders:"Заказы",clients:"Новые клиенты",items:"Проданные единицы"})[type]||"Цель"}
+function goalValueLabel(goal,value){
+  if(goal.type==="revenue"||goal.type==="profit")return fmtMoney(value);
+  return `${Math.round(value)} шт.`;
+}
+function goalsActive(){return state.goals.filter(g=>g.status!=="Архив");}
+function tasksPage(){
+  const status=state.taskStatus||"";
+  const list=[...state.tasks].filter(t=>!status||t.status===status).sort((a,b)=>{
+    if(a.status!==b.status){if(a.status==="Выполнено")return 1;if(b.status==="Выполнено")return -1}
+    return (a.dueDate||"9999-99-99").localeCompare(b.dueDate||"9999-99-99");
+  });
+  const open=state.tasks.filter(t=>t.status!=="Выполнено").length, overdue=state.tasks.filter(t=>taskDueClass(t)==="overdue").length;
+  return pageHeader("Задачи","Конкретные действия, которые нужно выполнить",`<button class="btn primary" onclick="openTask()">${icon("plus",16)}Новая задача</button>`)
+   +`<div class="grid-metrics">${statCard("Активные",open,"задач требуют внимания","calendar")}${statCard("Просроченные",overdue,"нужно закрыть сегодня","calendar","red")}${statCard("Выполнено",state.tasks.filter(t=>t.status==="Выполнено").length,"всего закрыто","check","green")}${statCard("Всего",state.tasks.length,"задач в CRM","list")}</div>`
+   +`<div class="panel"><div class="toolbar"><select class="control select-small" onchange="state.taskStatus=this.value;renderPage()"><option value="">Все статусы</option><option value="Запланировано" ${status==="Запланировано"?"selected":""}>Запланировано</option><option value="В работе" ${status==="В работе"?"selected":""}>В работе</option><option value="Выполнено" ${status==="Выполнено"?"selected":""}>Выполнено</option></select><div class="grow"></div><button class="btn" onclick="openTask()">${icon("plus",15)}Добавить</button></div>`
+   +(list.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Задача</th><th>Срок</th><th>Приоритет</th><th>Статус</th><th>Связь</th><th></th></tr></thead><tbody>${list.map(t=>`<tr class="${taskDueClass(t)}"><td><div><b>${esc(t.title)}</b><div class="small">${esc(t.description||"")}</div></div></td><td>${t.dueDate?new Date(t.dueDate+"T12:00:00").toLocaleDateString("ru-RU"):("—")}</td><td>${priorityBadge(t.priority)}</td><td>${taskStatusBadge(t.status)}</td><td>${taskLinkText(t)||"—"}</td><td><div class="actions-inline">${t.status!=="Выполнено"?`<button class="btn icon sm" title="Выполнить" onclick="completeTask('${t.id}')">${icon("check",15)}</button>`:""}<button class="btn icon sm" onclick="openTask('${t.id}')">${icon("edit",15)}</button><button class="btn icon sm danger" onclick="removeTask('${t.id}')">${icon("trash",15)}</button></div></td></tr>`).join("")}</tbody></table></div><div class="mobile-list">${list.map(t=>`<div class="mobile-card ${taskDueClass(t)}"><div class="mc-top"><div class="mc-main"><div class="more-icon" style="width:38px;height:38px;margin:0">${icon("calendar",17)}</div><div><b>${esc(t.title)}</b><div class="small">${t.dueDate?new Date(t.dueDate+"T12:00:00").toLocaleDateString("ru-RU"):"Без срока"}${taskLinkText(t)?" · "+taskLinkText(t):""}</div></div></div>${priorityBadge(t.priority)}</div><div class="small">${esc(t.description||"Без описания")}</div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px">${taskStatusBadge(t.status)}<div class="actions-inline">${t.status!=="Выполнено"?`<button class="btn sm" onclick="completeTask('${t.id}')">${icon("check",14)}Готово</button>`:""}<button class="btn icon sm" onclick="openTask('${t.id}')">${icon("edit",14)}</button><button class="btn icon sm danger" onclick="removeTask('${t.id}')">${icon("trash",14)}</button></div></div></div>`).join("")}</div>`:emptyState("calendar","Задач пока нет","Создайте первую задачу"))+`</div>`;
+}
+window.openTask=(id="")=>{
+  const t=state.tasks.find(x=>x.id===id)||{title:"",description:"",dueDate:isoToday(),priority:"Средний",status:"Запланировано",linkType:"",linkId:"",createdAt:Date.now()};
+  const links=`<option value="">Без связи</option><optgroup label="Заказы">${state.orders.slice().sort((a,b)=>num(b.number)-num(a.number)).map(x=>`<option value="order:${esc(x.id)}" ${t.linkType==="order"&&t.linkId===x.id?"selected":""}>#${esc(x.number||"—")} · ${esc(x.clientName||"Без клиента")}</option>`).join("")}</optgroup><optgroup label="Клиенты">${state.clients.map(x=>`<option value="client:${esc(x.id)}" ${t.linkType==="client"&&t.linkId===x.id?"selected":""}>${esc(x.name||"Без имени")}</option>`).join("")}</optgroup><optgroup label="Закупки">${state.purchases.slice().sort((a,b)=>num(b.number)-num(a.number)).map(x=>`<option value="purchase:${esc(x.id)}" ${t.linkType==="purchase"&&t.linkId===x.id?"selected":""}>#${esc(x.number||"—")} · ${esc(x.supplier||"Без поставщика")}</option>`).join("")}</optgroup>`;
+  openModal(id?"Редактировать задачу":"Новая задача",id?"Изменение задачи":"Создайте напоминание или рабочее поручение",`<div class="formgrid"><div class="field full"><label>Название задачи</label><input id="task_title" class="control" value="${esc(t.title)}" placeholder="Например: написать клиенту"></div><div class="field full"><label>Описание</label><textarea id="task_desc" class="control" rows="4" placeholder="Дополнительные детали">${esc(t.description)}</textarea></div><div class="field"><label>Срок</label><input id="task_due" type="date" class="control" value="${esc(t.dueDate||"")}"></div><div class="field"><label>Приоритет</label><select id="task_priority" class="control"><option ${t.priority==="Низкий"?"selected":""}>Низкий</option><option ${t.priority==="Средний"?"selected":""}>Средний</option><option ${t.priority==="Высокий"?"selected":""}>Высокий</option></select></div><div class="field"><label>Статус</label><select id="task_status" class="control"><option ${t.status==="Запланировано"?"selected":""}>Запланировано</option><option ${t.status==="В работе"?"selected":""}>В работе</option><option ${t.status==="Выполнено"?"selected":""}>Выполнено</option></select></div><div class="field"><label>Связать с</label><select id="task_link" class="control">${links}</select></div></div>`,async()=>{
+    const title=$("#task_title").value.trim();if(!title)return showToast("Введите название задачи","bad");
+    const lv=$("#task_link").value||"", parts=lv.split(":"), data={title,description:$("#task_desc").value.trim(),dueDate:$("#task_due").value||"",priority:$("#task_priority").value,status:$("#task_status").value,linkType:parts[0]||"",linkId:parts[1]||"",updatedAt:Date.now(),createdAt:t.createdAt||Date.now()};
+    try{if(id){await updateDoc(doc(db,"tasks",id),data);Object.assign(t,data)}else{const r=await addDoc(c("tasks"),data);state.tasks.push({id:r.id,...data})}closeModal();renderPage();showToast("Задача сохранена")}catch(e){showToast(firebaseError(e),"bad")}
+  });
+};
+window.completeTask=async id=>{const t=state.tasks.find(x=>x.id===id);if(!t)return;try{await updateDoc(doc(db,"tasks",id),{status:"Выполнено",completedAt:Date.now(),updatedAt:Date.now()});t.status="Выполнено";t.completedAt=Date.now();renderPage();showToast("Задача выполнена") }catch(e){showToast(firebaseError(e),"bad")}};
+window.removeTask=async id=>{const t=state.tasks.find(x=>x.id===id);if(!t||!confirm(`Удалить задачу «${t.title}»?`))return;try{await deleteDoc(doc(db,"tasks",id));state.tasks=state.tasks.filter(x=>x.id!==id);renderPage();showToast("Задача удалена")}catch(e){showToast(firebaseError(e),"bad")}};
+function goalsPage(){
+  const list=[...goalsActive()].sort((a,b)=>new Date(a.endDate||"2999-12-31")-new Date(b.endDate||"2999-12-31"));
+  const done=list.filter(g=>goalProgress(g).percent>=100).length, active=list.length-done;
+  return pageHeader("Цели","Показатели магазина и прогресс к результату",`<button class="btn primary" onclick="openGoal()">${icon("plus",16)}Новая цель</button>`)
+   +`<div class="grid-metrics">${statCard("Активные",active,"целей в работе","star")}${statCard("Достигнуто",done,"целей на 100%","check","green")}${statCard("Всего",state.goals.length,"создано целей","target")}${statCard("Продажи",fmtMoney(getStats().revenue),"выполненных заказов","dollar")}</div>`
+   +`<div class="panel"><div class="panel-head"><div><h2>Мои цели</h2><div class="panel-sub">Прогресс считается автоматически из данных CRM</div></div><select class="control select-small" onchange="state.goalStatus=this.value;renderPage()"><option value="">Активные</option><option value="Достигнуты" ${state.goalStatus==="Достигнуты"?"selected":""}>Достигнуты</option><option value="Архив" ${state.goalStatus==="Архив"?"selected":""}>Архив</option><option value="Все" ${state.goalStatus==="Все"?"selected":""}>Все</option></select></div>`
+   +renderGoalsList(list)+`</div>`;
+}
+function renderGoalsList(base){
+  let list=base;
+  if(state.goalStatus==="Достигнуты")list=state.goals.filter(g=>g.status!=="Архив"&&goalProgress(g).percent>=100);
+  if(state.goalStatus==="Архив")list=state.goals.filter(g=>g.status==="Архив");
+  if(state.goalStatus==="Все")list=[...state.goals];
+  if(!list.length)return emptyState("star","Целей пока нет","Создайте первую цель магазина");
+  const html=list.map(g=>{const p=goalProgress(g), done=p.percent>=100, days=g.endDate?Math.ceil((new Date(g.endDate+"T23:59:59")-new Date())/86400000):null;return `<div class="goal-card ${done?"done":""}"><div class="goal-top"><div><div class="goal-type">${esc(goalTypeLabel(g.type))}</div><h3>${esc(g.title)}</h3><div class="small">${esc(g.description||"")}</div></div><div class="actions-inline"><span class="badge ${done?"badge-closed":g.status==="Архив"?"badge-cancel":"badge-new"}">${done?"Достигнута":g.status==="Архив"?"Архив":"Активна"}</span><button class="btn icon sm" onclick="openGoal('${g.id}')">${icon("edit",15)}</button><button class="btn icon sm danger" onclick="removeGoal('${g.id}')">${icon("trash",15)}</button></div></div><div class="goal-stats"><b>${goalValueLabel(g,p.value)}</b><span>из ${goalValueLabel(g,p.target)}</span><strong>${Math.round(p.percent)}%</strong></div><div class="progress goal-progress"><div style="width:${p.percent}%"></div></div><div class="goal-bottom"><span>${g.startDate?new Date(g.startDate+"T12:00:00").toLocaleDateString("ru-RU"):"Без начала"} — ${g.endDate?new Date(g.endDate+"T12:00:00").toLocaleDateString("ru-RU"):"Без дедлайна"}</span><span>${done?"Цель достигнута":days!==null?(days<0?`Просрочена на ${Math.abs(days)} дн.`:`Осталось ${days} дн.`):"Без дедлайна"}</span></div></div>`}).join("");
+  return `<div class="goals-grid">${html}</div>`;
+}
+window.openGoal=(id="")=>{
+  const g=state.goals.find(x=>x.id===id)||{title:"",description:"",type:"revenue",target:"",startDate:isoToday(),endDate:isoToday(),status:"Активна",createdAt:Date.now()};
+  openModal(id?"Редактировать цель":"Новая цель",id?"Изменение цели":"Задайте измеримый результат для магазина",`<div class="formgrid"><div class="field full"><label>Название цели</label><input id="goal_title" class="control" value="${esc(g.title)}" placeholder="Например: Выручка за октябрь"></div><div class="field"><label>Тип цели</label><select id="goal_type" class="control"><option value="revenue" ${g.type==="revenue"?"selected":""}>Выручка</option><option value="profit" ${g.type==="profit"?"selected":""}>Прибыль</option><option value="orders" ${g.type==="orders"?"selected":""}>Количество заказов</option><option value="clients" ${g.type==="clients"?"selected":""}>Новые клиенты</option><option value="items" ${g.type==="items"?"selected":""}>Проданные единицы</option></select></div><div class="field"><label>Целевое значение</label><input id="goal_target" type="number" min="1" step="0.01" class="control" value="${esc(g.target)}" placeholder="50000"></div><div class="field"><label>Начало</label><input id="goal_start" type="date" class="control" value="${esc(g.startDate||"")}"></div><div class="field"><label>Дедлайн</label><input id="goal_end" type="date" class="control" value="${esc(g.endDate||"")}"></div><div class="field"><label>Статус</label><select id="goal_status" class="control"><option value="Активна" ${g.status==="Активна"?"selected":""}>Активна</option><option value="Архив" ${g.status==="Архив"?"selected":""}>Архив</option></select></div><div class="field full"><label>Описание</label><textarea id="goal_desc" class="control" rows="3" placeholder="Что именно хотим получить">${esc(g.description||"")}</textarea></div></div><div class="dialog-note">Прогресс для цели считается автоматически по выполненным заказам, клиентам и продажам за выбранный период.</div>`,async()=>{
+    const title=$("#goal_title").value.trim(),target=num($("#goal_target").value),start=$("#goal_start").value,end=$("#goal_end").value;
+    if(!title)return showToast("Введите название цели","bad");if(target<=0)return showToast("Введите цель больше нуля","bad");if(start&&end&&start>end)return showToast("Дата начала не может быть позже дедлайна","bad");
+    const data={title,description:$("#goal_desc").value.trim(),type:$("#goal_type").value,target,startDate:start,endDate:end,status:$("#goal_status").value,updatedAt:Date.now(),createdAt:g.createdAt||Date.now()};
+    try{if(id){await updateDoc(doc(db,"goals",id),data);Object.assign(g,data)}else{const r=await addDoc(c("goals"),data);state.goals.push({id:r.id,...data})}closeModal();renderPage();showToast("Цель сохранена")}catch(e){showToast(firebaseError(e),"bad")}
+  });
+};
+window.removeGoal=async id=>{const g=state.goals.find(x=>x.id===id);if(!g||!confirm(`Удалить цель «${g.title}»?`))return;try{await deleteDoc(doc(db,"goals",id));state.goals=state.goals.filter(x=>x.id!==id);renderPage();showToast("Цель удалена")}catch(e){showToast(firebaseError(e),"bad")}};
+
 function settingsPage(){
  return pageHeader("Настройки","Магазин, резервные копии и безопасность")
  +`<div class="panel"><div class="panel-head"><div><h2>Основное</h2><div class="panel-sub">Персонализация рабочей среды</div></div></div><div class="formgrid"><div class="field"><label>Название магазина</label><input id="shopNameSetting" class="control" value="${esc(state.settings.shopName)}"></div><div class="field"><label>Валюта</label><select id="currencySetting" class="control"><option value="MDL" selected>MDL — молдавский лей</option></select></div><div class="field full"><div class="setting"><div class="setting-info"><b>Тема оформления</b><span>Светлая, тёмная или полностью чёрная.</span></div><select class="control" style="max-width:190px" onchange="setTheme(this.value)"><option value="light" ${getTheme()==="light"?"selected":""}>Светлая</option><option value="dark" ${getTheme()==="dark"?"selected":""}>Тёмная</option><option value="black" ${getTheme()==="black"?"selected":""}>Чёрная</option></select></div></div><div class="field full"><button class="btn primary" style="justify-self:start" onclick="saveSettings()">${icon("check",15)}Сохранить настройки</button></div></div></div>
@@ -964,14 +1085,16 @@ function applyTheme(){
 }
 async function saveSettings(){const shopName=$("#shopNameSetting").value.trim()||"Bine Store";state.settings.shopName=shopName;state.settings.currency="MDL";state.settings.theme=getTheme();state.settings.dark=state.settings.theme==="dark";try{await setDoc(doc(db,"settings","main"),state.settings,{merge:true});applyTheme();render();showToast("Настройки сохранены")}catch(e){showToast(firebaseError(e),"bad")}}
 window.changePassword=async()=>{openModal("Изменить пароль","После сохранения новый пароль будет использоваться при следующем входе.",`<div class="formgrid"><div class="field"><label>Новый пароль</label><input id="np1" type="password" class="control"></div><div class="field"><label>Повторите пароль</label><input id="np2" type="password" class="control"></div></div>`,async()=>{const a=$("#np1").value,b=$("#np2").value;if(a.length<4)return showToast("Минимум 4 символа","bad");if(a!==b)return showToast("Пароли не совпадают","bad");try{state.settings.passwordHash=await hashText(a);await setDoc(doc(db,"settings","main"),{passwordHash:state.settings.passwordHash},{merge:true});closeModal();showToast("Пароль изменён")}catch(e){showToast(firebaseError(e),"bad")}})}
-window.exportJSON=()=>{const data={version:2,exportedAt:new Date().toISOString(),settings:state.settings,products:state.products,orders:state.orders,purchases:state.purchases,clients:state.clients,transactions:state.transactions};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bine-store-crm-backup-"+isoToday()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);showToast("Резервная копия готова")}
-window.importJSON=async e=>{const file=e.target.files[0];if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.products)||!Array.isArray(d.orders)||!Array.isArray(d.clients)||!Array.isArray(d.transactions))throw Error("Неподдерживаемый формат JSON");if(!confirm("Импорт добавит данные к существующей базе. Продолжить?"))return;for(const [name,arr] of Object.entries({products:d.products,orders:d.orders,purchases:d.purchases||[],clients:d.clients,transactions:d.transactions})){for(const item of arr){const copy={...item},id=copy.id||uid();delete copy.id;await setDoc(doc(db,name,id),copy,{merge:true})}}if(d.settings){state.settings={...state.settings,...d.settings};await setDoc(doc(db,"settings","main"),state.settings,{merge:true})}await loadAll();showToast("Импорт завершён")}catch(x){showToast(x.message||"Ошибка импорта","bad")}e.target.value=""}
-window.wipeAll=async()=>{if(!confirm("Удалить ВСЕ товары, заказы, клиентов и финансовые операции? Это нельзя отменить."))return;if(!confirm("Последнее предупреждение. Продолжить очистку?"))return;try{for(const [name,arr] of Object.entries({products:state.products,orders:state.orders,purchases:state.purchases,clients:state.clients,transactions:state.transactions})){for(const x of arr)await deleteDoc(doc(db,name,x.id))}await loadAll();showToast("Все данные удалены")}catch(e){showToast(firebaseError(e),"bad")}}
+window.exportJSON=()=>{const data={version:3,exportedAt:new Date().toISOString(),settings:state.settings,products:state.products,orders:state.orders,purchases:state.purchases,clients:state.clients,transactions:state.transactions,tasks:state.tasks,goals:state.goals};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bine-store-crm-backup-"+isoToday()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);showToast("Резервная копия готова")}
+window.importJSON=async e=>{const file=e.target.files[0];if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.products)||!Array.isArray(d.orders)||!Array.isArray(d.clients)||!Array.isArray(d.transactions))throw Error("Неподдерживаемый формат JSON");if(!confirm("Импорт добавит данные к существующей базе. Продолжить?"))return;for(const [name,arr] of Object.entries({products:d.products,orders:d.orders,purchases:d.purchases||[],clients:d.clients,transactions:d.transactions,tasks:d.tasks||[],goals:d.goals||[]})){for(const item of arr){const copy={...item},id=copy.id||uid();delete copy.id;await setDoc(doc(db,name,id),copy,{merge:true})}}if(d.settings){state.settings={...state.settings,...d.settings};await setDoc(doc(db,"settings","main"),state.settings,{merge:true})}await loadAll();showToast("Импорт завершён")}catch(x){showToast(x.message||"Ошибка импорта","bad")}e.target.value=""}
+window.wipeAll=async()=>{if(!confirm("Удалить ВСЕ товары, заказы, клиентов и финансовые операции? Это нельзя отменить."))return;if(!confirm("Последнее предупреждение. Продолжить очистку?"))return;try{for(const [name,arr] of Object.entries({products:state.products,orders:state.orders,purchases:state.purchases,clients:state.clients,transactions:state.transactions,tasks:state.tasks,goals:state.goals})){for(const x of arr)await deleteDoc(doc(db,name,x.id))}await loadAll();showToast("Все данные удалены")}catch(e){showToast(firebaseError(e),"bad")}}
 
 function morePage(){
   return pageHeader("Ещё","Дополнительные разделы CRM")+`<div class="more-cards">
     <div class="more-card" onclick="go('finance')"><div class="more-icon">${icon("wallet",20)}</div><h3>Финансы</h3><p>Доходы, расходы, бюджет и автоматические операции по заказам.</p></div>
     <div class="more-card" onclick="go('clients')"><div class="more-icon">${icon("users",20)}</div><h3>Клиенты</h3><p>Контакты, количество заказов, сумма покупок и заметки.</p></div>
+    <div class="more-card" onclick="go('tasks')"><div class="more-icon">${icon("calendar",20)}</div><h3>Задачи</h3><p>Поручения, сроки, приоритеты и связь с заказами, клиентами и закупками.</p></div>
+    <div class="more-card" onclick="go('goals')"><div class="more-icon">${icon("star",20)}</div><h3>Цели</h3><p>Планы магазина с автоматическим расчётом прогресса по реальным данным.</p></div>
     <div class="more-card" onclick="go('analytics')"><div class="more-icon">${icon("chart",20)}</div><h3>Аналитика</h3><p>Продажи, средний чек, популярные товары и остатки.</p></div>
     <div class="more-card" onclick="go('settings')"><div class="more-icon">${icon("settings",20)}</div><h3>Настройки</h3><p>Название магазина, резервные копии, пароль и очистка.</p></div>
   </div>`
@@ -984,7 +1107,9 @@ function globalSearch(q){
   const inProducts=state.products.some(p=>(p.name+" "+p.category+" "+p.supplier+" "+p.model).toLowerCase().includes(needle));
   const inOrders=state.orders.some(o=>(o.number+" "+o.clientName+" "+o.status).toLowerCase().includes(needle));
   const inPurchases=state.purchases.some(o=>(o.number+" "+o.supplier+" "+o.status+" "+(o.items||[]).map(i=>i.name).join(" ")).toLowerCase().includes(needle));
-  state.page=inProducts?"products":inOrders?"orders":inPurchases?"purchases":"clients";
+  const inTasks=state.tasks.some(t=>(t.title+" "+t.description+" "+t.status+" "+t.priority).toLowerCase().includes(needle));
+  const inGoals=state.goals.some(g=>(g.title+" "+g.description+" "+g.type+" "+g.status).toLowerCase().includes(needle));
+  state.page=inProducts?"products":inOrders?"orders":inPurchases?"purchases":inTasks?"tasks":inGoals?"goals":"clients";
   state.more=false;state.search=value;state.status="";state.category="";render();
 }
 function renderPage(){
@@ -994,6 +1119,8 @@ function renderPage(){
  else if(state.page==="orders")m.innerHTML=ordersPage();
  else if(state.page==="purchases")m.innerHTML=purchasesPage();
  else if(state.page==="clients")m.innerHTML=clientsPage();
+ else if(state.page==="tasks")m.innerHTML=tasksPage();
+ else if(state.page==="goals")m.innerHTML=goalsPage();
  else if(state.page==="finance")m.innerHTML=financePage();
  else if(state.page==="analytics")m.innerHTML=analyticsPage();
  else if(state.page==="settings")m.innerHTML=settingsPage();
