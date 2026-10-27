@@ -124,7 +124,7 @@ async function dash(user) {
       <nav class="acc-nav" aria-label="Разделы кабинета">
         <div class="acc-user"><span class="avatar">${esc((user.name || user.email)[0].toUpperCase())}</span><span><b>${esc(user.name || "")}</b><small>${esc(user.email)}</small></span></div>
         ${tabs.map(([k, t, i]) => `<a href="#${k}" data-tab="${k}">${i}${t}<span class="n" id="n-${k}"></span></a>`).join("")}
-        ${user.isAdmin ? `<a href="admin.html">${icon.grid}Админ-панель</a>` : ""}
+        ${user.isAdmin ? `<a href="admin.html">${icon.grid}Админ-панель</a><a href="crm.html">${icon.chart}CRM</a>` : ""}
         <button id="logout">${icon.logout}Выйти</button>
       </nav>
       <section class="panel" id="panel"></section>

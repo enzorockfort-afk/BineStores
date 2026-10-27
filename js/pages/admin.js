@@ -98,6 +98,7 @@ function overview() {
     </div>
     <div class="adm-bar">
       <button class="btn btn-chrome" data-act="new">${icon.plus} Добавить товар</button>
+      <a class="btn btn-ghost" href="crm.html">${icon.chart} Открыть CRM</a>
       ${products.length ? "" : `<button class="btn btn-ghost" data-act="seed">Загрузить демо-товары</button>`}
     </div>
     <div class="sec-head" style="margin:36px 0 16px"><h2 class="h2" style="font-size:32px">Последние заказы</h2>${orders.length ? `<button class="link-u" data-go="orders">Все заказы ${icon.arrow}</button>` : ""}</div>

@@ -48,6 +48,10 @@ export const DEMO_ADMIN = {
   name: "Администратор",
 };
 
+/* Вход в CRM (crm.html): вводится только пароль — CRM входит в аккаунт CRM_EMAIL
+   (Firebase Authentication). Сам пароль в коде не хранится. */
+export const CRM_EMAIL = "babaevdavid88@gmail.com";
+
 export const CATEGORIES = ["Обувь", "Одежда", "Аксессуары", "Сумки"];
 
 /* Подкатегории: выбираются в админке, по ним фильтруется каталог */
