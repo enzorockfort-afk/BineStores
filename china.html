@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Под заказ из Китая — Bine Store</title>
+  <meta name="description" content="Пришлите название или фото вещи — найдём и привезём из Китая за 14–20 дней. Встреча в Кишинёве или доставка по Молдове.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css?v=6">
+</head>
+<body>
+<main id="main" class="wrap">
+  <div id="formView">
+    <div class="page-head">
+      <nav class="crumbs" aria-label="Навигация"><a href="index.html">Главная</a><span>Под заказ</span></nav>
+      <h1 class="page-title chrome-t">Под заказ</h1>
+      <p class="sub">Опишите вещь или пришлите фото — найдём у поставщика, назовём цену и срок.</p>
+    </div>
+
+    <div class="co">
+      <form id="form" novalidate>
+        <div class="co-block">
+          <h2>Что ищете</h2>
+          <div class="stack">
+            <label class="field"><span>Название или модель *</span><input class="input" name="title" placeholder="Например, Nike Dunk Low Panda" required></label>
+            <label class="field"><span>Ссылка на товар</span><input class="input" name="link" type="url" inputmode="url" placeholder="Poizon, 1688, Instagram — если есть"></label>
+            <div class="field"><span>Фото — до 3 штук</span>
+              <label class="drop" id="drop">
+                <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3.5h16V16"/></svg>
+                <b>Добавить фото</b>
+                <span>Скриншот или снимок вещи</span>
+                <input type="file" id="files" accept="image/*" multiple>
+              </label>
+              <div class="imgs" id="imgs"></div>
+            </div>
+            <div class="row2">
+              <label class="field"><span>Размер</span><input class="input" name="size" placeholder="42, M, One size"></label>
+              <label class="field"><span>Цвет</span><input class="input" name="color"></label>
+            </div>
+            <div class="row2">
+              <label class="field"><span>Количество</span><input class="input" name="qty" type="number" inputmode="numeric" min="1" value="1"></label>
+              <label class="field"><span>Бюджет до, лей</span><input class="input" name="budget" type="number" inputmode="numeric" min="0"></label>
+            </div>
+            <label class="field"><span>Комментарий</span><textarea class="textarea" name="comment" rows="3"></textarea></label>
+          </div>
+        </div>
+
+        <div class="co-block">
+          <h2>Контакты</h2>
+          <div class="row2">
+            <label class="field"><span>Имя *</span><input class="input" name="name" autocomplete="name" required></label>
+            <label class="field"><span>Телефон *</span><input class="input" name="phone" type="tel" autocomplete="tel" placeholder="+373 6__ __ ___" required></label>
+          </div>
+          <div class="field" style="margin-top:14px"><span>Где удобнее связаться</span>
+            <div class="opts opts-3" id="messengers"></div>
+          </div>
+        </div>
+
+        <label class="consent check"><input type="checkbox" name="agree"> <span>Даю согласие на обработку данных по <a href="privacy.html" target="_blank">политике конфиденциальности</a></span></label>
+        <p class="form-err" id="err" role="alert"></p>
+        <button class="btn btn-chrome btn-block" id="submit" type="submit">Отправить заявку</button>
+      </form>
+
+      <aside class="co-summary" aria-label="Как это работает">
+        <h2>Как это работает</h2>
+        <ol class="mini-steps">
+          <li><b>Заявка</b><span>Вы описываете вещь — это бесплатно и ни к чему не обязывает.</span></li>
+          <li><b>Предложение</b><span>Свяжемся в течение дня: цена, срок, фото от поставщика.</span></li>
+          <li><b>Заказ</b><span>После вашего согласия — предоплата и выкуп.</span></li>
+          <li><b>Получение</b><span>Обычно 14–20 дней. Встреча в Кишинёве или доставка по Молдове.</span></li>
+        </ol>
+      </aside>
+    </div>
+  </div>
+  <div id="doneView" hidden></div>
+</main>
+<script type="module" src="js/pages/china.js?v=6"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Админ-панель — Bine Store</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css?v=6">
+</head>
+<body>
+<main id="main" class="wrap" style="padding-bottom:120px"><div id="view"></div></main>
+
+<dialog class="modal" id="editor" aria-labelledby="edTitle">
+  <form id="edForm" method="dialog" novalidate style="display:contents">
+    <div class="modal-head"><h2 id="edTitle">Новый товар</h2><button type="button" class="ic-btn" data-close aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div>
+        <label class="drop" id="drop">
+          <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3.5h16V16"/></svg>
+          <b>Перетащите фото или нажмите</b>
+          <span>JPG, PNG, WEBP, HEIC — сожмём автоматически. Первое фото — обложка, порядок меняется перетаскиванием.</span>
+          <input type="file" id="files" accept="image/*" multiple>
+        </label>
+        <div class="imgs" id="imgs"></div>
+      </div>
+      <div class="stack">
+        <div class="row2">
+          <label class="field"><span>Бренд</span><input class="input" name="brand" list="brandList" required></label>
+          <label class="field"><span>Категория</span><select class="select" name="cat" id="catSel"></select></label>
+        </div>
+        <datalist id="brandList"></datalist>
+        <label class="field"><span>Название</span><input class="input" name="pname" required></label>
+        <div class="row2">
+          <label class="field"><span>Цена, лей</span><input class="input" name="price" type="number" inputmode="numeric" min="0" required></label>
+          <label class="field"><span>Старая цена (для скидки)</span><input class="input" name="oldPrice" type="number" inputmode="numeric" min="0"></label>
+        </div>
+        <div class="field"><span>Размеры</span>
+          <div class="size-pick" id="sizePick"></div>
+          <div style="display:flex;gap:8px"><input class="input" id="customSize" placeholder="Свой размер, например 44.5" style="height:44px"><button type="button" class="btn btn-ghost btn-sm" id="addSize">Добавить</button></div>
+        </div>
+        <label class="field"><span>Описание</span><textarea class="textarea" name="desc" rows="3"></textarea></label>
+        <label class="check"><input type="checkbox" name="featured"> Показывать на главной</label>
+        <label class="pub" style="font-size:15px;color:var(--white)"><span class="switch"><input type="checkbox" name="published" checked></span> Опубликован</label>
+        <p class="form-err" id="edErr" role="alert"></p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" data-close>Отмена</button>
+      <button type="submit" class="btn btn-chrome" id="edSave">Сохранить</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="confirm" style="width:min(440px,calc(100% - 20px))">
+  <div class="modal-head"><h2 id="cfTitle">Удалить?</h2></div>
+  <div style="padding:20px 24px;color:var(--mist)" id="cfText"></div>
+  <div class="modal-foot"><button class="btn btn-ghost" value="no" id="cfNo">Отмена</button><button class="btn btn-chrome" id="cfYes">Удалить</button></div>
+</dialog>
+
+<script type="module" src="js/pages/admin.js?v=6"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Каталог — Bine Store</title>
+  <meta name="description" content="Каталог брендовой обуви, одежды и аксессуаров. В наличии в Кишинёве и под заказ из Китая.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css?v=6">
+</head>
+<body>
+<main id="main" class="wrap">
+  <div class="page-head">
+    <nav class="crumbs" aria-label="Навигация"><a href="index.html">Главная</a><span>Каталог</span></nav>
+    <h1 class="page-title chrome-t" id="title">Каталог<sup id="count"></sup></h1>
+  </div>
+
+  <div class="cat-tabs" id="catTabs" role="group" aria-label="Категории"></div>
+
+  <div class="cat-layout">
+    <aside class="filters" id="filters" aria-label="Фильтры">
+      <div class="f-sheet-head"><b>Фильтры</b><button class="ic-btn" id="fClose" aria-label="Закрыть фильтры"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="f-group">
+        <h3>Бренд</h3>
+        <div id="fBrands"></div>
+      </div>
+      <div class="f-group">
+        <h3>Размер</h3>
+        <div class="f-sizes" id="fSizes"></div>
+      </div>
+      <div class="f-group">
+        <h3>Цена, лей</h3>
+        <div class="f-price">
+          <input class="input" type="number" inputmode="numeric" id="pMin" placeholder="от" aria-label="Цена от">
+          <input class="input" type="number" inputmode="numeric" id="pMax" placeholder="до" aria-label="Цена до">
+        </div>
+      </div>
+      <div class="f-group">
+        <label class="check"><input type="checkbox" id="fSale"> Только со скидкой</label>
+      </div>
+      <div class="f-sheet-foot"><button class="btn btn-chrome btn-block" id="fApply">Показать</button></div>
+    </aside>
+
+    <section aria-label="Товары">
+      <div class="toolbar">
+        <label class="tb-search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <input class="input" type="search" id="q" placeholder="Бренд или модель" aria-label="Поиск в каталоге">
+        </label>
+        <select class="select" id="sort" aria-label="Сортировка">
+          <option value="new">Сначала новые</option>
+          <option value="asc">Сначала дешевле</option>
+          <option value="desc">Сначала дороже</option>
+          <option value="sale">Самые большие скидки</option>
+        </select>
+        <button class="btn btn-ghost btn-sm f-toggle" id="fOpen"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Фильтры</button>
+      </div>
+      <div class="active-chips" id="active"></div>
+      <div class="grid" id="grid"></div>
+      <div class="empty-state" id="empty" hidden>
+        <div class="empty-orb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></div>
+        <p>Ничего не нашлось</p>
+        <button class="btn btn-ghost" id="reset">Сбросить фильтры</button>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="scrim" id="fScrim" hidden></div>
+<script type="module" src="js/pages/catalog.js?v=6"></script>
+</body>
+</html>
