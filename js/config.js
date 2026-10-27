@@ -4,10 +4,10 @@
 export const SHOP = {
   name: "Bine Store",
   city: "Кишинёв",
-  telegram: "binestore",       // username без @
-  whatsapp: "37360000000",     // номер без + и пробелов
-  viber: "37360000000",        // номер без + и пробелов
-  instagram: "binestore",      // username без @
+  telegram: "bine_manager",    // менеджер в Telegram (username без @) — сюда идут вопросы и заказы
+  channel: "bine_store",       // Telegram-канал
+  tiktok: "binestoremds",      // TikTok (без @)
+  instagram: "binestoremd",    // Instagram (без @)
   currency: "лей",
   chinaDays: "14–20 дней",
 };

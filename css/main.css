@@ -984,3 +984,14 @@ body.leaving::after { transform: scaleY(1); }
 .lightbox img { max-width: 94vw; max-height: 88svh; border-radius: var(--r-md); object-fit: contain; }
 .lightbox .ic-btn { position: absolute; top: -52px; right: 0; background: rgba(255,255,255,.1); }
 .lightbox[open] { animation: modalIn .4s var(--ease); }
+
+/* ---------- Floating "ask the manager" ---------- */
+.ask-fab { position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 70; display: inline-flex; align-items: center; gap: 10px; height: 54px; padding: 0 20px 0 16px; border-radius: var(--pill); background: var(--chrome); background-size: 200% 100%; color: var(--ink); font-weight: 700; font-size: 14px; box-shadow: 0 14px 40px -12px rgba(0,0,0,.8), inset 0 1px 0 #fff; transition: transform .4s var(--ease), background-position .8s var(--ease); animation: rise .8s var(--ease) 1.2s both; }
+.ask-fab:hover { transform: translateY(-3px); background-position: 100% 0; }
+.ask-fab svg { width: 22px; height: 22px; }
+.lock .ask-fab { display: none; }
+@media (max-width: 900px) {
+  .ask-fab { width: 54px; padding: 0; justify-content: center; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .ask-fab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  body:has(.mobile-buy.show) .ask-fab { bottom: calc(86px + env(safe-area-inset-bottom)); }
+}

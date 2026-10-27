@@ -9,9 +9,9 @@ const F = form.elements;
 
 const MESS = [
   ["telegram", "Telegram", icon.tg],
-  ["whatsapp", "WhatsApp", icon.wa],
-  ["viber", "Viber", icon.vb],
-].filter(([k]) => SHOP[k]);
+  ["phone", "Звонок", '<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>'],
+].filter(([k]) => k === "phone" || SHOP[k]);
+$("#messengers").style.gridTemplateColumns = `repeat(${MESS.length}, 1fr)`;
 $("#messengers").innerHTML = MESS.map(
   ([k, t, i], n) => `<label class="opt"><input type="radio" name="messenger" value="${k}"${n ? "" : " checked"}><span class="opt-body">${i}<b>${t}</b></span></label>`
 ).join("");
@@ -73,9 +73,7 @@ const msgText = (o) =>
 
 function messengerUrl(m, text) {
   const t = encodeURIComponent(text);
-  if (m === "telegram") return `https://t.me/${SHOP.telegram}?text=${t}`;
-  if (m === "whatsapp") return `https://wa.me/${SHOP.whatsapp}?text=${t}`;
-  return `viber://chat?number=%2B${SHOP.viber}&draft=${t}`;
+  return `https://t.me/${SHOP.telegram}?text=${t}`;
 }
 
 form.addEventListener("submit", async (e) => {
@@ -135,7 +133,7 @@ function showDone(o) {
     <h1 class="chrome-t">Заказ принят</h1>
     <span class="num">${esc(o.number)}</span>
     <p>Мы свяжемся с вами в ближайшее время. Чтобы ускорить подтверждение — отправьте заказ нам в мессенджер.</p>
-    ${o.messenger ? `<a class="btn btn-chrome" href="${messengerUrl(o.messenger, text)}" target="_blank" rel="noopener" data-magnetic>Отправить в ${o.messenger === "telegram" ? "Telegram" : o.messenger === "whatsapp" ? "WhatsApp" : "Viber"}</a>` : ""}
+    ${SHOP.telegram ? `<a class="btn btn-chrome" href="${messengerUrl(o.messenger, text)}" target="_blank" rel="noopener" data-magnetic>${icon.tg} Написать менеджеру в Telegram</a>` : ""}
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
       ${user ? `<a class="btn btn-ghost" href="account.html#orders">Мои заказы</a>` : ""}
       <a class="btn btn-ghost" href="catalog.html">Продолжить покупки</a>

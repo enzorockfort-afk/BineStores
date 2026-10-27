@@ -10,8 +10,6 @@ const MAX = 3;
 
 const MESS = [
   ["telegram", "Telegram", icon.tg],
-  ["whatsapp", "WhatsApp", icon.wa],
-  ["viber", "Viber", icon.vb],
   ["phone", "Звонок", '<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>'],
 ].filter(([k]) => k === "phone" || SHOP[k]);
 $("#messengers").style.gridTemplateColumns = `repeat(${Math.min(MESS.length, 4)}, 1fr)`;
@@ -129,14 +127,14 @@ function done(r) {
   const v = $("#doneView");
   v.hidden = false;
   const text = encodeURIComponent(`Здравствуйте! Заявка ${r.number}: ${r.title}${r.size ? `, размер ${r.size}` : ""}`);
-  const msg = SHOP.telegram ? `https://t.me/${SHOP.telegram}?text=${text}` : SHOP.whatsapp ? `https://wa.me/${SHOP.whatsapp}?text=${text}` : "";
+  const msg = SHOP.telegram ? `https://t.me/${SHOP.telegram}?text=${text}` : "";
   v.innerHTML = `<section class="success">
     <div class="success-orb">${icon.check}</div>
     <h1 class="chrome-t">Заявка отправлена</h1>
     <span class="num">${esc(r.number)}</span>
     <p>Мы свяжемся с вами в течение дня, назовём цену и срок доставки.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-      ${msg ? `<a class="btn btn-chrome" href="${msg}" target="_blank" rel="noopener">Написать нам</a>` : ""}
+      ${msg ? `<a class="btn btn-chrome" href="${msg}" target="_blank" rel="noopener">${icon.tg} Написать менеджеру</a>` : ""}
       ${user ? `<a class="btn btn-ghost" href="account.html#orders">Мои заявки</a>` : ""}
       <a class="btn btn-ghost" href="china.html">Ещё одна заявка</a>
     </div>

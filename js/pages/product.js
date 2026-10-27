@@ -59,7 +59,7 @@ if (!p) {
         <button class="btn btn-chrome" id="addBtn" data-magnetic>${icon.bag} Добавить в корзину</button>
         <button class="fav-btn" data-fav="${esc(p.id)}" aria-pressed="${favs.has(p.id)}" aria-label="В избранное">${icon.heart}</button>
       </div>
-      ${SHOP.telegram ? `<a class="pd-ask" href="https://t.me/${SHOP.telegram}?text=${askText}" target="_blank" rel="noopener">${icon.tg} Задать вопрос в Telegram</a>` : ""}
+      ${SHOP.telegram ? `<a class="pd-ask" href="https://t.me/${SHOP.telegram}?text=${askText}" target="_blank" rel="noopener">${icon.tg} Задать вопрос менеджеру</a>` : ""}
       <div class="pd-perks">
         <div>${icon.shield} Осматриваем вещь перед выдачей</div>
         <div>${icon.pin} Встреча и примерка в Кишинёве бесплатно</div>

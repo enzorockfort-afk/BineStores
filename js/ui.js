@@ -36,6 +36,8 @@ export const icon = {
   tg: '<svg viewBox="0 0 24 24"><path d="M21 4 3 11l6 2 2 6 3-4 5 4 2-15Z"/><path d="m9 13 8-6"/></svg>',
   wa: '<svg viewBox="0 0 24 24"><path d="M4 20l1.3-4A8 8 0 1 1 8 19Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1a4 4 0 0 1-2-2l1-1-1-2Z"/></svg>',
   vb: '<svg viewBox="0 0 24 24"><path d="M12 3c5 0 8 2 8 7.5S17 18 12 18l-4 3v-3.5C5 16.5 4 14 4 10.5 4 5 7 3 12 3Z"/><path d="M13 7a3 3 0 0 1 3 3"/></svg>',
+  tiktok: '<svg viewBox="0 0 24 24"><path d="M13.5 3v11.6a3.6 3.6 0 1 1-3.6-3.6"/><path d="M13.5 3c.4 2.7 2.3 4.6 5.2 4.8"/></svg>',
+  channel: '<svg viewBox="0 0 24 24"><path d="M3.5 9.5v5h3l7.5 4.5v-14l-7.5 4.5z"/><path d="M17.5 9a4 4 0 0 1 0 6"/></svg>',
   ig: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".7"/></svg>',
   upload: '<svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3.5h16V16"/></svg>',
   edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>',
@@ -307,12 +309,15 @@ function header(active) {
   </aside>`;
 }
 
+/* ссылка на менеджера в Telegram; text — готовое сообщение */
+export const managerLink = (text = "") => `https://t.me/${SHOP.telegram}${text ? "?text=" + encodeURIComponent(text) : ""}`;
+
 export function socials(cls = "") {
   const l = [
-    SHOP.telegram && ["Telegram", `https://t.me/${SHOP.telegram}`, icon.tg],
-    SHOP.whatsapp && ["WhatsApp", `https://wa.me/${SHOP.whatsapp}`, icon.wa],
-    SHOP.viber && ["Viber", `viber://chat?number=%2B${SHOP.viber}`, icon.vb],
-    SHOP.instagram && ["Instagram", `https://instagram.com/${SHOP.instagram}`, icon.ig],
+    SHOP.telegram && ["Менеджер", managerLink(), icon.tg],
+    SHOP.channel && ["Telegram-канал", `https://t.me/${SHOP.channel}`, icon.channel],
+    SHOP.tiktok && ["TikTok", `https://www.tiktok.com/@${SHOP.tiktok}`, icon.tiktok],
+    SHOP.instagram && ["Instagram", `https://www.instagram.com/${SHOP.instagram}/`, icon.ig],
   ].filter(Boolean);
   return `<div class="socials ${cls}">${l.map(([t, h, i]) => `<a href="${h}" target="_blank" rel="noopener" aria-label="${t}">${i}<span>${t}</span></a>`).join("")}</div>`;
 }
@@ -464,6 +469,11 @@ async function runSearch(q) {
 export async function initLayout(active) {
   document.body.insertAdjacentHTML("afterbegin", header(active));
   document.body.insertAdjacentHTML("beforeend", footer());
+  if (SHOP.telegram)
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<a class="ask-fab" href="${managerLink("Здравствуйте! У меня вопрос по Bine Store")}" target="_blank" rel="noopener" aria-label="Задать вопрос менеджеру в Telegram">${icon.tg}<span>Вопрос менеджеру</span></a>`
+    );
   preloader();
   transitions();
   requestAnimationFrame(() => document.body.classList.add("ready"));

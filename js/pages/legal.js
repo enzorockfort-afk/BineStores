@@ -7,7 +7,7 @@ await initLayout("");
 const req = (v, label) => (v ? esc(v) : `<mark>${label}</mark>`);
 const seller = `${req(COMPANY.name, "[название продавца]")}, IDNO ${req(COMPANY.idno, "[IDNO]")}, адрес: ${req(COMPANY.address, "[юридический адрес]")}`;
 const mail = COMPANY.email ? `<a href="mailto:${esc(COMPANY.email)}">${esc(COMPANY.email)}</a>` : `<mark>[email]</mark>`;
-const tg = SHOP.telegram ? ` или в Telegram <a href="https://t.me/${esc(SHOP.telegram)}" target="_blank" rel="noopener">@${esc(SHOP.telegram)}</a>` : "";
+const tg = SHOP.telegram ? ` или менеджеру в Telegram <a href="https://t.me/${esc(SHOP.telegram)}" target="_blank" rel="noopener">@${esc(SHOP.telegram)}</a>` : "";
 
 const DOCS = {
   privacy: `
