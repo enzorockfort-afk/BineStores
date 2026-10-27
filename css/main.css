@@ -657,6 +657,7 @@ body.leaving::after { transform: scaleY(1); }
 .sizes { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
 .size { height: 52px; border-radius: 12px; border: 1px solid var(--line-2); font-weight: 600; transition: all .25s var(--ease); }
 .size:hover { border-color: var(--white); }
+.size:disabled { opacity: .35; text-decoration: line-through; pointer-events: none; }
 .size[aria-checked="true"] { background: var(--white); color: var(--ink); border-color: var(--white); transform: translateY(-2px); box-shadow: 0 10px 24px -10px rgba(255,255,255,.4); }
 .sizes.err .size { animation: shake .4s; border-color: var(--red); }
 .pd-actions { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
@@ -759,8 +760,8 @@ body.leaving::after { transform: scaleY(1); }
 .st { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--pill); font-size: 12px; font-weight: 700; background: var(--carbon-3); color: var(--mist); }
 .st::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .st-new { color: var(--ink); background: var(--holo); }
-.st-confirmed, .st-ordered { color: var(--amber); background: rgba(243,201,119,.12); }
-.st-shipping, .st-ready { color: #9cc8ff; background: rgba(156,200,255,.12); }
+.st-confirmed, .st-ordered, .st-progress, .st-offered, .st-prepaid { color: var(--amber); background: rgba(243,201,119,.12); }
+.st-shipping, .st-ready, .st-transit, .st-arrived { color: #9cc8ff; background: rgba(156,200,255,.12); }
 .st-done { color: var(--mint); background: rgba(125,240,185,.12); }
 .st-cancelled { color: var(--red); background: rgba(255,112,112,.12); }
 .order-body { padding: 0 20px 20px; border-top: 1px solid var(--line); }

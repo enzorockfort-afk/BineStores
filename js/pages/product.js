@@ -22,7 +22,10 @@ if (!p) {
   let images = p.imgCount ? await api.products.images(p.id).catch(() => []) : [];
   const slides = images.length ? images.map((src) => `<img src="${src}" alt="${esc(p.brand + " " + p.name)}">`) : [art(p)];
   const thumbs = images.length ? images.map((src) => `<img src="${src}" alt="">`) : [art(p, "art-sm")];
-  const single = (p.sizes || []).length === 1;
+  // остатки ведутся в CRM: размер с нулём недоступен
+  const out = (s) => p.stockQty && p.stockQty[s] === 0;
+  const avail = (p.sizes || []).filter((s) => !out(s));
+  const single = avail.length === 1;
   const askText = encodeURIComponent(`Здравствуйте! Интересует ${p.brand} ${p.name} (${location.href})`);
 
   root.innerHTML = `
@@ -49,7 +52,7 @@ if (!p) {
       <div>
         <div class="pd-label"><span>Размер</span><em id="sizeErr">Выберите размер</em></div>
         <div class="sizes" id="sizes" role="radiogroup" aria-label="Размер">${(p.sizes || [])
-          .map((s) => `<button class="size" role="radio" aria-checked="${single}" data-size="${esc(s)}">${esc(s)}</button>`)
+          .map((s) => `<button class="size" role="radio" aria-checked="${single && !out(s)}" data-size="${esc(s)}"${out(s) ? ` disabled aria-label="${esc(s)} — нет в наличии"` : ""}>${esc(s)}</button>`)
           .join("")}</div>
       </div>
       <div class="pd-actions">
@@ -116,7 +119,7 @@ ${p.stock === "china" ? `Заказ из Китая — ${SHOP.chinaDays}. Пе�
   });
 
   // sizes + add
-  let size = single ? p.sizes[0] : null;
+  let size = single ? avail[0] : null;
   $("#sizes").addEventListener("click", (e) => {
     const b = e.target.closest("[data-size]");
     if (!b) return;

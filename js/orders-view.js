@@ -56,7 +56,7 @@ export function requestHtml(r, i, admin = false) {
     <summary>
       <span><span class="order-num">${esc(r.number)}</span><span class="order-date">${fmtDate(r.createdAt)} · ${esc(r.title)}</span></span>
       <span class="order-sum hide-m">${r.photos?.length ? `${r.photos.length} фото` : ""}</span>
-      <span class="st st-${r.status === "progress" || r.status === "offered" ? "confirmed" : r.status}">${REQUEST_STATUSES[r.status] || r.status}</span>
+      <span class="st st-${r.status}">${REQUEST_STATUSES[r.status] || r.status}</span>
     </summary>
     <div class="order-body">
       ${admin ? `<div class="req-acts">${status}

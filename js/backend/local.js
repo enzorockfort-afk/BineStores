@@ -45,6 +45,13 @@ async function hash(s) {
   return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 const err = (code, message) => Object.assign(new Error(message), { code });
+async function patchIn(key, id, patch) {
+  const list = await get(key, []);
+  const x = list.find((o) => o.id === id);
+  if (x) Object.assign(x, patch);
+  await set(key, list);
+  return x;
+}
 
 async function boot() {
   if (await get("booted")) return;
@@ -167,9 +174,9 @@ export async function createLocal() {
     },
 
     requests: {
-      async create(req) {
+      async create(req, { manual = false } = {}) {
         const list = await get("requests", []);
-        const r = { ...req, id: uid(), uid: current?.uid || null, status: "new", createdAt: Date.now() };
+        const r = { ...req, id: uid(), uid: manual ? null : current?.uid || null, status: "new", createdAt: Date.now() };
         list.unshift(r);
         await set("requests", list);
         return r;
@@ -187,12 +194,13 @@ export async function createLocal() {
         if (r) r.status = status;
         await set("requests", list);
       },
+      update: (id, patch) => patchIn("requests", id, patch),
     },
 
     orders: {
-      async create(order) {
+      async create(order, { manual = false } = {}) {
         const orders = await get("orders", []);
-        const o = { ...order, id: uid(), uid: current?.uid || null, status: "new", createdAt: Date.now() };
+        const o = { ...order, id: uid(), uid: manual ? null : current?.uid || null, status: "new", createdAt: Date.now() };
         orders.unshift(o);
         await set("orders", orders);
         return o;
@@ -209,6 +217,24 @@ export async function createLocal() {
         const o = orders.find((x) => x.id === id);
         if (o) o.status = status;
         await set("orders", orders);
+      },
+      update: (id, patch) => patchIn("orders", id, patch),
+    },
+
+    /* CRM-коллекции: clients, tasks */
+    crm: {
+      list: (col) => get(col, []),
+      async save(col, data) {
+        const list = await get(col, []);
+        const doc = { ...data, id: data.id || uid(), updatedAt: Date.now() };
+        doc.createdAt ||= Date.now();
+        const i = list.findIndex((x) => x.id === doc.id);
+        i >= 0 ? (list[i] = doc) : list.unshift(doc);
+        await set(col, list);
+        return doc;
+      },
+      async remove(col, id) {
+        await set(col, (await get(col, [])).filter((x) => x.id !== id));
       },
     },
   };

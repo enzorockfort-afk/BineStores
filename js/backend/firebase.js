@@ -139,8 +139,8 @@ export async function createFirebase(config) {
     },
 
     requests: {
-      async create(req) {
-        const data = { ...req, uid: current?.uid || null, status: "new", createdAt: Date.now() };
+      async create(req, { manual = false } = {}) {
+        const data = { ...req, uid: manual ? null : current?.uid || null, status: "new", createdAt: Date.now() };
         const ref = await addDoc(collection(db, "requests"), data);
         return { ...data, id: ref.id };
       },
@@ -156,11 +156,12 @@ export async function createFirebase(config) {
       async setStatus(id, status) {
         await updateDoc(doc(db, "requests", id), { status });
       },
+      update: (id, patch) => updateDoc(doc(db, "requests", id), patch),
     },
 
     orders: {
-      async create(order) {
-        const data = { ...order, uid: current?.uid || null, status: "new", createdAt: Date.now() };
+      async create(order, { manual = false } = {}) {
+        const data = { ...order, uid: manual ? null : current?.uid || null, status: "new", createdAt: Date.now() };
         const ref = await addDoc(collection(db, "orders"), data);
         return { ...data, id: ref.id };
       },
@@ -176,6 +177,24 @@ export async function createFirebase(config) {
       async setStatus(id, status) {
         await updateDoc(doc(db, "orders", id), { status });
       },
+      update: (id, patch) => updateDoc(doc(db, "orders", id), patch),
+    },
+
+    /* CRM-коллекции: clients, tasks (только для админа) */
+    crm: {
+      async list(col) {
+        const snap = await getDocs(collection(db, col));
+        return snap.docs.map(withId);
+      },
+      async save(col, data) {
+        const { id, ...rest } = data;
+        rest.updatedAt = Date.now();
+        rest.createdAt ||= Date.now();
+        const ref = id ? doc(db, col, id) : doc(collection(db, col));
+        await setDoc(ref, rest);
+        return { ...rest, id: ref.id };
+      },
+      remove: (col, id) => deleteDoc(doc(db, col, id)),
     },
   };
 }

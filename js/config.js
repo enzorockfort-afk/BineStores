@@ -52,11 +52,15 @@ export const CATEGORIES = ["Обувь", "Одежда", "Аксессуары",
 export const REQUEST_STATUSES = {
   new: "Новая",
   progress: "Ищем",
-  offered: "Предложение отправлено",
-  ordered: "Заказано",
-  done: "Выполнена",
+  offered: "Предложение",
+  prepaid: "Предоплата",
+  ordered: "Выкуплено",
+  transit: "В пути",
+  arrived: "Приехало",
+  done: "Выдано",
   cancelled: "Отменена",
 };
+export const SOURCES = { site: "Сайт", instagram: "Instagram", telegram: "Telegram", whatsapp: "WhatsApp", viber: "Viber", offline: "Лично", other: "Другое" };
 export const ORDER_STATUSES = {
   new: "Новый",
   confirmed: "Подтверждён",
