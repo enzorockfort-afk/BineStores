@@ -32,12 +32,12 @@ export const LEGAL_UPDATED = "26 октября 2026";
    данные хранятся только в этом браузере.
    ========================================================= */
 export const FIREBASE = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
+  apiKey: "AIzaSyBeT-5IXv4cynmLtECavfDY0okViKD6wLM",
+  authDomain: "binecrm.firebaseapp.com",
+  projectId: "binecrm",
+  storageBucket: "binecrm.firebasestorage.app",
+  messagingSenderId: "103777865626",
+  appId: "1:103777865626:web:00a247429751b92383f423",
 };
 
 /* Демо-режим: аккаунт администратора, который создаётся в браузере
