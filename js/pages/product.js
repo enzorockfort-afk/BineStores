@@ -17,7 +17,7 @@ if (!p) {
 } else {
   document.title = `${p.brand} ${p.name} — Bine Store`;
   $('meta[name="description"]').content = `${p.brand} ${p.name} — ${money(p.price)}. ${p.stock === "stock" ? "В наличии в Кишинёве" : "Под заказ из Китая"}.`;
-  $("#crumbs").insertAdjacentHTML("beforeend", `<a href="catalog.html?cat=${encodeURIComponent(p.cat)}"><span>${esc(p.cat)}</span></a><span>${esc(p.brand)}</span>`);
+  $("#crumbs").insertAdjacentHTML("beforeend", `<a href="catalog.html?cat=${encodeURIComponent(p.cat)}"><span>${esc(p.cat)}</span></a>${p.sub ? `<a href="catalog.html?cat=${encodeURIComponent(p.cat)}&sub=${encodeURIComponent(p.sub)}"><span>${esc(p.sub)}</span></a>` : ""}<span>${esc(p.brand)}</span>`);
 
   let images = p.imgCount ? await api.products.images(p.id).catch(() => []) : [];
   const slides = images.length ? images.map((src) => `<img src="${src}" alt="${esc(p.brand + " " + p.name)}">`) : [art(p)];

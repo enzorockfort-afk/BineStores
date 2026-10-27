@@ -1,5 +1,5 @@
 import { initLayout, $, $$, card, skeletons, reveal, esc, qs, icon } from "../ui.js";
-import { CATEGORIES } from "../config.js";
+import { CATEGORIES, SUBCATEGORIES } from "../config.js";
 
 await initLayout("catalog");
 
@@ -10,6 +10,7 @@ const all = await loadProducts();
 
 const S = {
   cat: qs("cat") || "",
+  sub: qs("sub") || "",
   q: qs("q") || "",
   brands: new Set((qs("brand") || "").split(",").filter(Boolean)),
   sizes: new Set(),
@@ -27,11 +28,18 @@ const brands = [...new Set(all.map((p) => p.brand))].sort();
 $("#fBrands").innerHTML = brands
   .map((b) => `<label class="check"><input type="checkbox" value="${esc(b)}"${S.brands.has(b) ? " checked" : ""}> ${esc(b)} <em>${all.filter((p) => p.brand === b).length}</em></label>`)
   .join("");
-const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL", "One size"];
+// порядок: обувь (числа) → талия (W..) → буквенные → One size → прочее
+const LETTERS = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+const sizeKey = (s) => {
+  if (/^\d+([.,]\d+)?$/.test(s)) return [0, parseFloat(s.replace(",", "."))];
+  if (/^W\d+$/i.test(s)) return [1, parseInt(s.slice(1))];
+  if (LETTERS.includes(s)) return [2, LETTERS.indexOf(s)];
+  if (s === "One size") return [3, 0];
+  return [4, 0];
+};
 const sizes = [...new Set(all.flatMap((p) => p.sizes || []))].sort((a, b) => {
-  const ia = sizeOrder.indexOf(a), ib = sizeOrder.indexOf(b);
-  if (ia >= 0 || ib >= 0) return (ia < 0 ? -1 : ia) - (ib < 0 ? -1 : ib) || 0;
-  return parseFloat(a) - parseFloat(b);
+  const [ga, va] = sizeKey(a), [gb, vb] = sizeKey(b);
+  return ga - gb || va - vb || a.localeCompare(b);
 });
 $("#fSizes").innerHTML = sizes.map((s) => `<button class="chip" data-size="${esc(s)}" aria-pressed="false">${esc(s)}</button>`).join("");
 $("#q").value = S.q;
@@ -42,12 +50,13 @@ function filtered() {
   let list = all.filter(
     (p) =>
       (!S.cat || p.cat === S.cat) &&
+      (!S.sub || p.sub === S.sub) &&
       (!S.brands.size || S.brands.has(p.brand)) &&
       (!S.sizes.size || (p.sizes || []).some((s) => S.sizes.has(s))) &&
       (!S.min || p.price >= +S.min) &&
       (!S.max || p.price <= +S.max) &&
       (!S.sale || p.oldPrice > p.price) &&
-      (!q || `${p.brand} ${p.name} ${p.cat}`.toLowerCase().includes(q))
+      (!q || `${p.brand} ${p.name} ${p.cat} ${p.sub || ""}`.toLowerCase().includes(q))
   );
   const off = (p) => (p.oldPrice > p.price ? 1 - p.price / p.oldPrice : 0);
   const sorts = {
@@ -62,6 +71,7 @@ function filtered() {
 function syncUrl() {
   const p = new URLSearchParams();
   if (S.cat) p.set("cat", S.cat);
+  if (S.sub) p.set("sub", S.sub);
   if (S.q) p.set("q", S.q);
   if (S.brands.size) p.set("brand", [...S.brands].join(","));
   if (S.sale) p.set("sale", "1");
@@ -71,7 +81,13 @@ function syncUrl() {
 function render() {
   const list = filtered();
   $("#count").textContent = list.length;
-  $("#title").firstChild.textContent = S.cat || "Каталог";
+  $("#title").firstChild.textContent = S.sub || S.cat || "Каталог";
+  // подкатегории показываем только те, где есть товары
+  const subs = (SUBCATEGORIES[S.cat] || []).filter((s) => all.some((p) => p.cat === S.cat && p.sub === s));
+  $("#subTabs").hidden = !subs.length;
+  $("#subTabs").innerHTML = ["", ...subs]
+    .map((s) => `<button class="chip" data-sub="${esc(s)}" aria-pressed="${S.sub === s}">${s || "Все"}</button>`)
+    .join("");
   grid.innerHTML = list.map(card).join("");
   $("#empty").hidden = list.length > 0;
   $$("#catTabs .chip").forEach((c) => c.setAttribute("aria-pressed", c.dataset.cat === S.cat));
@@ -92,6 +108,13 @@ $("#catTabs").addEventListener("click", (e) => {
   const b = e.target.closest("[data-cat]");
   if (!b) return;
   S.cat = b.dataset.cat;
+  S.sub = "";
+  render();
+});
+$("#subTabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-sub]");
+  if (!b) return;
+  S.sub = b.dataset.sub;
   render();
 });
 $("#fBrands").addEventListener("change", (e) => {
@@ -126,7 +149,7 @@ $("#q").addEventListener("input", (e) => {
 $("#sort").addEventListener("change", (e) => ((S.sort = e.target.value), render()));
 
 function reset() {
-  Object.assign(S, { cat: "", q: "", min: "", max: "", sale: false });
+  Object.assign(S, { cat: "", sub: "", q: "", min: "", max: "", sale: false });
   S.brands.clear();
   S.sizes.clear();
   $$("#filters input[type=checkbox]").forEach((c) => (c.checked = false));

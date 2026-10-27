@@ -1,6 +1,6 @@
 import { initLayout, $, $$, esc, money, art, icon, toast, tag, reveal } from "../ui.js";
 import { api, errorText } from "../api.js";
-import { CATEGORIES, ORDER_STATUSES, REQUEST_STATUSES } from "../config.js";
+import { CATEGORIES, ORDER_STATUSES, REQUEST_STATUSES, SUBCATEGORIES, SIZE_SETS, WAIST_SUBS } from "../config.js";
 import { SEED } from "../seed.js";
 import { orderHtml, requestHtml } from "../orders-view.js";
 import { compress, isImageFile } from "../images.js";
@@ -276,16 +276,28 @@ view.addEventListener("change", async (e) => {
 /* ---------------- editor ---------------- */
 const ed = $("#editor");
 const EF = $("#edForm").elements;
-const SHOE = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
-const CLOTH = ["XS", "S", "M", "L", "XL", "XXL"];
 let editing = null;
 let imgs = [];
 let sizes = new Set();
 
 $("#catSel").innerHTML = CATEGORIES.map((c) => `<option>${c}</option>`).join("");
 
+function renderSubs(selected = "") {
+  const list = SUBCATEGORIES[EF.cat.value] || [];
+  $("#subSel").innerHTML = `<option value="">Без подкатегории</option>` + list.map((s) => `<option${s === selected ? " selected" : ""}>${s}</option>`).join("");
+}
+/* размеры для выбора зависят от категории: обувь 30–48, одежда XXS–XXXL (+ талия для низа) */
+function presetSizes() {
+  const cat = EF.cat.value;
+  if (cat === "Обувь") return SIZE_SETS.shoes;
+  if (cat === "Одежда") return WAIST_SUBS.includes(EF.sub.value) ? [...SIZE_SETS.waist, ...SIZE_SETS.clothes] : SIZE_SETS.clothes;
+  return SIZE_SETS.one;
+}
+EF.cat.addEventListener("change", () => (renderSubs(), renderSizes()));
+EF.sub.addEventListener("change", renderSizes);
+
 function renderSizes() {
-  const all = [...new Set([...SHOE, ...CLOTH, "One size", ...sizes])];
+  const all = [...new Set([...presetSizes(), ...sizes])];
   $("#sizePick").innerHTML = all.map((s) => `<button type="button" class="chip" data-s="${esc(s)}" aria-pressed="${sizes.has(s)}">${esc(s)}</button>`).join("");
 }
 $("#sizePick").addEventListener("click", (e) => {
@@ -393,12 +405,15 @@ async function openEditor(p = null) {
   $("#edErr").textContent = "";
   $("#brandList").innerHTML = [...new Set(products.map((x) => x.brand))].map((b) => `<option value="${esc(b)}">`).join("");
   sizes = new Set(p?.sizes || []);
+  renderSubs();
   renderSizes();
   imgs = [];
   if (p) {
     EF.brand.value = p.brand;
     EF.pname.value = p.name;
     EF.cat.value = p.cat;
+    renderSubs(p.sub || "");
+    renderSizes();
     EF.price.value = p.price;
     EF.oldPrice.value = p.oldPrice || "";
     EF.desc.value = p.desc || "";
@@ -442,6 +457,7 @@ $("#edForm").addEventListener("submit", async (e) => {
       brand: EF.brand.value.trim(),
       name: EF.pname.value.trim(),
       cat: EF.cat.value,
+      sub: EF.sub.value,
       price: Math.round(+EF.price.value),
       oldPrice: Math.round(+EF.oldPrice.value) || 0,
       stock: "stock",

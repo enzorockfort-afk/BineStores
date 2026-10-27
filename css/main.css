@@ -619,6 +619,8 @@ body.leaving::after { transform: scaleY(1); }
 .active-chips .chip:hover { border-color: var(--red); }
 .cat-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 24px; }
 .cat-tabs::-webkit-scrollbar { display: none; }
+.sub-tabs { margin-top: -12px; }
+.sub-tabs .chip { height: 34px; font-size: 13px; border-color: var(--line); }
 .result-meta { color: var(--steel); font-size: 14px; margin: 0 0 16px; }
 .f-sheet-head, .f-sheet-foot { display: none; }
 

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=7">
+  <link rel="stylesheet" href="css/main.css?v=8">
 </head>
 <body>
 <main id="main" class="wrap" style="padding-bottom:120px"><div id="view"></div></main>
@@ -32,6 +32,7 @@
         <div class="row2">
           <label class="field"><span>Бренд</span><input class="input" name="brand" list="brandList" required></label>
           <label class="field"><span>Категория</span><select class="select" name="cat" id="catSel"></select></label>
+          <label class="field"><span>Подкатегория</span><select class="select" name="sub" id="subSel"></select></label>
         </div>
         <datalist id="brandList"></datalist>
         <label class="field"><span>Название</span><input class="input" name="pname" required></label>
@@ -62,6 +63,6 @@
   <div class="modal-foot"><button class="btn btn-ghost" value="no" id="cfNo">Отмена</button><button class="btn btn-chrome" id="cfYes">Удалить</button></div>
 </dialog>
 
-<script type="module" src="js/pages/admin.js?v=7"></script>
+<script type="module" src="js/pages/admin.js?v=8"></script>
 </body>
 </html>
