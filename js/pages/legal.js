@@ -1,4 +1,4 @@
-import { initLayout, $, esc } from "../ui.js";
+import { initLayout, $, esc, lang } from "../ui.js";
 import { SHOP, COMPANY, LEGAL_UPDATED } from "../config.js";
 
 await initLayout("");
@@ -93,6 +93,7 @@ const DOCS = {
 <li><b>binestore-cart-v2</b> — корзина (localStorage, до очистки).</li>
 <li><b>binestore-fav</b> — избранное (localStorage).</li>
 <li><b>bs-consent</b> — ваш выбор по cookie (localStorage).</li>
+<li><b>bs-lang</b> — выбранный язык (localStorage).</li>
 <li><b>bs-intro</b> — показ заставки один раз за визит (sessionStorage).</li>
 <li><b>Firebase Auth</b> — сессия входа в аккаунт (IndexedDB), только если вы вошли.</li>
 </ul>
@@ -106,4 +107,107 @@ const DOCS = {
 <p>Изменить выбор можно по ссылке «Настройки cookie» внизу страницы. Удалить данные можно в настройках браузера — тогда очистятся корзина и избранное, а из аккаунта вы выйдете.</p>`,
 };
 
-$("#doc").innerHTML = DOCS[document.body.dataset.doc] || "";
+/* ---------------- Română ---------------- */
+const upd = "26 octombrie 2026";
+const sellerRo = `${req(COMPANY.name, "[denumirea vânzătorului]")}, IDNO ${req(COMPANY.idno, "[IDNO]")}, adresa: ${req(COMPANY.address, "[adresa juridică]")}`;
+const tgRo = SHOP.telegram ? ` sau managerului pe Telegram <a href="https://t.me/${esc(SHOP.telegram)}" target="_blank" rel="noopener">@${esc(SHOP.telegram)}</a>` : "";
+
+const DOCS_RO = {
+  privacy: `
+<p class="upd">Actualizat: ${upd}</p>
+<p>Această politică explică ce date colectează site-ul ${esc(SHOP.name)}, de ce și cum le poți gestiona. Prelucrarea se efectuează în conformitate cu Legea Republicii Moldova nr. 133/2011 „Privind protecția datelor cu caracter personal”.</p>
+<h2>Cine prelucrează datele</h2>
+<p>Operator: ${sellerRo}. Contact pentru întrebări despre date: ${mail}${tgRo}.</p>
+<h2>Ce date colectăm</h2>
+<ul>
+<li><b>La comandă:</b> nume, telefon, modul de primire, orașul și adresa (la livrare), comentariul, conținutul comenzii.</li>
+<li><b>La înregistrare:</b> email, nume, parola criptată (păstrată de Google Firebase, noi nu o vedem), confirmarea vârstei și a acordului.</li>
+<li><b>În profil</b> — opțional: telefon, oraș, adresă, lista de favorite.</li>
+<li><b>În browser:</b> coșul, favoritele, limba, alegerea privind cookie-urile, sesiunea de autentificare. Detalii — în <a href="cookies.html">politica cookie</a>.</li>
+</ul>
+<p>Nu colectăm date de plată: plata se face la primire.</p>
+<h2>De ce</h2>
+<ul>
+<li>Pentru a înregistra, confirma și livra comanda — temei: executarea contractului.</li>
+<li>Pentru contul personal și istoricul comenzilor — temei: acordul tău la înregistrare.</li>
+<li>Pentru păstrarea comenzilor în evidență — temei: cerințele legislației.</li>
+</ul>
+<p>Nu vindem datele și nu le folosim pentru publicitate. Nu trimitem newslettere; dacă vor apărea, fiecare mesaj va conține un link de dezabonare.</p>
+<h2>Servicii terțe</h2>
+<ul>
+<li><b>Google Firebase</b> (Authentication, Firestore) — stocarea conturilor, produselor și comenzilor. Serverele Google pot fi situate în afara Moldovei; Google aplică clauze contractuale standard de protecție a datelor.</li>
+<li><b>Google Fonts</b> — încărcarea fonturilor; Google primește adresa ta IP.</li>
+<li><b>Telegram</b> — doar dacă apeși tu butonul de mesagerie.</li>
+</ul>
+<h2>Cât timp păstrăm</h2>
+<p>Datele contului — cât timp există contul. Comenzile — atât cât cere evidența contabilă și fiscală, apoi sunt șterse.</p>
+<h2>Drepturile tale</h2>
+<p>Poți afla ce date despre tine sunt păstrate, le poți corecta, îți poți retrage acordul și poți cere ștergerea lor. Contul îl poți șterge singur: „Contul meu → Profil → Șterge contul”. Ștergerea datelor comenzilor — la cerere pe ${mail}; răspundem în 15 zile lucrătoare. Poți depune o plângere la Centrul Național pentru Protecția Datelor cu Caracter Personal (datepersonale.md).</p>
+<h2>Copii</h2>
+<p>Site-ul nu este destinat persoanelor sub 16 ani. La înregistrare cerem confirmarea vârstei. Dacă afli că un copil ne-a transmis date, scrie-ne la ${mail} — le vom șterge.</p>`,
+
+  terms: `
+<p class="upd">Actualizat: ${upd}</p>
+<p>Folosind site-ul și plasând o comandă, ești de acord cu acești termeni.</p>
+<h2>Vânzătorul</h2>
+<p>${sellerRo}. Contacte: ${mail}${COMPANY.phone ? `, ${esc(COMPANY.phone)}` : ""}.</p>
+<h2>Produsele</h2>
+<ul>
+<li>Produsele din catalog sunt în stoc în Chișinău. Modelele lipsă pot fi comandate din China prin formularul „La comandă”.</li>
+<li>Pozele și descrierile au caracter informativ; nuanța poate diferi puțin din cauza setărilor ecranului.</li>
+<li>Denumirile brandurilor și mărcile comerciale aparțin proprietarilor lor. ${esc(SHOP.name)} nu este reprezentant oficial sau dealer al acestor branduri.</li>
+</ul>
+<h2>Comanda și prețul</h2>
+<ul>
+<li>Plasarea pe site este o cerere. Contractul se încheie după ce confirmăm stocul, prețul și termenele.</li>
+<li>Prețurile sunt în lei. Costul livrării în Moldova — conform tarifului serviciului de livrare, îl comunicăm la confirmare.</li>
+<li>Pentru comenzile din China poate fi necesar un avans; mărimea lui o stabilim din timp.</li>
+</ul>
+<h2>Termene</h2>
+<p>Întâlnire în Chișinău — după înțelegere. Livrare în Moldova — de obicei 1–3 zile. Comandă din China — de obicei 14–20 zile; termenul se poate schimba din cauza transportatorului sau a vămii, te anunțăm din timp.</p>
+<h2>Returul</h2>
+<p>Procedura este descrisă în secțiunea <a href="returns.html">„Retur și schimb”</a>.</p>
+<h2>Contul</h2>
+<p>Înregistrarea este disponibilă de la 16 ani. Ești responsabil pentru păstrarea parolei. Putem bloca un cont folosit pentru fraudă.</p>
+<h2>Litigii</h2>
+<p>Rezolvăm problemele prin negocieri. Dacă nu ajungem la o înțelegere, litigiul se examinează conform legislației Republicii Moldova; drepturile consumatorului sunt protejate de Legea nr. 105/2003 „Privind protecția consumatorilor”.</p>`,
+
+  returns: `
+<p class="upd">Actualizat: ${upd}</p>
+<h2>Returul unui produs corespunzător</h2>
+<p>Poți returna produsul în <b>14 zile</b> de la primire, dacă nu a fost purtat și are etichetele, ambalajul și aspectul comercial păstrate. La întâlnirea în Chișinău poți proba produsul și renunța la el pe loc.</p>
+<p>Din motive de igienă nu se returnează: lenjeria, șosetele și costumele de baie, dacă ambalajul a fost deschis.</p>
+<h2>Produs cu defect sau alt produs</h2>
+<p>Anunță-ne în 14 zile cu o poză. Înlocuim produsul sau returnăm banii, iar costurile de expediere le suportăm noi.</p>
+<h2>Cum se face</h2>
+<ol>
+<li>Scrie la ${mail}${tgRo}: numărul comenzii și motivul.</li>
+<li>Stabilim o întâlnire în Chișinău sau expedierea.</li>
+<li>Returnăm banii prin aceeași metodă prin care ai plătit, în 14 zile de la primirea produsului.</li>
+</ol>
+<h2>Costurile de expediere</h2>
+<p>La returul unui produs corespunzător, expedierea înapoi o plătește cumpărătorul. La defect — noi.</p>`,
+
+  cookies: `
+<p class="upd">Actualizat: ${upd}</p>
+<p>Cookie-urile și stocarea locală sunt date mici din browserul tău. Folosim doar ce este necesar pentru funcționarea site-ului.</p>
+<h2>Ce păstrăm</h2>
+<ul>
+<li><b>binestore-cart-v2</b> — coșul (localStorage, până la ștergere).</li>
+<li><b>binestore-fav</b> — favoritele (localStorage).</li>
+<li><b>bs-consent</b> — alegerea ta privind cookie-urile (localStorage).</li>
+<li><b>bs-lang</b> — limba aleasă (localStorage).</li>
+<li><b>bs-intro</b> — afișarea introducerii o singură dată pe vizită (sessionStorage).</li>
+<li><b>Firebase Auth</b> — sesiunea de autentificare (IndexedDB), doar dacă ai intrat în cont.</li>
+</ul>
+<h2>Terți</h2>
+<ul>
+<li><b>Google Fonts</b> — încărcarea fonturilor, transmite Google adresa ta IP. Nu setează cookie-uri.</li>
+<li><b>Google Firebase</b> — baza de date și autentificarea.</li>
+</ul>
+<p>Nu avem cookie-uri de publicitate, analiză sau urmărire. Dacă vor apărea, îți vom cere acordul separat.</p>
+<h2>Cum le gestionezi</h2>
+<p>Poți schimba alegerea prin linkul „Setări cookie” din josul paginii. Datele le poți șterge din setările browserului — atunci se vor goli coșul și favoritele, iar tu vei ieși din cont.</p>`,
+};
+
+$("#doc").innerHTML = (lang === "ro" ? DOCS_RO : DOCS)[document.body.dataset.doc] || "";

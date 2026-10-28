@@ -1,4 +1,4 @@
-import { initLayout, $, esc, icon, toast, burst } from "../ui.js";
+import { initLayout, $, esc, icon, toast, burst, lang } from "../ui.js";
 import { api, errorText } from "../api.js";
 import { SHOP } from "../config.js";
 import { compressFile, compress, isImageFile } from "../images.js";
@@ -126,7 +126,11 @@ function done(r) {
   $("#formView").hidden = true;
   const v = $("#doneView");
   v.hidden = false;
-  const text = encodeURIComponent(`Здравствуйте! Заявка ${r.number}: ${r.title}${r.size ? `, размер ${r.size}` : ""}`);
+  const text = encodeURIComponent(
+    lang === "ro"
+      ? `Bună ziua! Cererea ${r.number}: ${r.title}${r.size ? `, mărimea ${r.size}` : ""}`
+      : `Здравствуйте! Заявка ${r.number}: ${r.title}${r.size ? `, размер ${r.size}` : ""}`
+  );
   const msg = SHOP.telegram ? `https://t.me/${SHOP.telegram}?text=${text}` : "";
   v.innerHTML = `<section class="success">
     <div class="success-orb">${icon.check}</div>

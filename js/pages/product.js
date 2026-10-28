@@ -1,4 +1,4 @@
-import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced } from "../ui.js";
+import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced, lang } from "../ui.js";
 import { api } from "../api.js";
 import { SHOP } from "../config.js";
 import { cart, favs } from "../store.js";
@@ -26,7 +26,9 @@ if (!p) {
   const out = (s) => p.stockQty && p.stockQty[s] === 0;
   const avail = (p.sizes || []).filter((s) => !out(s));
   const single = avail.length === 1;
-  const askText = encodeURIComponent(`Здравствуйте! Интересует ${p.brand} ${p.name} (${location.href})`);
+  const askText = encodeURIComponent(
+    lang === "ro" ? `Bună ziua! Mă interesează ${p.brand} ${p.name} (${location.href})` : `Здравствуйте! Интересует ${p.brand} ${p.name} (${location.href})`
+  );
 
   root.innerHTML = `
   <div class="pd">

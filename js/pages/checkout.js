@@ -1,4 +1,4 @@
-import { initLayout, $, $$, esc, money, art, icon, toast, burst, STATUS, socials } from "../ui.js";
+import { initLayout, $, $$, esc, money, art, icon, toast, burst, STATUS, socials, lang } from "../ui.js";
 import { api, errorText } from "../api.js";
 import { SHOP } from "../config.js";
 import { cart, onStoreChange } from "../store.js";
@@ -59,14 +59,14 @@ form.addEventListener("input", (e) => e.target.removeAttribute("aria-invalid"));
 
 const msgText = (o) =>
   [
-    `Заказ ${o.number} — Bine Store`,
+    lang === "ro" ? `Comanda ${o.number} — Bine Store` : `Заказ ${o.number} — Bine Store`,
     "",
-    ...o.items.map((i, n) => `${n + 1}. ${i.brand} ${i.name}, р. ${i.size} × ${i.qty} = ${money(i.price * i.qty)}`),
+    ...o.items.map((i, n) => `${n + 1}. ${i.brand} ${i.name}, ${lang === "ro" ? "mărimea" : "р."} ${i.size} × ${i.qty} = ${money(i.price * i.qty)}`),
     "",
-    `Итого: ${money(o.total)}`,
-    `Имя: ${o.contact.name}, ${o.contact.phone}`,
-    o.delivery.type === "ship" ? `Доставка: ${o.delivery.city}, ${o.delivery.address}` : "Встреча в Кишинёве",
-    o.comment ? `Комментарий: ${o.comment}` : "",
+    `${lang === "ro" ? "Total" : "Итого"}: ${money(o.total)}`,
+    `${lang === "ro" ? "Nume" : "Имя"}: ${o.contact.name}, ${o.contact.phone}`,
+    o.delivery.type === "ship" ? `${lang === "ro" ? "Livrare" : "Доставка"}: ${o.delivery.city}, ${o.delivery.address}` : lang === "ro" ? "Întâlnire în Chișinău" : "Встреча в Кишинёве",
+    o.comment ? `${lang === "ro" ? "Comentariu" : "Комментарий"}: ${o.comment}` : "",
   ]
     .filter((x, i, a) => x || a[i - 1])
     .join("\n");

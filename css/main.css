@@ -995,3 +995,17 @@ body.leaving::after { transform: scaleY(1); }
   .ask-fab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   body:has(.mobile-buy.show) .ask-fab { bottom: calc(86px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------- Language switch ---------- */
+.i18n-wait body { visibility: hidden; }
+.lang-btn { height: 34px; min-width: 40px; padding: 0 10px; margin-right: 4px; border-radius: var(--pill); border: 1px solid var(--line-2); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; transition: background-color .25s, color .25s, border-color .25s; }
+.lang-btn:hover { background: var(--white); color: var(--ink); border-color: var(--white); }
+.lang-switch { display: inline-flex; padding: 4px; margin-top: 16px; border-radius: var(--pill); background: var(--carbon-2); }
+.lang-switch button { height: 38px; padding: 0 18px; border-radius: var(--pill); font-weight: 600; font-size: 14px; color: var(--mist); }
+.lang-switch button[aria-pressed="true"] { background: var(--white); color: var(--ink); }
+@media (max-width: 640px) {
+  .hdr { gap: 10px; }
+  .hdr-actions { gap: 0; }
+  .hdr .ic-btn { width: 40px; height: 40px; }
+  .lang-btn { height: 32px; min-width: 34px; padding: 0 8px; margin-right: 2px; }
+}

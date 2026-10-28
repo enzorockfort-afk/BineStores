@@ -1,3 +1,4 @@
+import { lang, locale, t, setLang, I18N_ON } from "./i18n.js";
 import { api } from "./api.js";
 import { SHOP, COMPANY } from "./config.js";
 import { cart, favs, onStoreChange } from "./store.js";
@@ -7,10 +8,11 @@ export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const nf = new Intl.NumberFormat("ru-RU");
-export const money = (n) => nf.format(n || 0) + " " + SHOP.currency;
-export const fmtDate = (t) =>
-  new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+const nf = new Intl.NumberFormat(locale);
+export const money = (n) => nf.format(n || 0) + " " + (lang === "ro" ? "lei" : SHOP.currency);
+export const fmtDate = (d) =>
+  new Date(d).toLocaleDateString(locale, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+export { lang, t };
 export const STATUS = { stock: "В наличии", china: "Из Китая" };
 export const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fine = matchMedia("(pointer: fine)").matches;
@@ -276,6 +278,7 @@ function header(active) {
       ${NAV.map(([h, t, k]) => `<a href="${h}"${k === active ? ' aria-current="page"' : ""}><span data-text="${t}">${t}</span></a>`).join("")}
     </nav>
     <div class="hdr-actions">
+      ${I18N_ON ? `<button class="lang-btn" data-lang="${lang === "ro" ? "ru" : "ro"}" aria-label="${lang === "ro" ? "Русский язык" : "Limba română"}" data-no-i18n>${lang === "ro" ? "RU" : "RO"}</button>` : ""}
       <button class="ic-btn" id="searchBtn" aria-label="Поиск">${icon.search}</button>
       <a class="ic-btn hide-sm" href="account.html#favorites" aria-label="Избранное">${icon.heart}<b class="badge" id="favCount"></b></a>
       <a class="ic-btn" href="account.html" id="accBtn" aria-label="Личный кабинет">${icon.user}</a>
@@ -288,7 +291,8 @@ function header(active) {
     <nav>${NAV.map(([h, t], i) => `<a href="${h}" style="--i:${i}">${t}</a>`).join("")}
       <a href="account.html#favorites" style="--i:${NAV.length}">Избранное</a>
       <a href="account.html" style="--i:${NAV.length + 1}">Личный кабинет</a></nav>
-    <div class="menu-foot">${socials()}</div>
+    <div class="menu-foot">${socials()}
+      ${I18N_ON ? `<div class="lang-switch" data-no-i18n><button data-lang="ru" aria-pressed="${lang === "ru"}">Русский</button><button data-lang="ro" aria-pressed="${lang === "ro"}">Română</button></div>` : ""}</div>
   </div>
 
   <div class="search-ov" id="searchOv" aria-hidden="true" role="dialog" aria-label="Поиск">
@@ -472,7 +476,7 @@ export async function initLayout(active) {
   if (SHOP.telegram)
     document.body.insertAdjacentHTML(
       "beforeend",
-      `<a class="ask-fab" href="${managerLink("Здравствуйте! У меня вопрос по Bine Store")}" target="_blank" rel="noopener" aria-label="Задать вопрос менеджеру в Telegram">${icon.tg}<span>Вопрос менеджеру</span></a>`
+      `<a class="ask-fab" href="${managerLink(t("Здравствуйте! У меня вопрос по Bine Store"))}" target="_blank" rel="noopener" aria-label="Задать вопрос менеджеру в Telegram">${icon.tg}<span>Вопрос менеджеру</span></a>`
     );
   preloader();
   transitions();
@@ -529,6 +533,10 @@ export async function initLayout(active) {
   });
   $("#searchClose").addEventListener("click", closeOverlays);
   $("#menu").addEventListener("click", (e) => e.target.closest("a") && closeOverlays());
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-lang]");
+    if (b && b.dataset.lang !== lang) setLang(b.dataset.lang);
+  });
 
   // full-size photo viewer for request photos
   document.addEventListener("click", (e) => {
