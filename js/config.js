@@ -91,9 +91,19 @@ export const SOURCES = { site: "Сайт", instagram: "Instagram", telegram: "Te
 export const ORDER_STATUSES = {
   new: "Новый",
   confirmed: "Подтверждён",
-  ordered: "Заказан в Китае",
-  shipping: "В пути",
+  prepaid: "Предоплата",
+  ordered: "Выкуплен",
+  transit: "В пути",
+  shipping: "Отправлен",
+  arrived: "Приехал",
   ready: "Готов к выдаче",
-  done: "Выполнен",
+  done: "Выдан",
   cancelled: "Отменён",
 };
+/* этапы заказа в CRM по типу */
+export const ORDER_STAGES = {
+  stock: ["new", "confirmed", "ready", "shipping", "done", "cancelled"],
+  china: ["new", "prepaid", "ordered", "transit", "arrived", "done", "cancelled"],
+};
+/* статус вещи на складе: зелёный — в наличии, чёрный — в дороге, красный — продано */
+export const INV_STATUSES = { stock: "В наличии", transit: "В дороге", sold: "Продано" };

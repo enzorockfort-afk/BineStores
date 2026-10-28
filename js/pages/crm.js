@@ -1,445 +1,884 @@
 import { $, $$, esc, art, icon, toast } from "../ui.js";
 import { api, errorText } from "../api.js";
-import { ORDER_STATUSES, REQUEST_STATUSES, SOURCES, CRM_EMAIL, DEMO_ADMIN } from "../config.js";
+import { ORDER_STATUSES, ORDER_STAGES, REQUEST_STATUSES, INV_STATUSES, SOURCES, CATEGORIES, CRM_EMAIL, DEMO_ADMIN } from "../config.js";
 
 /* =========================================================
-   Bine CRM — раздел сайта магазина (crm.html). Работает на тех же коллекциях:
-   orders / requests — сделки (сайт создаёт, CRM ведёт),
-   products — склад, clients и tasks — только CRM.
+   Bine CRM (crm.html). Три главных раздела по шаблонам продавца:
+   Заказы — №, тип, контакт, вещи (закупка/продажа/размер), итоги, прибыль;
+   Бюджет — №, сумма ±, причина, дата;
+   Склад  — название (цвет по статусу), закупка, продажа, размеры ×, кол-во, цвета ×.
+   Данные общие с сайтом: orders, requests, products + budget, clients, tasks.
    ========================================================= */
 
 const view = $("#view");
 const nf = new Intl.NumberFormat("ru-RU");
 const lei = (n) => nf.format(Math.round(n || 0));
-const day = 864e5;
+const DAY = 864e5;
 const startOfDay = (t = Date.now()) => new Date(new Date(t).toDateString()).getTime();
 const fmtD = (t) => new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+const fmtLong = (t) => new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 const fmtDT = (t) => new Date(t).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const toDateInput = (t) => new Date(t - new Date(t).getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+const num = (v) => (v === "" || v == null ? null : Math.round(+v));
+const EDIT_ICON = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>';
+const COPY_ICON = '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></svg>';
 
-/* Телефон → ключ клиента: 8 последних значимых цифр (+373 / 0 отбрасываются) */
-export function phoneKey(p) {
+/* телефон → ключ клиента (8 цифр без +373 / 0) */
+function phoneKey(p) {
   let d = String(p || "").replace(/\D/g, "");
   if (d.startsWith("373")) d = d.slice(3);
   if (d.startsWith("0")) d = d.slice(1);
   return d;
 }
-const digitsIntl = (p) => {
+const tgName = (t) => String(t || "").trim().replace(/^https?:\/\/t\.me\//i, "").replace(/^@/, "");
+const intl = (p) => {
   const k = phoneKey(p);
   return k.length === 8 ? "373" + k : String(p || "").replace(/\D/g, "");
 };
-
-/* ---------------- pipelines ---------------- */
-const PIPES = {
-  request: {
-    label: "Под заказ",
-    stages: ["new", "progress", "offered", "prepaid", "ordered", "transit", "arrived", "done"],
-    names: REQUEST_STATUSES,
-  },
-  order: {
-    label: "Наличие",
-    stages: ["new", "confirmed", "ready", "shipping", "done"],
-    names: { ...ORDER_STATUSES, ready: "Встреча назначена", shipping: "Отправлен", done: "Выдан" },
-  },
-};
-const ACTIVE_ORDER = ["confirmed", "ordered", "shipping", "ready", "done"];
+const clientKey = (c = {}) => phoneKey(c.phone) || (tgName(c.telegram) ? "tg_" + tgName(c.telegram).toLowerCase() : "");
 
 /* ---------------- state ---------------- */
-const D = { orders: [], requests: [], products: [], clients: [], tasks: [] };
-const S = { view: "today", pipe: "request", showClosed: false, q: "" };
+const D = { orders: [], requests: [], products: [], clients: [], tasks: [], budget: [] };
+const S = { view: "orders", q: "", kind: "all", stage: "all", inv: "all", budgetEdit: null };
 
 async function load() {
-  const [orders, requests, products, clients, tasks] = await Promise.all([
-    api.orders.all().catch(() => []),
-    api.requests.all().catch(() => []),
-    api.products.list({ all: true }).catch(() => []),
-    api.crm.list("clients").catch(() => []),
-    api.crm.list("tasks").catch(() => []),
+  const safe = (p) => p.catch((e) => (console.warn(e), []));
+  const [orders, requests, products, clients, tasks, budget] = await Promise.all([
+    safe(api.orders.all()),
+    safe(api.requests.all()),
+    safe(api.products.list({ all: true })),
+    safe(api.crm.list("clients")),
+    safe(api.crm.list("tasks")),
+    api.crm.list("budget").catch((e) => {
+      if (e?.code === "permission-denied") toast("Обновите правила Firestore — раздел «Бюджет» пока недоступен", "error");
+      return [];
+    }),
   ]);
-  Object.assign(D, { orders, requests, products, clients, tasks });
+  Object.assign(D, { orders, requests, products, clients, tasks, budget });
 }
 
-function deals() {
-  const fromOrder = (o) => ({
-    kind: "order",
-    id: o.id,
-    raw: o,
-    number: o.number,
-    status: o.status,
-    title: (o.items || []).map((i) => `${i.brand} ${i.name}, ${i.size}${i.qty > 1 ? ` ×${i.qty}` : ""}`).join("; "),
-    name: o.contact?.name || "",
-    phone: o.contact?.phone || "",
-    sale: +o.total || 0,
-    cost: +o.cost || 0,
-    ship: +o.shipCost || 0,
-    prepaid: +o.prepaid || 0,
-    createdAt: o.createdAt,
-    doneAt: o.doneAt,
-    due: o.due,
-    source: o.source || "site",
-  });
-  const fromReq = (r) => ({
-    kind: "request",
-    id: r.id,
-    raw: r,
-    number: r.number,
-    status: r.status,
-    title: `${r.title}${r.size ? `, ${r.size}` : ""}${r.qty > 1 ? ` ×${r.qty}` : ""}`,
-    name: r.contact?.name || "",
-    phone: r.contact?.phone || "",
-    sale: +r.price || 0,
-    cost: +r.cost || 0,
-    ship: +r.shipCost || 0,
-    prepaid: +r.prepaid || 0,
-    createdAt: r.createdAt,
-    doneAt: r.doneAt,
-    due: r.due,
-    source: r.source || "site",
-  });
-  return [...D.orders.map(fromOrder), ...D.requests.map(fromReq)].sort((a, b) => b.createdAt - a.createdAt);
-}
-const profitOf = (d) => (d.cost || d.ship ? d.sale - d.cost - d.ship : null);
-const isOpen = (d) => d.status !== "done" && d.status !== "cancelled";
-const findDeal = (kind, id) => deals().find((d) => d.kind === kind && d.id === id);
+/* ---------------- orders model ---------------- */
+const kindOf = (o) => o.kind || "stock";
+const itemName = (i) => (i.brand ? `${i.brand} ${i.name || ""}` : i.name || "").trim();
+const qtyOf = (i) => +i.qty || 1;
+const hasVal = (v) => v !== undefined && v !== null && v !== "";
+const costOf = (o) => (o.items || []).reduce((s, i) => s + (+i.cost || 0) * qtyOf(i), 0);
+const saleOf = (o) => (o.items || []).reduce((s, i) => s + (+i.price || 0) * qtyOf(i), 0);
+const hasCost = (o) => (o.items || []).length > 0 && (o.items || []).every((i) => hasVal(i.cost));
+const profitOf = (o) => saleOf(o) - costOf(o);
+const label = (o) => (o.num ? `№${o.num}` : o.number || "—");
+const stageName = (s) => ORDER_STATUSES[s] || s;
+const isOpen = (o) => o.status !== "done" && o.status !== "cancelled";
+const nextNum = () => Math.max(0, ...D.orders.map((o) => +o.num || 0), ...D.budget.map((b) => +b.num || 0)) + 1;
 
-/* клиенты = сохранённые карточки + все контакты из сделок, склеенные по телефону */
-function clients() {
-  const map = new Map();
-  for (const c of D.clients) map.set(phoneKey(c.phone) || c.id, { ...c, deals: [] });
-  for (const d of deals()) {
-    const k = phoneKey(d.phone);
-    if (!k) continue;
-    if (!map.has(k)) map.set(k, { id: "c" + k, name: d.name, phone: d.phone, source: d.source, tags: [], deals: [], derived: true });
-    const c = map.get(k);
-    c.deals.push(d);
-    c.name ||= d.name;
-  }
-  return [...map.values()].map((c) => {
-    const done = c.deals.filter((d) => d.status === "done");
-    return {
-      ...c,
-      key: phoneKey(c.phone),
-      spent: done.reduce((s, d) => s + d.sale, 0),
-      profit: done.reduce((s, d) => s + (profitOf(d) || 0), 0),
-      last: Math.max(c.updatedAt || 0, c.createdAt || 0, ...c.deals.map((d) => d.createdAt)),
-    };
-  });
-}
-const clientByPhone = (p) => clients().find((c) => c.key && c.key === phoneKey(p));
+/* ---------------- stock model ---------------- */
+const pTitle = (p) => `${p.brand || ""} ${p.name || ""}`.trim();
+const sumMap = (m) => Object.values(m || {}).reduce((s, n) => s + (+n || 0), 0);
+const invOf = (p) => p.invStatus || (p.stockQty && Object.keys(p.stockQty).length && sumMap(p.stockQty) === 0 ? "sold" : "stock");
+const pairs = (m) =>
+  Object.entries(m || {})
+    .filter(([, n]) => n != null)
+    .map(([k, n]) => `${esc(k)} ×${n}`)
+    .join(", ");
 
 /* ---------------- shell ---------------- */
-const TITLES = { today: "Сегодня", deals: "Сделки", clients: "Клиенты", stock: "Склад", tasks: "Задачи", data: "Данные" };
+const VIEWS = {
+  orders: ["Заказы", "Заказ"],
+  budget: ["Бюджет", "Запись"],
+  stock: ["Склад", "Вещь"],
+  today: ["Итоги", "Заказ"],
+  requests: ["Заявки с сайта", "Заказ"],
+  clients: ["Клиенты", "Клиент"],
+  tasks: ["Задачи", "Задача"],
+  data: ["Данные", "Заказ"],
+};
 function route() {
-  S.view = TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "today";
+  S.view = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : "orders";
   $$("#nav a").forEach((a) => a.setAttribute("aria-current", a.dataset.v === S.view ? "page" : "false"));
-  $("#title").textContent = TITLES[S.view];
+  $("#title").textContent = VIEWS[S.view][0];
+  $("#addLabel").textContent = VIEWS[S.view][1];
   render();
 }
 function badges() {
-  $("#nNew").textContent = deals().filter((d) => d.status === "new").length || "";
-  const end = startOfDay() + day;
+  $("#nNew").textContent = D.orders.filter((o) => o.status === "new").length || "";
+  $("#nReq").textContent = D.requests.filter((r) => r.status === "new" && !r.orderId).length || "";
+  const end = startOfDay() + DAY;
   $("#nTasks").textContent = D.tasks.filter((t) => !t.done && t.due && t.due < end).length || "";
 }
 function render() {
   badges();
-  view.innerHTML = { today, deals: dealsView, clients: clientsView, stock: stockView, tasks: tasksView, data: dataView }[S.view]();
-  afterRender[S.view]?.();
+  view.innerHTML = { orders: ordersView, budget: budgetView, stock: stockView, today: todayView, requests: requestsView, clients: clientsView, tasks: tasksView, data: dataView }[S.view]();
+  after[S.view]?.();
 }
-const afterRender = {};
+const after = {};
 
-/* ---------------- Сегодня ---------------- */
-function today() {
-  const all = deals();
-  const m0 = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
-  const doneM = all.filter((d) => d.status === "done" && (d.doneAt || d.createdAt) >= m0);
-  const open = all.filter(isOpen);
-  const revenue = doneM.reduce((s, d) => s + d.sale, 0);
-  const profit = doneM.reduce((s, d) => s + (profitOf(d) || 0), 0);
-  const owed = open.reduce((s, d) => s + Math.max(0, d.sale - d.prepaid), 0);
-  const end = startOfDay() + day;
-  const tasks = D.tasks.filter((t) => !t.done && t.due && t.due < end).sort((a, b) => a.due - b.due);
-  const fresh = all.filter((d) => d.status === "new").slice(0, 8);
-  const low = [];
-  for (const p of D.products) for (const [s, q] of Object.entries(p.stockQty || {})) if (q <= 1) low.push({ p, s, q });
-  const month = new Date().toLocaleDateString("ru-RU", { month: "long" });
-
-  return `
-  <div class="kpis">
-    <div class="kpi"><small>Выручка, ${month}</small><b>${lei(revenue)}</b><em>${doneM.length} выдано</em></div>
-    <div class="kpi good"><small>Прибыль, ${month}</small><b>${lei(profit)}</b><em>где указана закупка</em></div>
-    <div class="kpi"><small>Сделок в работе</small><b>${open.length}</b><em>на ${lei(open.reduce((s, d) => s + d.sale, 0))} лей</em></div>
-    <div class="kpi"><small>Ждём оплату, лей</small><b>${lei(owed)}</b><em>остаток после предоплат</em></div>
-  </div>
-  <div class="cols2">
-    <div>
-      <div class="box">
-        <div class="box-h"><h2>Задачи и встречи на сегодня</h2><a href="#tasks">Все задачи</a></div>
-        ${tasks.length ? `<div>${tasks.map(taskRow).join("")}</div>` : `<p class="empty-mini">На сегодня всё сделано</p>`}
-      </div>
-      <div class="box">
-        <div class="box-h"><h2>Новые сделки</h2><a href="#deals">Воронка</a></div>
-        ${fresh.length ? `<div class="rows">${fresh.map(dealRow).join("")}</div>` : `<p class="empty-mini">Новых нет</p>`}
-      </div>
-    </div>
-    <div>
-      <div class="box">
-        <div class="box-h"><h2>Заканчивается на складе</h2><a href="#stock">Склад</a></div>
-        ${
-          low.length
-            ? `<div class="rows">${low
-                .slice(0, 10)
-                .map((l) => `<div class="row"><span class="ava">${esc(l.s)}</span><span><b>${esc(l.p.brand)} ${esc(l.p.name)}</b><small>размер ${esc(l.s)}</small></span><span class="pill ${l.q ? "warn" : "bad"}">${l.q ? "1 шт." : "нет"}</span></div>`)
-                .join("")}</div>`
-            : `<p class="empty-mini">${D.products.some((p) => p.stockQty) ? "Всего хватает" : "Укажите остатки по размерам в разделе «Склад»"}</p>`
-        }
-      </div>
-      <div class="box">
-        <div class="box-h"><h2>Ждут оплату</h2></div>
-        ${(() => {
-          const l = open.filter((d) => d.sale > d.prepaid && d.prepaid > 0).slice(0, 6);
-          return l.length ? `<div class="rows">${l.map(dealRow).join("")}</div>` : `<p class="empty-mini">Нет сделок с частичной оплатой</p>`;
-        })()}
-      </div>
-    </div>
-  </div>`;
+/* =========================================================
+   ЗАКАЗЫ
+   ========================================================= */
+function orderMatches(o, q) {
+  if (!q) return true;
+  const c = o.contact || {};
+  return `${label(o)} ${c.name || ""} ${c.phone || ""} ${c.telegram || ""} ${(o.items || []).map((i) => itemName(i) + " " + (i.size || "")).join(" ")} ${o.notes || ""}`
+    .toLowerCase()
+    .includes(q);
 }
-function dealRow(d) {
-  const st = PIPES[d.kind].names[d.status] || d.status;
-  return `<button class="row" data-deal="${d.kind}:${esc(d.id)}">
-    <span class="ava">${esc((d.name || "?")[0].toUpperCase())}</span>
-    <span><b>${esc(d.name || "Без имени")} · ${esc(d.title)}</b><small>${esc(d.number || "")} · ${PIPES[d.kind].label} · ${st}</small></span>
-    <span class="r">${d.sale ? lei(d.sale) + " лей" : "—"}</span></button>`;
-}
-
-/* ---------------- Сделки (канбан) ---------------- */
-function dealsView() {
-  const P = PIPES[S.pipe];
+function ordersView() {
   const q = S.q.toLowerCase();
-  const list = deals().filter((d) => d.kind === S.pipe && (!q || `${d.name} ${d.phone} ${d.title} ${d.number}`.toLowerCase().includes(q)));
-  const closed = list.filter((d) => d.status === "cancelled");
-  const stages = [...P.stages, ...(S.showClosed ? ["cancelled"] : [])];
+  const list = D.orders
+    .filter((o) => (S.kind === "all" || kindOf(o) === S.kind) && (S.stage === "all" || (S.stage === "open" ? isOpen(o) : o.status === S.stage)) && orderMatches(o, q))
+    .sort((a, b) => (+b.num || 0) - (+a.num || 0) || b.createdAt - a.createdAt);
+  const live = list.filter((o) => o.status !== "cancelled");
+  const sumCost = live.reduce((s, o) => s + costOf(o), 0);
+  const sumSale = live.reduce((s, o) => s + saleOf(o), 0);
+  const stages = [...new Set([...ORDER_STAGES.stock, ...ORDER_STAGES.china])];
   return `
   <div class="pipe-bar">
-    ${Object.entries(PIPES).map(([k, p]) => `<button class="chip" data-pipe="${k}" aria-pressed="${S.pipe === k}">${p.label} ${deals().filter((d) => d.kind === k && isOpen(d)).length}</button>`).join("")}
-    <button class="chip" data-closed aria-pressed="${S.showClosed}" style="margin-left:auto">Отменённые ${closed.length}</button>
+    ${[["all", "Все"], ["stock", "Из наличия"], ["china", "Под заказ"]].map(([k, t]) => `<button class="chip" data-kind="${k}" aria-pressed="${S.kind === k}">${t}</button>`).join("")}
+    <select class="select sel-sm" id="stageFilter" aria-label="Этап">
+      <option value="all">Все этапы</option><option value="open"${S.stage === "open" ? " selected" : ""}>В работе</option>
+      ${stages.map((s) => `<option value="${s}"${S.stage === s ? " selected" : ""}>${stageName(s)}</option>`).join("")}
+    </select>
   </div>
-  <div class="board">${stages
-    .map((st) => {
-      const items = list.filter((d) => d.status === st);
-      const sum = items.reduce((s, d) => s + d.sale, 0);
-      return `<section class="lane" data-lane="${st}" aria-label="${esc(P.names[st] || st)}">
-        <div class="lane-h"><b>${esc(P.names[st] || st)} · ${items.length}</b><small>${sum ? lei(sum) + " лей" : ""}</small></div>
-        <div class="lane-b">${items.map(dcard).join("")}</div>
-      </section>`;
-    })
-    .join("")}</div>`;
+  <div class="sumbar">
+    <span>Заказов <b>${list.length}</b></span>
+    <span>Закупка <b>${lei(sumCost)}</b></span>
+    <span>Продажа <b>${lei(sumSale)}</b></span>
+    <span class="pos">Прибыль <b>${lei(sumSale - sumCost)}</b></span>
+  </div>
+  ${list.length ? `<div class="ocards">${list.map(orderCard).join("")}</div>` : `<div class="empty-state"><div class="empty-orb">${icon.box}</div><p>Заказов нет</p><button class="btn btn-chrome" data-act="newOrder">Новый заказ</button></div>`}`;
 }
-function dcard(d) {
-  const pr = profitOf(d);
-  const late = d.due && d.due < Date.now() && isOpen(d);
-  return `<button class="dcard" draggable="true" data-deal="${d.kind}:${esc(d.id)}">
-    <span class="dcard-top"><span>${esc(d.number || "")}</span><span>${fmtD(d.createdAt)}</span></span>
-    <span class="dcard-t">${esc(d.title)}</span>
-    <span class="dcard-c">${esc(d.name || "Без имени")}${d.source && d.source !== "site" ? ` · ${SOURCES[d.source] || d.source}` : ""}</span>
-    <span class="dcard-f"><b>${d.sale ? lei(d.sale) + " лей" : "цена не указана"}</b>
-      ${late ? `<span class="pill bad">срок ${fmtD(d.due)}</span>` : pr != null ? `<span class="pill ${pr >= 0 ? "ok" : "bad"}">${pr >= 0 ? "+" : ""}${lei(pr)}</span>` : d.prepaid ? `<span class="pill warn">пред. ${lei(d.prepaid)}</span>` : ""}
-    </span></button>`;
+function orderCard(o) {
+  const c = o.contact || {};
+  const k = kindOf(o);
+  const pr = profitOf(o);
+  const tg = tgName(c.telegram);
+  const fromSite = !o.num && o.number;
+  return `<article class="ocard">
+    <header class="oc-h">
+      <button class="oc-num" data-edit="${esc(o.id)}">${esc(label(o))}</button>
+      <span class="pill ${k === "china" ? "warn" : "ok"}">${k === "china" ? "Под заказ" : "Из наличия"}</span>
+      ${fromSite ? `<span class="pill">с сайта</span>` : ""}
+      <span class="oc-date">${fmtD(o.createdAt)}</span>
+      <select class="select sel-sm" data-ostage="${esc(o.id)}" aria-label="Этап заказа ${esc(label(o))}">
+        ${[...new Set([...ORDER_STAGES[k], o.status])].map((s) => `<option value="${s}"${s === o.status ? " selected" : ""}>${stageName(s)}</option>`).join("")}
+      </select>
+    </header>
+    <div class="oc-contact">${[
+      c.name ? `<button class="link-plain" data-client="${esc(clientKey(c))}">${esc(c.name)}</button>` : "",
+      tg ? `<a href="https://t.me/${esc(tg)}" target="_blank" rel="noopener">@${esc(tg)}</a>` : "",
+      c.phone ? `<a href="tel:+${intl(c.phone)}">${esc(c.phone)}</a>` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ") || "—"}</div>
+    <ol class="oc-items">${(o.items || [])
+      .map(
+        (i) => `<li><span class="oi-name">${esc(itemName(i))}</span><span class="oi-size">${esc(i.size || "")}${i.color ? ` · ${esc(i.color)}` : ""}${qtyOf(i) > 1 ? ` ×${qtyOf(i)}` : ""}</span>
+        <span class="oi-cost">${hasVal(i.cost) ? lei(i.cost) : "—"}</span><span class="oi-price">${lei(i.price)}</span></li>`
+      )
+      .join("")}</ol>
+    <footer class="oc-tot">
+      <span>Закупка <b>${hasCost(o) ? lei(costOf(o)) : "—"}</b></span>
+      <span>Продажа <b>${lei(saleOf(o))}</b></span>
+      <span class="${hasCost(o) ? (pr >= 0 ? "pos" : "neg") : ""}">Прибыль <b>${hasCost(o) ? lei(pr) : "—"}</b></span>
+      <span class="oc-acts"><button class="ic-btn" data-copy="${esc(o.id)}" aria-label="Скопировать заказ текстом" title="Скопировать текстом">${COPY_ICON}</button>
+      <button class="ic-btn" data-edit="${esc(o.id)}" aria-label="Изменить заказ" title="Изменить">${EDIT_ICON}</button></span>
+    </footer>
+    ${o.notes ? `<p class="oc-notes">${esc(o.notes)}</p>` : ""}
+  </article>`;
 }
-afterRender.deals = () => {
-  let drag = null;
-  view.addEventListener("dragstart", (e) => {
-    const c = e.target.closest(".dcard");
-    if (!c) return;
-    drag = c.dataset.deal;
-    c.classList.add("dragging");
-    e.dataTransfer.effectAllowed = "move";
-  });
-  view.addEventListener("dragend", () => {
-    $$(".dragging,.over", view).forEach((x) => x.classList.remove("dragging", "over"));
-    drag = null;
-  });
-  view.addEventListener("dragover", (e) => {
-    const l = e.target.closest(".lane");
-    if (!l || !drag) return;
-    e.preventDefault();
-    $$(".lane", view).forEach((x) => x.classList.toggle("over", x === l));
-  });
-  view.addEventListener("drop", async (e) => {
-    const l = e.target.closest(".lane");
-    if (!l || !drag) return;
-    e.preventDefault();
-    const [kind, id] = drag.split(":");
-    await setStatus(kind, id, l.dataset.lane);
-    render();
-  });
+/* текст заказа ровно по шаблону продавца */
+function orderText(o) {
+  const c = o.contact || {};
+  const contact = [tgName(c.telegram) && "@" + tgName(c.telegram), c.phone, c.name].filter(Boolean).join(" · ");
+  return [
+    label(o),
+    `1. ${kindOf(o) === "china" ? "Под заказ" : "Из наличия"}`,
+    `2. ${contact || "—"}`,
+    `3. ${(o.items || [])
+      .map((i) => `${itemName(i)} ${hasVal(i.cost) ? lei(i.cost) : "—"} / ${lei(i.price)}${i.size ? `, ${i.size} размер` : ""}${i.color ? `, ${i.color}` : ""}${qtyOf(i) > 1 ? ` ×${qtyOf(i)}` : ""}`)
+      .join("\n   ")}`,
+    `4. ${hasCost(o) ? lei(costOf(o)) : "—"}`,
+    `5. ${lei(saleOf(o))}`,
+    `6. ${hasCost(o) ? lei(profitOf(o)) : "—"}`,
+  ].join("\n");
+}
+after.orders = () => {
+  $("#stageFilter").addEventListener("change", (e) => ((S.stage = e.target.value), render()));
 };
 
-/* смена статуса + учёт склада для сделок из наличия */
-async function setStatus(kind, id, status) {
-  const raw = (kind === "order" ? D.orders : D.requests).find((x) => x.id === id);
-  if (!raw || raw.status === status) return;
+/* смена этапа + списание со склада для вещей, выбранных со склада */
+const APPLY = (s) => s !== "new" && s !== "cancelled";
+async function moveStock(items = [], dir) {
+  for (const it of items) {
+    if (!it.pid) continue;
+    const p = D.products.find((x) => x.id === it.pid);
+    if (!p) continue;
+    const q = qtyOf(it);
+    if (it.size && p.stockQty && p.stockQty[it.size] != null) p.stockQty = { ...p.stockQty, [it.size]: Math.max(0, (+p.stockQty[it.size] || 0) + dir * q) };
+    if (it.color && p.colorsQty && p.colorsQty[it.color] != null) p.colorsQty = { ...p.colorsQty, [it.color]: Math.max(0, (+p.colorsQty[it.color] || 0) + dir * q) };
+    const total = sumMap(p.stockQty);
+    if (p.stockQty && total === 0 && dir < 0) p.invStatus = "sold";
+    if (p.stockQty && total > 0 && dir > 0 && p.invStatus === "sold") p.invStatus = "stock";
+    await api.products.save(p).catch((e) => toast(errorText(e), "error"));
+  }
+}
+async function setStage(o, status) {
+  if (o.status === status) return;
   const patch = { status };
   if (status === "done") patch.doneAt = Date.now();
-  if (kind === "order") {
-    if (ACTIVE_ORDER.includes(status) && !raw.stockApplied) {
-      await moveStock(raw.items, -1);
-      patch.stockApplied = true;
+  if (APPLY(status) && !o.stockApplied) {
+    await moveStock(o.items, -1);
+    patch.stockApplied = true;
+  }
+  if (status === "cancelled" && o.stockApplied) {
+    await moveStock(o.items, +1);
+    patch.stockApplied = false;
+  }
+  await api.orders.update(o.id, patch);
+  Object.assign(o, patch);
+  toast(`${label(o)}: ${stageName(status)}`);
+}
+
+/* ---------------- форма заказа ---------------- */
+const om = $("#orderModal");
+const OF = $("#orderForm").elements;
+let editingOrder = null;
+let fromRequest = null;
+$("#srcSel").innerHTML = Object.entries(SOURCES).map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
+
+function itemRow(i = {}) {
+  const id = "sz" + Math.random().toString(36).slice(2, 8);
+  return `<div class="item-row" data-pid="${esc(i.pid || "")}">
+    <input class="input" name="iname" list="stockNames" placeholder="Moncler куртка" value="${esc(itemName(i))}" aria-label="Название вещи" autocomplete="off">
+    <input class="input" name="isize" list="${id}" placeholder="43" value="${esc(i.size || "")}" aria-label="Размер" autocomplete="off"><datalist id="${id}"></datalist>
+    <input class="input" name="icost" type="number" inputmode="numeric" min="0" placeholder="закуп" value="${hasVal(i.cost) ? i.cost : ""}" aria-label="Закупочная цена">
+    <input class="input" name="iprice" type="number" inputmode="numeric" min="0" placeholder="продажа" value="${hasVal(i.price) ? i.price : ""}" aria-label="Продажная цена">
+    <button type="button" class="ic-btn" data-rmitem aria-label="Убрать вещь">${icon.close}</button>
+    <input type="hidden" name="icolor" value="${esc(i.color || "")}"><input type="hidden" name="iqty" value="${qtyOf(i)}">
+  </div>`;
+}
+function fillSizes(row, p) {
+  row.querySelector("datalist").innerHTML = Object.entries(p?.stockQty || {})
+    .map(([s, n]) => `<option value="${esc(s)}">${n} шт.</option>`)
+    .join("");
+}
+function readItems() {
+  return $$(".item-row", om)
+    .map((r) => {
+      const v = (n) => r.querySelector(`[name=${n}]`).value.trim();
+      const it = { name: v("iname"), size: v("isize"), price: num(v("iprice")) || 0, qty: +v("iqty") || 1 };
+      const cost = num(v("icost"));
+      if (cost !== null) it.cost = cost;
+      if (r.dataset.pid) it.pid = r.dataset.pid;
+      if (v("icolor")) it.color = v("icolor");
+      return it;
+    })
+    .filter((i) => i.name);
+}
+function calcTotals() {
+  const o = { items: readItems() };
+  const pr = profitOf(o);
+  $("#totals").innerHTML = `<div><small>4. Общая закупка</small><b>${hasCost(o) ? lei(costOf(o)) : "—"}</b></div>
+    <div><small>5. Общая продажа</small><b>${lei(saleOf(o))}</b></div>
+    <div class="${hasCost(o) ? (pr >= 0 ? "pos" : "neg") : ""}"><small>6. Чистая прибыль</small><b>${hasCost(o) ? lei(pr) : "—"}</b></div>`;
+}
+function syncStages(selected) {
+  const list = ORDER_STAGES[OF.kind.value];
+  $("#stageSel").innerHTML = list.map((s) => `<option value="${s}"${s === selected ? " selected" : ""}>${stageName(s)}</option>`).join("");
+  if (!list.includes(selected)) OF.status.value = "new";
+}
+function openOrder(o = null, prefill = {}) {
+  editingOrder = o;
+  fromRequest = prefill.requestId || null;
+  const src = o || prefill;
+  $("#orderForm").reset();
+  $("#omErr").textContent = "";
+  $("#omTitle").textContent = o ? `Заказ ${label(o)}` : "Новый заказ";
+  $("#omDelete").hidden = !o;
+  OF.num.value = o ? o.num || "" : nextNum();
+  OF.kind.value = kindOf(src);
+  const c = src.contact || {};
+  OF.telegram.value = tgName(c.telegram) ? "@" + tgName(c.telegram) : "";
+  OF.phone.value = c.phone || "";
+  OF.cname.value = c.name || "";
+  OF.source.value = src.source || "telegram";
+  OF.notes.value = src.notes || "";
+  $("#stockNames").innerHTML = D.products
+    .filter((p) => invOf(p) !== "sold")
+    .map((p) => `<option value="${esc(pTitle(p))}">${hasVal(p.cost) ? lei(p.cost) : "—"} / ${lei(p.price)} · ${sumMap(p.stockQty)} шт.</option>`)
+    .join("");
+  $("#clientNames").innerHTML = clients()
+    .filter((x) => x.name)
+    .map((x) => `<option value="${esc(x.name)}">${esc([x.phone, tgName(x.telegram) && "@" + tgName(x.telegram)].filter(Boolean).join(" · "))}</option>`)
+    .join("");
+  const items = src.items?.length ? src.items : [{}];
+  $("#itemRows").innerHTML = items.map(itemRow).join("");
+  $$(".item-row", om).forEach((r) => r.dataset.pid && fillSizes(r, D.products.find((p) => p.id === r.dataset.pid)));
+  syncStages(o?.status || "new");
+  calcTotals();
+  om.showModal();
+}
+$("#addItem").addEventListener("click", () => {
+  $("#itemRows").insertAdjacentHTML("beforeend", itemRow());
+  $$(".item-row [name=iname]", om).at(-1).focus();
+});
+om.addEventListener("click", (e) => {
+  if (e.target === om || e.target.closest("[data-close]")) return om.close();
+  const rm = e.target.closest("[data-rmitem]");
+  if (rm) {
+    const row = rm.closest(".item-row");
+    if ($$(".item-row", om).length > 1) row.remove();
+    else {
+      $$("input:not([type=hidden])", row).forEach((i) => (i.value = ""));
+      row.dataset.pid = "";
     }
-    if (status === "cancelled" && raw.stockApplied) {
-      await moveStock(raw.items, +1);
-      patch.stockApplied = false;
+    calcTotals();
+  }
+});
+$("#orderForm").addEventListener("input", calcTotals);
+$("#orderForm").addEventListener("change", (e) => {
+  if (e.target.name === "kind") syncStages(OF.status.value);
+  if (e.target.name === "cname") {
+    const c = clients().find((x) => x.name === e.target.value);
+    if (c) {
+      if (!OF.phone.value) OF.phone.value = c.phone || "";
+      if (!OF.telegram.value && tgName(c.telegram)) OF.telegram.value = "@" + tgName(c.telegram);
     }
   }
+  if (e.target.name === "iname") {
+    const row = e.target.closest(".item-row");
+    const p = D.products.find((x) => pTitle(x).toLowerCase() === e.target.value.trim().toLowerCase());
+    row.dataset.pid = p ? p.id : "";
+    if (p) {
+      const f = (n) => row.querySelector(`[name=${n}]`);
+      if (f("icost").value === "" && hasVal(p.cost)) f("icost").value = p.cost;
+      if (f("iprice").value === "" && hasVal(p.price)) f("iprice").value = p.price;
+      fillSizes(row, p);
+      calcTotals();
+    }
+  }
+});
+$("#omDelete").addEventListener("click", async () => {
+  const o = editingOrder;
+  if (!o || !confirm(`Удалить заказ ${label(o)}?`)) return;
   try {
-    await (kind === "order" ? api.orders : api.requests).update(id, patch);
-    Object.assign(raw, patch);
-    toast(`${raw.number}: ${PIPES[kind].names[status] || status}`);
+    if (o.stockApplied) await moveStock(o.items, +1);
+    await api.crm.remove("orders", o.id);
+    D.orders = D.orders.filter((x) => x.id !== o.id);
+    om.close();
+    toast(`Заказ ${label(o)} удалён`);
+    render();
   } catch (err) {
     toast(errorText(err), "error");
   }
-}
-async function moveStock(items = [], dir) {
-  for (const it of items) {
-    const p = D.products.find((x) => x.id === it.id);
-    if (!p?.stockQty || p.stockQty[it.size] == null) continue;
-    p.stockQty = { ...p.stockQty, [it.size]: Math.max(0, (+p.stockQty[it.size] || 0) + dir * (it.qty || 1)) };
-    await api.products.save(p).catch(() => {});
+});
+$("#orderForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const items = readItems();
+  const err = (t) => ($("#omErr").textContent = t);
+  const telegram = tgName(OF.telegram.value);
+  const phone = OF.phone.value.trim();
+  if (!telegram && phoneKey(phone).length < 6) return err("Укажите Telegram или телефон клиента");
+  if (!items.length) return err("Добавьте хотя бы одну вещь");
+  const n = Math.round(+OF.num.value) || (editingOrder && !editingOrder.num ? null : nextNum());
+  if (n && (D.orders.some((o) => +o.num === n && o.id !== editingOrder?.id) || D.budget.some((b) => +b.num === n))) return err(`Номер №${n} уже занят`);
+  const btn = $("#omSave");
+  btn.classList.add("loading");
+  const o = { items };
+  const data = {
+    kind: OF.kind.value,
+    contact: { ...(editingOrder?.contact || {}), name: OF.cname.value.trim(), telegram, phone },
+    items,
+    total: saleOf(o),
+    costTotal: costOf(o),
+    source: OF.source.value,
+    notes: OF.notes.value.trim(),
+    messenger: telegram ? "telegram" : "phone",
+    delivery: editingOrder?.delivery || { type: "meet", city: "", address: "" },
+  };
+  if (n) Object.assign(data, { num: n, number: `№${n}` });
+  const status = OF.status.value;
+  try {
+    if (editingOrder) {
+      const old = editingOrder;
+      if (old.stockApplied) await moveStock(old.items, +1);
+      data.stockApplied = false;
+      await api.orders.update(old.id, data);
+      const prev = old.status;
+      Object.assign(old, data, { status: "__" });
+      await setStage(old, status);
+      if (prev === status) toast(`Заказ ${label(old)} сохранён`);
+    } else {
+      const created = await api.orders.create(data, { manual: true });
+      D.orders.unshift(created);
+      if (status !== "new") await setStage(created, status);
+      if (fromRequest) {
+        const r = D.requests.find((x) => x.id === fromRequest);
+        const patch = { orderId: created.id, orderNum: n, ...(r?.status === "new" ? { status: "progress" } : {}) };
+        await api.requests.update(fromRequest, patch);
+        if (r) Object.assign(r, patch);
+      }
+      toast(`Заказ №${n} создан`);
+    }
+    om.close();
+    if (S.view !== "orders") location.hash = "orders";
+    else render();
+  } catch (ex) {
+    err(errorText(ex));
   }
-}
+  btn.classList.remove("loading");
+});
 
-/* ---------------- Клиенты ---------------- */
-function clientsView() {
+/* =========================================================
+   БЮДЖЕТ
+   ========================================================= */
+function budgetView() {
   const q = S.q.toLowerCase();
-  const list = clients()
-    .filter((c) => !q || `${c.name} ${c.phone} ${c.instagram || ""} ${c.telegram || ""} ${(c.tags || []).join(" ")}`.toLowerCase().includes(q))
-    .sort((a, b) => b.last - a.last);
+  const sorted = [...D.budget].sort((a, b) => a.date - b.date || (+a.num || 0) - (+b.num || 0));
+  let run = 0;
+  const withBal = sorted.map((b) => ((run += +b.amount || 0), { ...b, bal: run }));
+  const balance = run;
+  const m0 = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+  const month = D.budget.filter((b) => b.date >= m0);
+  const inc = month.filter((b) => b.amount > 0).reduce((s, b) => s + b.amount, 0);
+  const out = month.filter((b) => b.amount < 0).reduce((s, b) => s + b.amount, 0);
+  const list = withBal.reverse().filter((b) => !q || `${b.num} ${b.reason} ${b.amount}`.toLowerCase().includes(q));
+  const ed = S.budgetEdit ? D.budget.find((b) => b.id === S.budgetEdit) : null;
+  const mName = new Date().toLocaleDateString("ru-RU", { month: "long" });
   return `
-  <div class="pipe-bar"><span class="muted">${list.length} клиентов · всего куплено на ${lei(list.reduce((s, c) => s + c.spent, 0))} лей</span>
-    <button class="btn btn-ghost btn-sm" data-newclient style="margin-left:auto">${icon.plus} Клиент</button></div>
+  <div class="kpis">
+    <div class="kpi ${balance >= 0 ? "good" : "bad"}"><small>Баланс</small><b>${lei(balance)}</b><em>по всем записям</em></div>
+    <div class="kpi good"><small>Приход, ${mName}</small><b>+${lei(inc)}</b></div>
+    <div class="kpi bad"><small>Расход, ${mName}</small><b>${lei(out)}</b></div>
+    <div class="kpi"><small>Записей</small><b>${D.budget.length}</b></div>
+  </div>
+  <form class="bform box" id="bForm" novalidate>
+    <label class="field"><span>Номер</span><input class="input" name="num" type="number" inputmode="numeric" min="1" value="${ed?.num ?? nextNum()}"></label>
+    <div class="field"><span>1. Сумма</span>
+      <div class="amount">
+        <div class="seg sign" role="radiogroup" aria-label="Приход или расход">
+          <label><input type="radio" name="sign" value="-"${!ed || ed.amount < 0 ? " checked" : ""}><span>−</span></label>
+          <label><input type="radio" name="sign" value="+"${ed && ed.amount >= 0 ? " checked" : ""}><span>+</span></label>
+        </div>
+        <input class="input" name="amount" type="number" inputmode="numeric" min="0" placeholder="1400" value="${ed ? Math.abs(ed.amount) : ""}" aria-label="Сумма">
+      </div></div>
+    <label class="field grow"><span>2. Причина</span><input class="input" name="reason" placeholder="Отдал долг" value="${esc(ed?.reason || "")}"></label>
+    <label class="field"><span>3. Дата</span><input class="input" name="date" type="date" value="${toDateInput(ed?.date || Date.now())}"></label>
+    <div class="bform-btns">${ed ? `<button type="button" class="btn btn-ghost btn-sm" data-bcancel>Отмена</button>` : ""}<button class="btn btn-chrome btn-sm">${ed ? "Сохранить" : "Добавить"}</button></div>
+    <p class="form-err" id="bErr" role="alert"></p>
+  </form>
   ${
     list.length
       ? `<div class="box" style="padding:6px 8px;overflow-x:auto"><table class="tbl">
-    <thead><tr><th>Клиент</th><th class="hide-m">Метки</th><th class="num">Сделок</th><th class="num">Купил на</th><th class="num hide-m">Последний раз</th></tr></thead>
+    <thead><tr><th>№</th><th class="num">1. Сумма</th><th>2. Причина</th><th>3. Дата</th><th class="num hide-m">Баланс после</th><th></th></tr></thead>
     <tbody>${list
       .map(
-        (c) => `<tr class="click" data-client="${esc(c.key || c.id)}" tabindex="0">
-        <td><div style="display:flex;gap:10px;align-items:center"><span class="ava ${c.spent ? "c" : ""}">${esc((c.name || "?")[0].toUpperCase())}</span><span><b style="font-size:14px">${esc(c.name || "Без имени")}</b><br><small class="muted">${esc(c.phone || "")}</small></span></div></td>
-        <td class="hide-m">${(c.tags || []).map((t) => `<span class="tag-chip">${esc(t)}</span>`).join("")}</td>
-        <td class="num">${c.deals.length}</td>
-        <td class="num">${c.spent ? lei(c.spent) + " лей" : "—"}</td>
-        <td class="num hide-m">${c.last ? fmtD(c.last) : ""}</td></tr>`
+        (b) => `<tr class="click${S.budgetEdit === b.id ? " sel" : ""}" data-bedit="${esc(b.id)}" tabindex="0">
+        <td><b>№${esc(b.num ?? "")}</b></td>
+        <td class="num ${b.amount < 0 ? "neg" : "pos"}"><b>${b.amount > 0 ? "+" : ""}${lei(b.amount)}</b></td>
+        <td>${esc(b.reason)}</td>
+        <td>${fmtLong(b.date)}</td>
+        <td class="num hide-m muted">${lei(b.bal)}</td>
+        <td class="num"><button class="ic-btn" data-bdel="${esc(b.id)}" aria-label="Удалить запись №${esc(b.num ?? "")}">${icon.trash}</button></td></tr>`
       )
       .join("")}</tbody></table></div>`
-      : `<div class="empty-state"><div class="empty-orb">${icon.user}</div><p>Клиенты появятся из сделок или добавьте вручную</p></div>`
+      : `<div class="empty-state"><div class="empty-orb"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/></svg></div><p>Записей пока нет</p></div>`
   }`;
 }
-
-/* ---------------- Склад ---------------- */
-function stockView() {
-  const q = S.q.toLowerCase();
-  const list = D.products.filter((p) => !q || `${p.brand} ${p.name}`.toLowerCase().includes(q));
-  let units = 0, value = 0, costV = 0;
-  for (const p of D.products)
-    for (const n of Object.values(p.stockQty || {})) {
-      units += +n || 0;
-      value += (+n || 0) * p.price;
-      costV += (+n || 0) * (+p.cost || 0);
+after.budget = () => {
+  const f = $("#bForm");
+  const F = f.elements;
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const amount = Math.round(+F.amount.value);
+    const err = (t) => ($("#bErr").textContent = t);
+    if (!amount) return err("Укажите сумму"), F.amount.focus();
+    if (!F.reason.value.trim()) return err("Укажите причину"), F.reason.focus();
+    const n = Math.round(+F.num.value) || nextNum();
+    if (D.budget.some((b) => +b.num === n && b.id !== S.budgetEdit) || D.orders.some((o) => +o.num === n)) return err(`Номер №${n} уже занят`);
+    const data = {
+      ...(S.budgetEdit ? D.budget.find((b) => b.id === S.budgetEdit) : {}),
+      num: n,
+      amount: F.sign.value === "-" ? -Math.abs(amount) : Math.abs(amount),
+      reason: F.reason.value.trim(),
+      date: F.date.value ? new Date(F.date.value + "T12:00").getTime() : Date.now(),
+    };
+    try {
+      const saved = await api.crm.save("budget", data);
+      const i = D.budget.findIndex((b) => b.id === saved.id);
+      i >= 0 ? (D.budget[i] = saved) : D.budget.push(saved);
+      toast(`№${n}: ${saved.amount > 0 ? "+" : ""}${lei(saved.amount)} — ${saved.reason}`);
+      S.budgetEdit = null;
+      render();
+    } catch (ex) {
+      err(ex?.code === "permission-denied" ? "Нет доступа: обновите правила Firestore" : errorText(ex));
     }
-  return `
-  <div class="kpis">
-    <div class="kpi"><small>Единиц на складе</small><b>${units}</b></div>
-    <div class="kpi"><small>Стоимость по цене продажи</small><b>${lei(value)}</b></div>
-    <div class="kpi"><small>Вложено (по закупке)</small><b>${lei(costV)}</b></div>
-    <div class="kpi"><small>Товаров в каталоге</small><b>${D.products.length}</b></div>
-  </div>
-  <p class="muted" style="margin:0 0 14px">Количество сохраняется сразу. Пустое поле — размер не учитывается. Когда сделка из наличия подтверждается, остаток уменьшается сам; при отмене — возвращается. На сайте закончившийся размер станет недоступен.</p>
-  ${
-    list
-      .map(
-        (p) => `<div class="stock-card" data-pid="${esc(p.id)}">
-      <span class="line-pic">${p.thumbs?.[0] ? `<img src="${p.thumbs[0]}" alt="${esc(p.brand + " " + p.name)}">` : art(p, "art-sm")}</span>
-      <div>
-        <div class="stock-h"><span><b>${esc(p.brand)} ${esc(p.name)}</b> <small class="muted">${lei(p.price)} лей${p.published ? "" : " · черновик"}</small></span>
-          <label class="cost-in">Закупка <input type="number" inputmode="numeric" min="0" data-cost value="${p.cost ?? ""}" aria-label="Закупочная цена"></label></div>
-        <div class="stock-sizes">${(p.sizes || [])
-          .map((s) => {
-            const v = p.stockQty?.[s];
-            return `<label class="sz ${v === 0 ? "zero" : v === 1 ? "low" : ""}"><span>${esc(s)}</span><input type="number" inputmode="numeric" min="0" data-size="${esc(s)}" value="${v ?? ""}" aria-label="Размер ${esc(s)}, штук"></label>`;
-          })
-          .join("")}</div>
-      </div></div>`
-      )
-      .join("") || `<div class="empty-state"><div class="empty-orb">${icon.box}</div><p>Товаров нет — добавьте их в админке сайта</p><a class="btn btn-ghost" href="admin.html#products">Открыть админку</a></div>`
-  }`;
-}
-afterRender.stock = () => {
-  const timers = {};
-  view.addEventListener("input", (e) => {
-    const card = e.target.closest("[data-pid]");
-    if (!card) return;
-    const p = D.products.find((x) => x.id === card.dataset.pid);
-    if (e.target.dataset.size != null) {
-      const v = e.target.value === "" ? null : Math.max(0, Math.round(+e.target.value));
-      const q = { ...(p.stockQty || {}) };
-      v == null ? delete q[e.target.dataset.size] : (q[e.target.dataset.size] = v);
-      p.stockQty = Object.keys(q).length ? q : null;
-      e.target.parentElement.className = `sz ${v === 0 ? "zero" : v === 1 ? "low" : ""}`;
-    }
-    if (e.target.dataset.cost != null) p.cost = e.target.value === "" ? null : Math.max(0, Math.round(+e.target.value));
-    clearTimeout(timers[p.id]);
-    timers[p.id] = setTimeout(() => api.products.save(p).then(() => toast("Склад сохранён")).catch((err) => toast(errorText(err), "error")), 600);
   });
 };
 
-/* ---------------- Задачи ---------------- */
-const TT = {
-  meet: ["Встреча", '<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>'],
-  call: ["Позвонить", '<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>'],
-  task: ["Задача", '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>'],
-};
+/* =========================================================
+   СКЛАД
+   ========================================================= */
+const INV_ORDER = ["stock", "transit", "sold"];
+function stockView() {
+  const q = S.q.toLowerCase();
+  const all = D.products.map((p) => ({ p, inv: invOf(p), n: sumMap(p.stockQty) }));
+  const list = all
+    .filter((x) => (S.inv === "all" || x.inv === S.inv) && (!q || `${pTitle(x.p)} ${Object.keys(x.p.stockQty || {}).join(" ")} ${Object.keys(x.p.colorsQty || {}).join(" ")}`.toLowerCase().includes(q)))
+    .sort((a, b) => INV_ORDER.indexOf(a.inv) - INV_ORDER.indexOf(b.inv) || (b.p.updatedAt || 0) - (a.p.updatedAt || 0));
+  const cnt = (s) => all.filter((x) => x.inv === s);
+  const units = (s) => cnt(s).reduce((t, x) => t + x.n, 0);
+  const invested = all.filter((x) => x.inv !== "sold").reduce((t, x) => t + x.n * (+x.p.cost || 0), 0);
+  const expected = all.filter((x) => x.inv !== "sold").reduce((t, x) => t + x.n * (+x.p.price || 0), 0);
+  return `
+  <div class="kpis">
+    <div class="kpi"><small>В наличии</small><b class="c-stock">${units("stock")} шт.</b><em>${cnt("stock").length} позиций</em></div>
+    <div class="kpi"><small>В дороге</small><b>${units("transit")} шт.</b><em>${cnt("transit").length} позиций</em></div>
+    <div class="kpi"><small>Вложено (закупка)</small><b>${lei(invested)}</b><em>в наличии и в дороге</em></div>
+    <div class="kpi good"><small>Ожидаемая выручка</small><b>${lei(expected)}</b><em>прибыль ${lei(expected - invested)}</em></div>
+  </div>
+  <div class="pipe-bar">
+    ${[["all", "Все"], ["stock", "В наличии"], ["transit", "В дороге"], ["sold", "Продано"]].map(([k, t]) => `<button class="chip" data-inv="${k}" aria-pressed="${S.inv === k}">${t} ${k === "all" ? all.length : cnt(k).length}</button>`).join("")}
+  </div>
+  ${
+    list.length
+      ? `<div class="inv-list">${list
+          .map(
+            ({ p, inv, n }) => `<button class="inv inv-${inv}" data-stock="${esc(p.id)}">
+          <span class="inv-pic">${p.thumbs?.[0] ? `<img src="${p.thumbs[0]}" alt="">` : art({ ...p, brand: p.brand || p.name }, "art-sm")}</span>
+          <span class="inv-body">
+            <span class="inv-name">${esc(pTitle(p))}<small>${INV_STATUSES[inv]}${p.published ? " · на сайте" : ""}</small></span>
+            <span class="inv-grid">
+              <span><em>Закупка</em>${hasVal(p.cost) ? lei(p.cost) : "—"}</span>
+              <span><em>Продажа</em>${hasVal(p.price) ? lei(p.price) : "—"}</span>
+              <span><em>Размеры</em>${pairs(p.stockQty) || "—"}</span>
+              <span><em>Количество</em>${n} шт.</span>
+              <span><em>Цвета</em>${pairs(p.colorsQty) || "—"}</span>
+            </span>
+          </span></button>`
+          )
+          .join("")}</div>`
+      : `<div class="empty-state"><div class="empty-orb">${icon.box}</div><p>На складе пусто</p><button class="btn btn-chrome" data-act="newStock">Добавить вещь</button></div>`
+  }`;
+}
+
+/* ---------------- форма вещи ---------------- */
+const sm = $("#stockModal");
+const SF = $("#stockForm").elements;
+let editingStock = null;
+$("#catSel").innerHTML = CATEGORIES.map((c) => `<option>${c}</option>`).join("");
+const pairRow = (kind, k = "", n = 1) => `<div class="pair">
+  <input class="input" name="${kind}Key" value="${esc(k)}" placeholder="${kind === "size" ? "42" : "чёрный"}" aria-label="${kind === "size" ? "Размер" : "Цвет"}">
+  <span class="x">×</span>
+  <input class="input" name="${kind}Qty" type="number" inputmode="numeric" min="0" value="${n}" aria-label="Количество">
+  <button type="button" class="ic-btn" data-rmpair aria-label="Убрать">${icon.close}</button></div>`;
+function readPairs(kind) {
+  const m = {};
+  $$(`#${kind}Rows .pair`).forEach((r) => {
+    const k = r.querySelector(`[name=${kind}Key]`).value.trim();
+    const n = Math.max(0, Math.round(+r.querySelector(`[name=${kind}Qty]`).value || 0));
+    if (k) m[k] = (m[k] || 0) + n;
+  });
+  return m;
+}
+function qtyInfo() {
+  const a = sumMap(readPairs("size")), colors = readPairs("color"), b = sumMap(colors);
+  $("#qtyInfo").innerHTML = `5. Количество: <b>${a} шт.</b>${Object.keys(colors).length && a !== b ? ` <span style="color:var(--amber)">· по цветам ${b} — не совпадает с размерами</span>` : ""}`;
+}
+function openStock(p = null) {
+  editingStock = p;
+  $("#stockForm").reset();
+  $("#smErr").textContent = "";
+  $("#smTitle").textContent = p ? pTitle(p) : "Новая вещь на склад";
+  $("#smDelete").hidden = !p;
+  SF.title.value = p ? pTitle(p) : "";
+  SF.inv.value = p ? invOf(p) : "stock";
+  SF.cost.value = p && hasVal(p.cost) ? p.cost : "";
+  SF.price.value = p && hasVal(p.price) ? p.price : "";
+  SF.cat.value = p?.cat || "Обувь";
+  SF.published.checked = !!p?.published;
+  const sz = Object.entries(p?.stockQty || {});
+  const cl = Object.entries(p?.colorsQty || {});
+  $("#sizeRows").innerHTML = (sz.length ? sz : [["", 1]]).map(([k, n]) => pairRow("size", k, n)).join("");
+  $("#colorRows").innerHTML = (cl.length ? cl : [["", 1]]).map(([k, n]) => pairRow("color", k, n)).join("");
+  qtyInfo();
+  sm.showModal();
+  setTimeout(() => SF.title.focus(), 50);
+}
+sm.addEventListener("click", (e) => {
+  if (e.target === sm || e.target.closest("[data-close]")) return sm.close();
+  const add = e.target.closest("[data-addpair]");
+  if (add) {
+    $(`#${add.dataset.addpair}Rows`).insertAdjacentHTML("beforeend", pairRow(add.dataset.addpair, "", 1));
+    $$(`#${add.dataset.addpair}Rows .pair input`).at(-2).focus();
+    qtyInfo();
+  }
+  const rm = e.target.closest("[data-rmpair]");
+  if (rm) {
+    rm.closest(".pair").remove();
+    qtyInfo();
+  }
+});
+$("#stockForm").addEventListener("input", qtyInfo);
+$("#smDelete").addEventListener("click", async () => {
+  const p = editingStock;
+  if (!p || !confirm(`Удалить «${pTitle(p)}» со склада${p.published ? " и с сайта" : ""}?`)) return;
+  try {
+    await api.products.remove(p.id);
+    D.products = D.products.filter((x) => x.id !== p.id);
+    sm.close();
+    toast("Удалено");
+    render();
+  } catch (err) {
+    toast(errorText(err), "error");
+  }
+});
+$("#stockForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = SF.title.value.trim();
+  if (!title) return ($("#smErr").textContent = "Укажите название"), SF.title.focus();
+  const stockQty = readPairs("size");
+  const colorsQty = readPairs("color");
+  const p = editingStock;
+  const data = {
+    ...(p || { desc: "", featured: false, oldPrice: 0, thumbs: [], imgCount: 0, stock: "stock", sub: "" }),
+    ...(!p || title !== pTitle(p) ? { brand: "", name: title } : {}),
+    cost: num(SF.cost.value),
+    price: num(SF.price.value) || 0,
+    stockQty,
+    colorsQty,
+    sizes: Object.keys(stockQty).length ? Object.keys(stockQty) : p?.sizes || [],
+    invStatus: SF.inv.value,
+    cat: SF.cat.value,
+    published: SF.published.checked,
+  };
+  const btn = $("#smSave");
+  btn.classList.add("loading");
+  try {
+    const id = await api.products.save(data);
+    data.id = id;
+    const i = D.products.findIndex((x) => x.id === id);
+    i >= 0 ? (D.products[i] = data) : D.products.unshift(data);
+    sm.close();
+    toast(`${title}: сохранено`);
+    render();
+  } catch (ex) {
+    $("#smErr").textContent = errorText(ex);
+  }
+  btn.classList.remove("loading");
+});
+
+/* =========================================================
+   ИТОГИ
+   ========================================================= */
+function todayView() {
+  const m0 = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+  const mName = new Date().toLocaleDateString("ru-RU", { month: "long" });
+  const monthOrders = D.orders.filter((o) => o.createdAt >= m0 && o.status !== "cancelled");
+  const sale = monthOrders.reduce((s, o) => s + saleOf(o), 0);
+  const cost = monthOrders.reduce((s, o) => s + costOf(o), 0);
+  const balance = D.budget.reduce((s, b) => s + (+b.amount || 0), 0);
+  const open = D.orders.filter(isOpen);
+  const byStage = {};
+  open.forEach((o) => (byStage[o.status] = (byStage[o.status] || 0) + 1));
+  const end = startOfDay() + DAY;
+  const tasks = D.tasks.filter((t) => !t.done && t.due && t.due < end).sort((a, b) => a.due - b.due);
+  const reqs = D.requests.filter((r) => r.status === "new" && !r.orderId);
+  return `
+  <div class="kpis">
+    <div class="kpi"><small>Продажи, ${mName}</small><b>${lei(sale)}</b><em>${monthOrders.length} заказов</em></div>
+    <div class="kpi"><small>Закупка, ${mName}</small><b>${lei(cost)}</b></div>
+    <div class="kpi good"><small>Прибыль, ${mName}</small><b>${lei(sale - cost)}</b></div>
+    <div class="kpi ${balance >= 0 ? "" : "bad"}"><small>Баланс бюджета</small><b>${lei(balance)}</b></div>
+  </div>
+  <div class="cols2">
+    <div>
+      <div class="box"><div class="box-h"><h2>Заказы в работе · ${open.length}</h2><a href="#orders">Все заказы</a></div>
+        ${open.length ? `<div class="rows">${Object.entries(byStage).map(([s, n]) => `<button class="row" data-gostage="${s}"><span class="st st-${s}">${stageName(s)}</span><span></span><span class="r">${n}</span></button>`).join("")}</div>` : `<p class="empty-mini">Все заказы закрыты</p>`}</div>
+      <div class="box"><div class="box-h"><h2>Задачи на сегодня</h2><a href="#tasks">Все задачи</a></div>
+        ${tasks.length ? tasks.map(taskRow).join("") : `<p class="empty-mini">На сегодня всё сделано</p>`}</div>
+    </div>
+    <div>
+      <div class="box"><div class="box-h"><h2>Новые заявки с сайта · ${reqs.length}</h2><a href="#requests">Все заявки</a></div>
+        ${reqs.length ? `<div class="rows">${reqs.slice(0, 6).map((r) => `<a class="row" href="#requests"><span class="ava">${esc((r.contact?.name || "?")[0].toUpperCase())}</span><span><b>${esc(r.title)}</b><small>${esc(r.number)} · ${esc(r.contact?.name || "")}</small></span><span class="r">${fmtD(r.createdAt)}</span></a>`).join("")}</div>` : `<p class="empty-mini">Новых нет</p>`}</div>
+      <div class="box"><div class="box-h"><h2>Последние записи бюджета</h2><a href="#budget">Бюджет</a></div>
+        ${D.budget.length ? `<div class="rows">${[...D.budget].sort((a, b) => b.date - a.date).slice(0, 5).map((b) => `<div class="row"><span class="ava">№</span><span><b>№${esc(b.num)} · ${esc(b.reason)}</b><small>${fmtLong(b.date)}</small></span><span class="r ${b.amount < 0 ? "neg" : "pos"}">${b.amount > 0 ? "+" : ""}${lei(b.amount)}</span></div>`).join("")}</div>` : `<p class="empty-mini">Записей нет</p>`}</div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   ЗАЯВКИ С САЙТА
+   ========================================================= */
+function requestsView() {
+  const q = S.q.toLowerCase();
+  const list = D.requests.filter((r) => !q || `${r.number} ${r.title} ${r.contact?.name} ${r.contact?.phone}`.toLowerCase().includes(q));
+  return list.length
+    ? `<div class="ocards">${list
+        .map((r) => {
+          const c = r.contact || {};
+          return `<article class="ocard">
+        <header class="oc-h"><b class="oc-num">${esc(r.number)}</b><span class="oc-date">${fmtDT(r.createdAt)}</span>
+          ${r.orderId ? `<span class="pill ok">→ заказ №${esc(r.orderNum)}</span>` : ""}
+          <select class="select sel-sm" data-rstage="${esc(r.id)}" aria-label="Статус заявки">${Object.entries(REQUEST_STATUSES).map(([k, t]) => `<option value="${k}"${k === r.status ? " selected" : ""}>${t}</option>`).join("")}</select></header>
+        <p class="oc-req"><b>${esc(r.title)}</b>${r.size ? ` · размер ${esc(r.size)}` : ""}${r.color ? ` · ${esc(r.color)}` : ""}${r.budget ? ` · бюджет до ${lei(r.budget)}` : ""}</p>
+        ${r.link && /^https?:/i.test(r.link) ? `<p class="oc-notes"><a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer">${esc(r.link)}</a></p>` : ""}
+        ${r.photos?.length ? `<div class="mini-photos">${r.photos.map((p, k) => `<button type="button" data-zoom="${k}" aria-label="Фото ${k + 1}"><img src="${p}" alt="Фото ${k + 1}"></button>`).join("")}</div>` : ""}
+        ${r.comment ? `<p class="oc-notes">«${esc(r.comment)}»</p>` : ""}
+        <div class="oc-contact">${esc(c.name || "")}${c.phone ? ` · <a href="tel:+${intl(c.phone)}">${esc(c.phone)}</a>` : ""}</div>
+        <footer class="oc-tot"><span class="oc-acts">${r.orderId ? "" : `<button class="btn btn-chrome btn-sm" data-req2order="${esc(r.id)}">Оформить заказ</button>`}</span></footer>
+      </article>`;
+        })
+        .join("")}</div>`
+    : `<div class="empty-state"><div class="empty-orb">${icon.box}</div><p>Заявок с сайта пока нет</p></div>`;
+}
+
+/* =========================================================
+   КЛИЕНТЫ
+   ========================================================= */
+function clients() {
+  const map = new Map();
+  for (const c of D.clients) {
+    const k = clientKey(c) || c.id;
+    map.set(k, { ...c, key: k, orders: [] });
+  }
+  const touch = (c, o) => {
+    const k = clientKey(c);
+    if (!k) return;
+    if (!map.has(k)) map.set(k, { id: "c" + k, key: k, name: c.name || "", phone: c.phone || "", telegram: c.telegram || "", tags: [], orders: [] });
+    const x = map.get(k);
+    x.name ||= c.name || "";
+    x.phone ||= c.phone || "";
+    x.telegram ||= c.telegram || "";
+    if (o) x.orders.push(o);
+  };
+  D.orders.forEach((o) => touch(o.contact || {}, o));
+  D.requests.forEach((r) => touch(r.contact || {}, null));
+  return [...map.values()].map((c) => {
+    const live = c.orders.filter((o) => o.status !== "cancelled");
+    return {
+      ...c,
+      spent: live.reduce((s, o) => s + saleOf(o), 0),
+      profit: live.reduce((s, o) => s + (hasCost(o) ? profitOf(o) : 0), 0),
+      last: Math.max(c.updatedAt || 0, ...c.orders.map((o) => o.createdAt || 0)),
+    };
+  });
+}
+const cName = (c) => c.name || (tgName(c.telegram) ? "@" + tgName(c.telegram) : c.phone) || "Без имени";
+function clientsView() {
+  const q = S.q.toLowerCase();
+  const list = clients()
+    .filter((c) => !q || `${c.name} ${c.phone} ${c.telegram} ${(c.tags || []).join(" ")}`.toLowerCase().includes(q))
+    .sort((a, b) => b.last - a.last);
+  return list.length
+    ? `<div class="box" style="padding:6px 8px;overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Клиент</th><th class="hide-m">Контакт</th><th class="num">Заказов</th><th class="num">Купил на</th><th class="num hide-m">Прибыль</th></tr></thead>
+    <tbody>${list
+      .map(
+        (c) => `<tr class="click" data-client="${esc(c.key)}" tabindex="0">
+        <td><div style="display:flex;gap:10px;align-items:center"><span class="ava ${c.spent ? "c" : ""}">${esc(cName(c).replace("@", "")[0].toUpperCase())}</span><b style="font-size:14px">${esc(cName(c))}</b></div></td>
+        <td class="hide-m muted">${esc([tgName(c.telegram) && "@" + tgName(c.telegram), c.phone].filter(Boolean).join(" · "))}</td>
+        <td class="num">${c.orders.length}</td><td class="num">${c.spent ? lei(c.spent) : "—"}</td><td class="num hide-m">${c.profit ? lei(c.profit) : "—"}</td></tr>`
+      )
+      .join("")}</tbody></table></div>`
+    : `<div class="empty-state"><div class="empty-orb">${icon.user}</div><p>Клиенты появятся из заказов</p></div>`;
+}
+
+const panel = $("#panel");
+function openPanel(title, body, foot = "") {
+  $("#pTitle").textContent = title;
+  $("#pBody").innerHTML = body;
+  $("#pFoot").innerHTML = foot;
+  panel.classList.add("open");
+  panel.setAttribute("aria-hidden", "false");
+  $("#pScrim").hidden = false;
+}
+function closePanel() {
+  panel.classList.remove("open");
+  panel.setAttribute("aria-hidden", "true");
+  $("#pScrim").hidden = true;
+}
+$("#pClose").addEventListener("click", closePanel);
+$("#pScrim").addEventListener("click", closePanel);
+
+function openClient(key) {
+  const c = clients().find((x) => x.key === key) || { key: "", name: "", phone: "", telegram: "", tags: [], orders: [] };
+  const tg = tgName(c.telegram);
+  openPanel(
+    key ? cName(c) : "Новый клиент",
+    `${c.orders.length ? `<div class="calc"><div><small>Купил на</small><b>${lei(c.spent)}</b></div><div class="pos"><small>Прибыль с клиента</small><b>${lei(c.profit)}</b></div></div>` : ""}
+    <div class="contact-btns">${tg ? `<a class="btn btn-ghost" href="https://t.me/${esc(tg)}" target="_blank" rel="noopener">Telegram</a>` : ""}${c.phone ? `<a class="btn btn-ghost" href="tel:+${intl(c.phone)}">Позвонить</a>` : ""}</div>
+    <form id="clientEdit" class="stack" novalidate>
+      <div class="row2">
+        <label class="field"><span>Имя</span><input class="input" name="cname" value="${esc(c.name || "")}"></label>
+        <label class="field"><span>Telegram</span><input class="input" name="telegram" value="${tg ? "@" + esc(tg) : ""}" placeholder="@username"></label>
+        <label class="field"><span>Телефон</span><input class="input" name="phone" type="tel" value="${esc(c.phone || "")}"></label>
+        <label class="field"><span>Размеры</span><input class="input" name="sizes" value="${esc(c.sizesNote || "")}" placeholder="обувь 43, одежда M"></label>
+      </div>
+      <label class="field"><span>Метки через запятую</span><input class="input" name="tags" value="${esc((c.tags || []).join(", "))}" placeholder="постоянный, перекуп"></label>
+      <label class="field"><span>Заметки</span><textarea class="textarea" name="notes" rows="3">${esc(c.notes || "")}</textarea></label>
+    </form>
+    ${c.orders.length ? `<div class="ps-sec"><h3>Заказы · ${c.orders.length}</h3><div class="rows">${c.orders.map((o) => `<button class="row" data-edit="${esc(o.id)}"><span class="ava">${esc(String(o.num || "•"))}</span><span><b>${esc((o.items || []).map(itemName).join(", "))}</b><small>${esc(label(o))} · ${stageName(o.status)} · ${fmtD(o.createdAt)}</small></span><span class="r">${lei(saleOf(o))}</span></button>`).join("")}</div></div>` : ""}`,
+    `${key ? `<button class="btn btn-ghost" data-orderfor="${esc(c.key)}">Новый заказ</button>` : ""}<button class="btn btn-chrome" id="clientSave">Сохранить</button>`
+  );
+  $("#clientSave").addEventListener("click", async () => {
+    const F = $("#clientEdit").elements;
+    const data = { name: F.cname.value.trim(), telegram: tgName(F.telegram.value), phone: F.phone.value.trim(), sizesNote: F.sizes.value.trim(), tags: F.tags.value.split(",").map((t) => t.trim()).filter(Boolean), notes: F.notes.value.trim() };
+    const k = clientKey(data);
+    if (!k) return toast("Укажите Telegram или телефон", "error");
+    try {
+      const saved = await api.crm.save("clients", { ...D.clients.find((x) => clientKey(x) === k), ...data, id: "c" + k });
+      const i = D.clients.findIndex((x) => x.id === saved.id);
+      i >= 0 ? (D.clients[i] = saved) : D.clients.unshift(saved);
+      toast("Клиент сохранён");
+      closePanel();
+      render();
+    } catch (err) {
+      toast(errorText(err), "error");
+    }
+  });
+}
+
+/* =========================================================
+   ЗАДАЧИ
+   ========================================================= */
+const TT = { meet: "Встреча", call: "Позвонить", task: "Задача" };
 function taskRow(t) {
   const late = !t.done && t.due && t.due < Date.now();
-  const c = t.phone ? clientByPhone(t.phone) : null;
   return `<div class="task ${t.done ? "done" : ""}">
     <label class="check"><input type="checkbox" data-tdone="${esc(t.id)}" ${t.done ? "checked" : ""} aria-label="Готово"></label>
-    <span><b>${TT[t.type]?.[0] || ""}: ${esc(t.title)}</b>
-      <small class="${late ? "late" : ""}">${t.due ? fmtDT(t.due) : "без срока"}${t.place ? ` · ${esc(t.place)}` : ""}${c ? ` · ${esc(c.name)}` : ""}</small></span>
+    <span><b>${TT[t.type] || ""}: ${esc(t.title)}</b><small class="${late ? "late" : ""}">${t.due ? fmtDT(t.due) : "без срока"}${t.place ? ` · ${esc(t.place)}` : ""}</small></span>
     <button class="ic-btn" data-tdel="${esc(t.id)}" aria-label="Удалить задачу">${icon.trash}</button></div>`;
 }
 function tasksView() {
-  const q = S.q.toLowerCase();
-  const list = D.tasks.filter((t) => !q || `${t.title} ${t.place || ""}`.toLowerCase().includes(q));
   const t0 = startOfDay();
   const groups = [
     ["Просрочено", (t) => !t.done && t.due && t.due < t0],
-    ["Сегодня", (t) => !t.done && t.due >= t0 && t.due < t0 + day],
-    ["Завтра", (t) => !t.done && t.due >= t0 + day && t.due < t0 + 2 * day],
-    ["Позже", (t) => !t.done && (!t.due || t.due >= t0 + 2 * day)],
+    ["Сегодня", (t) => !t.done && t.due >= t0 && t.due < t0 + DAY],
+    ["Позже", (t) => !t.done && (!t.due || t.due >= t0 + DAY)],
     ["Сделано", (t) => t.done],
   ];
   const nowLocal = new Date(Date.now() + 36e5 - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
-  return `
-  <form class="task-form" id="taskForm">
-    <select class="select" name="type" aria-label="Тип">${Object.entries(TT).map(([k, [t]]) => `<option value="${k}">${t}</option>`).join("")}</select>
-    <input class="input" name="title" placeholder="Что сделать" aria-label="Задача" required>
+  return `<form class="task-form" id="taskForm">
+    <select class="select" name="type" aria-label="Тип">${Object.entries(TT).map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select>
+    <input class="input" name="title" placeholder="Что сделать" aria-label="Задача">
     <input class="input" name="due" type="datetime-local" value="${nowLocal}" aria-label="Когда">
     <button class="btn btn-chrome btn-sm" style="height:44px">Добавить</button>
-    <input class="input" name="place" placeholder="Место встречи (необязательно)" aria-label="Место" style="grid-column:1/3">
-    <input class="input" name="phone" list="clientPhones" placeholder="Телефон клиента (необязательно)" aria-label="Клиент" style="grid-column:3/5">
-    <datalist id="clientPhones">${clients().map((c) => `<option value="${esc(c.phone)}">${esc(c.name)}</option>`).join("")}</datalist>
+    <input class="input" name="place" placeholder="Место (необязательно)" aria-label="Место" style="grid-column:1/-1">
   </form>
   ${groups
-    .map(([name, fn]) => {
-      const l = list.filter(fn).sort((a, b) => (a.due || 9e15) - (b.due || 9e15));
-      return l.length ? `<div class="tgroup box"><h3>${name} · ${l.length}</h3>${l.map(taskRow).join("")}</div>` : "";
+    .map(([n, fn]) => {
+      const l = D.tasks.filter(fn).sort((a, b) => (a.due || 9e15) - (b.due || 9e15));
+      return l.length ? `<div class="tgroup box"><h3>${n} · ${l.length}</h3>${l.map(taskRow).join("")}</div>` : "";
     })
     .join("") || `<div class="empty-state"><div class="empty-orb">${icon.check}</div><p>Задач нет</p></div>`}`;
 }
-afterRender.tasks = () => {
+after.tasks = () => {
   $("#taskForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const F = e.target.elements;
     if (!F.title.value.trim()) return F.title.focus();
-    await saveTask({ type: F.type.value, title: F.title.value.trim(), due: F.due.value ? new Date(F.due.value).getTime() : null, place: F.place.value.trim(), phone: F.phone.value.trim() });
+    await saveTask({ type: F.type.value, title: F.title.value.trim(), due: F.due.value ? new Date(F.due.value).getTime() : null, place: F.place.value.trim() });
     render();
   });
 };
@@ -448,46 +887,34 @@ async function saveTask(t) {
     const saved = await api.crm.save("tasks", { done: false, ...t });
     const i = D.tasks.findIndex((x) => x.id === saved.id);
     i >= 0 ? (D.tasks[i] = saved) : D.tasks.unshift(saved);
-    toast(t.id ? "Задача обновлена" : "Задача добавлена");
   } catch (err) {
     toast(errorText(err), "error");
   }
 }
 
-/* ---------------- Данные ---------------- */
+/* =========================================================
+   ДАННЫЕ
+   ========================================================= */
 function dataView() {
-  return `
-  <div class="cols2">
-    <div class="box">
-      <div class="box-h"><h2>Где хранятся данные</h2></div>
-      <p class="muted">${
-        api.mode === "demo"
-          ? "Сейчас — демо-режим: всё лежит только в этом браузере. Если очистить браузер или зайти с телефона, данных там не будет. Подключите Firebase по README, затем импортируйте сюда файл выгрузки."
-          : "Подключён Firebase: данные общие для всех устройств администратора и для сайта."
-      }</p>
-      <p class="muted">CRM и сайт используют одни и те же заказы, заявки и товары. Когда сайт откроется, его заказы и заявки сами появятся в воронке и в карточках клиентов.</p>
-    </div>
-    <div class="box">
-      <div class="box-h"><h2>Резервная копия</h2></div>
-      <p class="muted">Файл с товарами (вместе с фото), заказами, заявками, клиентами и задачами.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-chrome btn-sm" id="exportBtn">${icon.upload} Скачать копию</button>
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer">Загрузить копию<input type="file" id="importFile" accept="application/json,.json" hidden></label>
-      </div>
-      <p class="form-err" id="dataErr"></p>
-    </div>
+  return `<div class="cols2">
+    <div class="box"><div class="box-h"><h2>Где хранятся данные</h2></div>
+      <p class="muted">${api.mode === "demo" ? "Демо-режим: всё лежит только в этом браузере." : "Firebase: данные общие для вас, напарника и сайта."} Заказы покупателей и заявки с сайта попадают сюда сами, склад — это те же товары, что на сайте.</p></div>
+    <div class="box"><div class="box-h"><h2>Резервная копия</h2></div>
+      <p class="muted">Файл со складом (с фото), заказами, бюджетом, заявками, клиентами и задачами.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-chrome btn-sm" id="exportBtn">${icon.upload} Скачать копию</button>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">Загрузить копию<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
+      <p class="form-err" id="dataErr"></p></div>
   </div>`;
 }
-afterRender.data = () => {
+after.data = () => {
   $("#exportBtn").addEventListener("click", async (e) => {
     const b = e.currentTarget;
     b.classList.add("loading");
     const images = {};
     for (const p of D.products) if (p.imgCount) images[p.id] = await api.products.images(p.id).catch(() => []);
-    const dump = { app: "bine-crm", version: 1, exportedAt: new Date().toISOString(), products: D.products, images, orders: D.orders, requests: D.requests, clients: D.clients, tasks: D.tasks };
+    const dump = { app: "bine-crm", version: 2, exportedAt: new Date().toISOString(), products: D.products, images, orders: D.orders, requests: D.requests, budget: D.budget, clients: D.clients, tasks: D.tasks };
     const url = URL.createObjectURL(new Blob([JSON.stringify(dump)], { type: "application/json" }));
-    const a = Object.assign(document.createElement("a"), { href: url, download: `bine-crm-${new Date().toISOString().slice(0, 10)}.json` });
-    a.click();
+    Object.assign(document.createElement("a"), { href: url, download: `bine-crm-${new Date().toISOString().slice(0, 10)}.json` }).click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
     b.classList.remove("loading");
   });
@@ -500,9 +927,9 @@ afterRender.data = () => {
       toast("Загружаю копию…");
       for (const p of dump.products || []) {
         const imgs = dump.images?.[p.id];
-        await api.products.save(p, imgs?.length ? await Promise.all(imgs.map(async (full, i) => ({ full, thumb: p.thumbs?.[i] || (i < 2 ? full : null) }))) : undefined);
+        await api.products.save(p, imgs?.length ? imgs.map((full, i) => ({ full, thumb: p.thumbs?.[i] || (i < 2 ? full : null) })) : undefined);
       }
-      for (const col of ["orders", "requests", "clients", "tasks"]) for (const x of dump[col] || []) await api.crm.save(col, x);
+      for (const col of ["orders", "requests", "budget", "clients", "tasks"]) for (const x of dump[col] || []) await api.crm.save(col, x);
       await load();
       toast("Копия загружена");
       render();
@@ -513,312 +940,131 @@ afterRender.data = () => {
   });
 };
 
-/* ---------------- side panel ---------------- */
-const panel = $("#panel");
-function openPanel(title, body, foot = "") {
-  $("#pTitle").textContent = title;
-  $("#pBody").innerHTML = body;
-  $("#pFoot").innerHTML = foot;
-  panel.classList.add("open");
-  panel.setAttribute("aria-hidden", "false");
-  $("#pScrim").hidden = false;
-  $("#pClose").focus();
-}
-function closePanel() {
-  panel.classList.remove("open");
-  panel.setAttribute("aria-hidden", "true");
-  $("#pScrim").hidden = true;
-}
-$("#pClose").addEventListener("click", closePanel);
-$("#pScrim").addEventListener("click", closePanel);
-addEventListener("keydown", (e) => e.key === "Escape" && panel.classList.contains("open") && closePanel());
-
-function contactBtns(phone, extra = {}) {
-  const d = digitsIntl(phone);
-  if (!d) return "";
-  return `<div class="contact-btns">
-    <a class="btn btn-ghost" href="tel:+${d}">Позвонить</a>
-    <a class="btn btn-ghost" href="https://wa.me/${d}" target="_blank" rel="noopener">WhatsApp</a>
-    <a class="btn btn-ghost" href="viber://chat?number=%2B${d}">Viber</a>
-    ${extra.telegram ? `<a class="btn btn-ghost" href="https://t.me/${esc(extra.telegram.replace(/^@/, ""))}" target="_blank" rel="noopener">Telegram</a>` : ""}
-    ${extra.instagram ? `<a class="btn btn-ghost" href="https://instagram.com/${esc(extra.instagram.replace(/^@/, ""))}" target="_blank" rel="noopener">Instagram</a>` : ""}
-  </div>`;
-}
-
-function openDeal(kind, id) {
-  const d = findDeal(kind, id);
-  if (!d) return;
-  const r = d.raw;
-  const P = PIPES[kind];
-  const c = clientByPhone(d.phone);
-  const dueVal = r.due ? new Date(r.due - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10) : "";
-  openPanel(
-    `${d.number || "Сделка"}`,
-    `<div class="ps-sec"><span class="tag tag-${kind === "order" ? "stock" : "china"}" style="background:transparent">${P.label}</span>
-      <span class="muted" style="margin-left:8px">${fmtDT(d.createdAt)} · ${SOURCES[d.source] || d.source}</span></div>
-    <div class="ps-sec"><h3>Клиент</h3>
-      <button class="row" data-client="${esc(phoneKey(d.phone))}" style="padding:6px 0"><span class="ava c">${esc((d.name || "?")[0].toUpperCase())}</span><span><b>${esc(d.name || "Без имени")}</b><small>${esc(d.phone)}${c ? ` · ${c.deals.length} сделок` : ""}</small></span><span class="r">${icon.arrow}</span></button>
-      ${contactBtns(d.phone, c || {})}</div>
-    <div class="ps-sec"><h3>Что</h3>
-      ${kind === "order" ? `<ul class="ps-items">${(r.items || []).map((i) => `<li>${esc(i.brand)} ${esc(i.name)} — р. ${esc(i.size)} × ${i.qty} · ${lei(i.price)} лей</li>`).join("")}</ul>` : `<p class="ps-items" style="margin:0">${esc(d.title)}${r.color ? `, ${esc(r.color)}` : ""}${r.budget ? ` · бюджет до ${lei(r.budget)} лей` : ""}</p>${r.link ? `<p class="ps-items" style="margin:4px 0 0;word-break:break-all"><a href="${/^https?:/i.test(r.link) ? esc(r.link) : "#"}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">${esc(r.link)}</a></p>` : ""}`}
-      ${r.photos?.length ? `<div class="mini-photos" style="margin-top:8px">${r.photos.map((p, k) => `<button type="button" data-zoom="${k}" aria-label="Фото ${k + 1}"><img src="${p}" alt="Фото ${k + 1}"></button>`).join("")}</div>` : ""}
-      ${r.comment ? `<p class="muted" style="margin:8px 0 0">«${esc(r.comment)}»</p>` : ""}
-      ${kind === "order" && r.delivery ? `<p class="muted" style="margin:8px 0 0">${r.delivery.type === "ship" ? `Доставка: ${esc(r.delivery.city)}, ${esc(r.delivery.address)}` : "Встреча в Кишинёве"}</p>` : ""}</div>
-    <form id="dealEdit" class="stack" novalidate>
-      <label class="field"><span>Этап</span><select class="select" name="status">${[...P.stages, "cancelled"].map((s) => `<option value="${s}"${s === d.status ? " selected" : ""}>${esc(P.names[s] || s)}</option>`).join("")}</select></label>
-      <div class="money">
-        <label class="field"><span>Продажа, лей</span><input class="input" name="sale" type="number" inputmode="numeric" min="0" value="${d.sale || ""}"></label>
-        <label class="field"><span>Закупка, лей</span><input class="input" name="cost" type="number" inputmode="numeric" min="0" value="${d.cost || ""}"></label>
-        <label class="field"><span>Доставка из Китая, лей</span><input class="input" name="ship" type="number" inputmode="numeric" min="0" value="${d.ship || ""}"></label>
-        <label class="field"><span>Получено (предоплата), лей</span><input class="input" name="prepaid" type="number" inputmode="numeric" min="0" value="${d.prepaid || ""}"></label>
-      </div>
-      <div class="calc" id="calc"></div>
-      <div class="money">
-        <label class="field"><span>Поставщик</span><input class="input" name="supplier" value="${esc(r.supplier || "")}"></label>
-        <label class="field"><span>Трек-номер</span><input class="input" name="tracking" value="${esc(r.tracking || "")}"></label>
-        <label class="field"><span>Срок</span><input class="input" name="due" type="date" value="${dueVal}"></label>
-        <label class="field"><span>Источник</span><select class="select" name="source">${Object.entries(SOURCES).map(([k, t]) => `<option value="${k}"${k === d.source ? " selected" : ""}>${t}</option>`).join("")}</select></label>
-      </div>
-      <label class="field"><span>Заметки</span><textarea class="textarea" name="notes" rows="3">${esc(r.notes || "")}</textarea></label>
-    </form>`,
-    `<button class="btn btn-ghost" data-addtask="${esc(d.phone)}|${esc(d.number || "")}">Задача</button><button class="btn btn-chrome" id="dealSave">Сохранить</button>`
-  );
-  const F = $("#dealEdit").elements;
-  const calc = () => {
-    const sale = +F.sale.value || 0, cost = (+F.cost.value || 0) + (+F.ship.value || 0), pre = +F.prepaid.value || 0;
-    const pr = sale - cost;
-    $("#calc").innerHTML = `<div class="${cost ? (pr >= 0 ? "pos" : "neg") : ""}"><small>Прибыль</small><b>${cost ? lei(pr) : "—"}</b></div><div><small>Осталось получить</small><b>${lei(Math.max(0, sale - pre))}</b></div>`;
-  };
-  $("#dealEdit").addEventListener("input", calc);
-  calc();
-  $("#dealSave").addEventListener("click", async () => {
-    const num = (n) => (F[n].value === "" ? 0 : Math.max(0, Math.round(+F[n].value)));
-    const patch = {
-      cost: num("cost"),
-      shipCost: num("ship"),
-      prepaid: num("prepaid"),
-      supplier: F.supplier.value.trim(),
-      tracking: F.tracking.value.trim(),
-      due: F.due.value ? new Date(F.due.value + "T12:00").getTime() : null,
-      source: F.source.value,
-      notes: F.notes.value.trim(),
-    };
-    patch[kind === "order" ? "total" : "price"] = num("sale");
-    try {
-      await (kind === "order" ? api.orders : api.requests).update(id, patch);
-      Object.assign(r, patch);
-      if (F.status.value !== d.status) await setStatus(kind, id, F.status.value);
-      toast("Сделка сохранена");
-      closePanel();
-      render();
-    } catch (err) {
-      toast(errorText(err), "error");
-    }
-  });
-}
-
-function openClient(key) {
-  const c = clients().find((x) => (x.key || x.id) === key) || { key, name: "", phone: "", tags: [], deals: [], derived: true };
-  const done = c.deals.filter((d) => d.status === "done");
-  openPanel(
-    c.name || "Новый клиент",
-    `${c.deals.length ? `<div class="calc"><div><small>Купил на</small><b>${lei(c.spent)}</b></div><div class="pos"><small>Прибыль с клиента</small><b>${lei(c.profit)}</b></div></div>` : ""}
-    ${c.phone ? contactBtns(c.phone, c) : ""}
-    <form id="clientEdit" class="stack" novalidate>
-      <div class="row2">
-        <label class="field"><span>Имя *</span><input class="input" name="cname" value="${esc(c.name || "")}"></label>
-        <label class="field"><span>Телефон *</span><input class="input" name="phone" type="tel" value="${esc(c.phone || "")}"></label>
-        <label class="field"><span>Telegram</span><input class="input" name="telegram" value="${esc(c.telegram || "")}" placeholder="@username"></label>
-        <label class="field"><span>Instagram</span><input class="input" name="instagram" value="${esc(c.instagram || "")}" placeholder="@username"></label>
-        <label class="field"><span>Размер обуви</span><input class="input" name="shoe" value="${esc(c.sizes?.shoe || "")}"></label>
-        <label class="field"><span>Размер одежды</span><input class="input" name="cloth" value="${esc(c.sizes?.cloth || "")}"></label>
-      </div>
-      <label class="field"><span>Любимые бренды</span><input class="input" name="brands" value="${esc(c.brands || "")}"></label>
-      <label class="field"><span>Метки через запятую</span><input class="input" name="tags" value="${esc((c.tags || []).join(", "))}" placeholder="постоянный, перекуп, VIP"></label>
-      <label class="field"><span>Откуда</span><select class="select" name="source">${Object.entries(SOURCES).map(([k, t]) => `<option value="${k}"${k === (c.source || "instagram") ? " selected" : ""}>${t}</option>`).join("")}</select></label>
-      <label class="field"><span>Заметки</span><textarea class="textarea" name="notes" rows="3">${esc(c.notes || "")}</textarea></label>
-    </form>
-    ${c.deals.length ? `<div class="ps-sec"><h3>Сделки · ${c.deals.length} (выдано ${done.length})</h3><div class="rows">${c.deals.map(dealRow).join("")}</div></div>` : ""}`,
-    `${c.phone ? `<button class="btn btn-ghost" data-dealfor="${esc(c.phone)}|${esc(c.name || "")}">Сделка</button>` : ""}<button class="btn btn-chrome" id="clientSave">Сохранить</button>`
-  );
-  $("#clientSave").addEventListener("click", async () => {
-    const F = $("#clientEdit").elements;
-    const name = F.cname.value.trim(), phone = F.phone.value.trim();
-    if (!name || phoneKey(phone).length < 6) return toast("Укажите имя и телефон", "error");
-    const k = phoneKey(phone);
-    const data = {
-      id: "c" + k,
-      name,
-      phone,
-      telegram: F.telegram.value.trim(),
-      instagram: F.instagram.value.trim(),
-      sizes: { shoe: F.shoe.value.trim(), cloth: F.cloth.value.trim() },
-      brands: F.brands.value.trim(),
-      tags: F.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
-      source: F.source.value,
-      notes: F.notes.value.trim(),
-      createdAt: c.createdAt || Date.now(),
-    };
-    try {
-      const saved = await api.crm.save("clients", data);
-      const i = D.clients.findIndex((x) => x.id === saved.id);
-      i >= 0 ? (D.clients[i] = saved) : D.clients.unshift(saved);
-      toast("Клиент сохранён");
-      closePanel();
-      render();
-    } catch (err) {
-      toast(errorText(err), "error");
-    }
-  });
-}
-
-/* ---------------- new deal ---------------- */
-const dm = $("#dealModal");
-const DF = $("#dealForm").elements;
-$("#srcSel").innerHTML = Object.entries(SOURCES).filter(([k]) => k !== "site").map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
-function openNewDeal(prefill = {}) {
-  $("#dealForm").reset();
-  $("#dmErr").textContent = "";
-  $("#clientList").innerHTML = clients().map((c) => `<option value="${esc(c.name)}">${esc(c.phone)}</option>`).join("");
-  $("#prodSel").innerHTML = D.products.map((p) => `<option value="${esc(p.id)}">${esc(p.brand)} ${esc(p.name)} — ${lei(p.price)} лей</option>`).join("") || `<option value="">Сначала добавьте товары в админке</option>`;
-  DF.cname.value = prefill.name || "";
-  DF.cphone.value = prefill.phone || "";
-  syncKind();
-  syncProduct();
-  dm.showModal();
-}
-function syncKind() {
-  const k = DF.kind.value;
-  $$("[data-k]", dm).forEach((x) => (x.hidden = x.dataset.k !== k));
-}
-function syncProduct() {
-  const p = D.products.find((x) => x.id === DF.product.value);
-  $("#sizeSel").innerHTML = (p?.sizes || [])
-    .map((s) => {
-      const q = p.stockQty?.[s];
-      return `<option value="${esc(s)}"${q === 0 ? " disabled" : ""}>${esc(s)}${q != null ? ` — ${q} шт.` : ""}</option>`;
-    })
-    .join("");
-  DF.pprice.value = p?.price || "";
-}
-DF.cname.addEventListener("change", () => {
-  const c = clients().find((x) => x.name === DF.cname.value);
-  if (c && !DF.cphone.value) DF.cphone.value = c.phone;
-});
-$("#dealForm").addEventListener("change", (e) => {
-  if (e.target.name === "kind") syncKind();
-  if (e.target.name === "product") syncProduct();
-});
-dm.addEventListener("click", (e) => (e.target === dm || e.target.closest("[data-close]")) && dm.close());
-$("#dealForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const kind = DF.kind.value;
-  const name = DF.cname.value.trim(), phone = DF.cphone.value.trim();
-  const err = (t) => ($("#dmErr").textContent = t);
-  if (!name || phoneKey(phone).length < 6) return err("Укажите имя и телефон клиента");
-  const btn = $("#dmSave");
-  btn.classList.add("loading");
-  try {
-    const base = { contact: { name, phone, via: DF.source.value }, comment: DF.comment.value.trim(), source: DF.source.value, consentAt: null };
-    if (kind === "request") {
-      if (DF.title.value.trim().length < 2) throw new Error("Опишите, что ищет клиент");
-      const r = await api.requests.create({ ...base, number: "Z-" + Date.now().toString(36).slice(-5).toUpperCase(), title: DF.title.value.trim(), size: DF.size.value.trim(), qty: 1, price: Math.round(+DF.price.value) || 0, photos: [], link: "" }, { manual: true });
-      D.requests.unshift(r);
-    } else {
-      const p = D.products.find((x) => x.id === DF.product.value);
-      if (!p || !DF.psize.value) throw new Error("Выберите товар и размер");
-      const price = Math.round(+DF.pprice.value) || p.price;
-      const o = await api.orders.create(
-        { ...base, number: "BS-" + Date.now().toString(36).slice(-6).toUpperCase(), items: [{ id: p.id, brand: p.brand, name: p.name, size: DF.psize.value, qty: 1, price, stock: "stock", thumb: p.thumbs?.[0] || "" }], total: price, delivery: { type: "meet", city: "", address: "" }, messenger: DF.source.value },
-        { manual: true }
-      );
-      D.orders.unshift(o);
-    }
-    dm.close();
-    toast("Сделка создана");
-    if (S.view !== "deals") location.hash = "deals";
-    S.pipe = kind;
-    render();
-  } catch (ex) {
-    err(errorText(ex));
-  }
-  btn.classList.remove("loading");
-});
-
-/* ---------------- global events ---------------- */
+/* =========================================================
+   события
+   ========================================================= */
 document.addEventListener("click", async (e) => {
   const t = e.target;
-  const deal = t.closest("[data-deal]");
-  if (deal && !deal.classList.contains("dragging")) {
-    const [k, id] = deal.dataset.deal.split(":");
-    return openDeal(k, id);
-  }
-  const cl = t.closest("[data-client]");
-  if (cl) return openClient(cl.dataset.client);
-  if (t.closest("[data-newclient]")) return openClient("");
-  if (t.closest("#newDeal")) return openNewDeal();
-  const df = t.closest("[data-dealfor]");
-  if (df) {
-    const [phone, name] = df.dataset.dealfor.split("|");
+  if (t.closest("dialog") && !t.closest("[data-zoom]")) return; // формы обрабатывают свои клики сами
+  const ed = t.closest("[data-edit]");
+  if (ed) {
     closePanel();
-    return openNewDeal({ phone, name });
+    return openOrder(D.orders.find((o) => o.id === ed.dataset.edit));
   }
-  const at = t.closest("[data-addtask]");
-  if (at) {
-    const [phone, num] = at.dataset.addtask.split("|");
-    await saveTask({ type: "call", title: `Связаться по ${num}`, due: Date.now() + 36e5, phone });
-    return badges();
+  const cp = t.closest("[data-copy]");
+  if (cp) {
+    const o = D.orders.find((x) => x.id === cp.dataset.copy);
+    try {
+      await navigator.clipboard.writeText(orderText(o));
+      toast(`${label(o)} скопирован текстом`);
+    } catch {
+      toast("Не удалось скопировать", "error");
+    }
+    return;
   }
-  const pp = t.closest("[data-pipe]");
-  if (pp) return (S.pipe = pp.dataset.pipe), render();
-  if (t.closest("[data-closed]")) return (S.showClosed = !S.showClosed), render();
+  const st = t.closest("[data-stock]");
+  if (st) return openStock(D.products.find((p) => p.id === st.dataset.stock));
+  const cl = t.closest("[data-client]");
+  if (cl && cl.dataset.client) return openClient(cl.dataset.client);
+  const of = t.closest("[data-orderfor]");
+  if (of) {
+    const c = clients().find((x) => x.key === of.dataset.orderfor) || {};
+    closePanel();
+    return openOrder(null, { contact: { name: c.name, phone: c.phone, telegram: c.telegram } });
+  }
+  const rq = t.closest("[data-req2order]");
+  if (rq) {
+    const r = D.requests.find((x) => x.id === rq.dataset.req2order);
+    return openOrder(null, { kind: "china", source: "site", requestId: r.id, contact: { name: r.contact?.name, phone: r.contact?.phone }, items: [{ name: r.title, size: r.size || "", price: r.price || null }], notes: r.comment || "" });
+  }
+  if (t.closest("#addBtn") || t.closest("[data-act=newOrder]") || t.closest("[data-act=newStock]")) {
+    if (S.view === "stock" || t.closest("[data-act=newStock]")) return openStock();
+    if (S.view === "budget") return $("#bForm [name=amount]").focus();
+    if (S.view === "clients") return openClient("");
+    if (S.view === "tasks") return $("#taskForm [name=title]").focus();
+    return openOrder();
+  }
+  const k = t.closest("[data-kind]");
+  if (k) return (S.kind = k.dataset.kind), render();
+  const iv = t.closest("[data-inv]");
+  if (iv) return (S.inv = iv.dataset.inv), render();
+  const gs = t.closest("[data-gostage]");
+  if (gs) return (S.stage = gs.dataset.gostage), (location.hash = "orders");
+  const bd = t.closest("[data-bdel]");
+  if (bd) {
+    const b = D.budget.find((x) => x.id === bd.dataset.bdel);
+    if (!confirm(`Удалить запись №${b.num} (${lei(b.amount)} — ${b.reason})?`)) return;
+    await api.crm.remove("budget", b.id).catch((err) => toast(errorText(err), "error"));
+    D.budget = D.budget.filter((x) => x.id !== b.id);
+    if (S.budgetEdit === b.id) S.budgetEdit = null;
+    return render();
+  }
+  const be = t.closest("[data-bedit]");
+  if (be) {
+    S.budgetEdit = be.dataset.bedit;
+    render();
+    return $("#bForm [name=amount]").focus();
+  }
+  if (t.closest("[data-bcancel]")) return (S.budgetEdit = null), render();
   const del = t.closest("[data-tdel]");
   if (del) {
     await api.crm.remove("tasks", del.dataset.tdel).catch((err) => toast(errorText(err), "error"));
     D.tasks = D.tasks.filter((x) => x.id !== del.dataset.tdel);
     return render();
   }
+  const zb = t.closest("[data-zoom]");
+  if (zb) {
+    const d = document.createElement("dialog");
+    d.className = "lightbox";
+    d.innerHTML = `<img src="${zb.querySelector("img").src}" alt=""><button class="ic-btn" aria-label="Закрыть">${icon.close}</button>`;
+    document.body.appendChild(d);
+    d.addEventListener("click", () => d.close());
+    d.addEventListener("close", () => d.remove());
+    d.showModal();
+  }
+});
+document.addEventListener("change", async (e) => {
+  const os = e.target.dataset?.ostage;
+  if (os) {
+    const o = D.orders.find((x) => x.id === os);
+    try {
+      await setStage(o, e.target.value);
+      render();
+    } catch (err) {
+      toast(errorText(err), "error");
+    }
+    return;
+  }
+  const rs = e.target.dataset?.rstage;
+  if (rs) {
+    await api.requests.update(rs, { status: e.target.value }).catch((err) => toast(errorText(err), "error"));
+    D.requests.find((x) => x.id === rs).status = e.target.value;
+    return badges();
+  }
+  const td = e.target.dataset?.tdone;
+  if (td) {
+    await saveTask({ ...D.tasks.find((x) => x.id === td), done: e.target.checked });
+    render();
+  }
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && e.target.matches("tr[data-client]")) openClient(e.target.dataset.client);
-});
-document.addEventListener("change", async (e) => {
-  const id = e.target.dataset?.tdone;
-  if (!id) return;
-  const t = D.tasks.find((x) => x.id === id);
-  await saveTask({ ...t, done: e.target.checked });
-  render();
+  if (e.key === "Enter" && e.target.matches("tr[data-bedit]")) e.target.click();
+  if (e.key === "Escape" && panel.classList.contains("open")) closePanel();
 });
 let qt;
 $("#q").addEventListener("input", (e) => {
   clearTimeout(qt);
-  qt = setTimeout(() => {
-    S.q = e.target.value.trim();
-    if (S.view === "today" && S.q) location.hash = "clients";
-    else render();
-  }, 200);
+  qt = setTimeout(() => ((S.q = e.target.value.trim()), render()), 200);
 });
 addEventListener("hashchange", route);
 
-/* ---------------- guard & start ---------------- */
-// photo viewer (same as site)
-document.addEventListener("click", (e) => {
-  const b = e.target.closest("[data-zoom]");
-  if (!b) return;
-  const d = document.createElement("dialog");
-  d.className = "lightbox";
-  d.innerHTML = `<img src="${b.querySelector("img").src}" alt=""><button class="ic-btn" aria-label="Закрыть">${icon.close}</button>`;
-  document.body.appendChild(d);
-  d.addEventListener("click", () => d.close());
-  d.addEventListener("close", () => d.remove());
-  d.showModal();
-});
-
-/* ---------------- вход по паролю ----------------
-   Вводится только пароль; CRM входит в аккаунт администратора
-   (CRM_EMAIL в Firebase, DEMO_ADMIN в демо-режиме). Пароль нигде в коде не хранится. */
+/* =========================================================
+   вход по паролю: CRM входит в аккаунт администратора
+   (CRM_EMAIL в Firebase, DEMO_ADMIN в демо-режиме). Пароль в коде не хранится.
+   ========================================================= */
 const LOGIN_EMAIL = api.mode === "demo" ? DEMO_ADMIN.email : CRM_EMAIL;
-
+let started = false;
 function showGate(msg = "") {
   started = false;
   const guard = $("#guard");
@@ -837,12 +1083,11 @@ function showGate(msg = "") {
   $("#gateEye").addEventListener("click", () => (inp.type = inp.type === "password" ? "text" : "password"));
   $("#gate").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const pass = inp.value;
-    if (!pass) return inp.focus();
+    if (!inp.value) return inp.focus();
     const btn = $("#gateBtn");
     btn.classList.add("loading");
     try {
-      await api.auth.signIn(LOGIN_EMAIL, pass); // дальше сработает onChange
+      await api.auth.signIn(LOGIN_EMAIL, inp.value);
     } catch (err) {
       btn.classList.remove("loading");
       $("#gateErr").textContent = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"].includes(err?.code) ? "Неверный пароль" : errorText(err);
@@ -850,8 +1095,6 @@ function showGate(msg = "") {
     }
   });
 }
-
-let started = false;
 async function start() {
   $("#guard").hidden = true;
   if (started) return;
@@ -861,9 +1104,7 @@ async function start() {
   await load();
   route();
 }
-
 $("#logout").addEventListener("click", () => api.auth.signOut());
-
 api.auth.onChange((u) => {
   if (u?.isAdmin) return start();
   if (u) {

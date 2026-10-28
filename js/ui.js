@@ -63,7 +63,7 @@ function hue(s) {
 }
 export function art(p, cls = "") {
   return `<div class="art ${cls}" style="--h:${hue(p.brand)}" role="img" aria-label="${esc(p.brand + " " + p.name)}">
-    <span class="art-word">${esc(p.brand)}</span><i class="art-spark">${icon.sparkle}</i></div>`;
+    <span class="art-word">${esc(p.brand || p.name)}</span><i class="art-spark">${icon.sparkle}</i></div>`;
 }
 export function pic(p, i = 0, cls = "") {
   const src = p.thumbs?.[i];
@@ -453,7 +453,7 @@ function closeOverlays() {
 /* ---------------- search ---------------- */
 let allProducts;
 // "Из Китая" is handled by the request form, so the public catalog shows in-stock items only
-export const loadProducts = () => (allProducts ||= api.products.list().then((l) => l.filter((p) => p.stock !== "china")).catch(() => []));
+export const loadProducts = () => (allProducts ||= api.products.list().then((l) => l.filter((p) => p.stock !== "china" && p.invStatus !== "sold")).catch(() => []));
 async function runSearch(q) {
   const box = $("#searchRes");
   q = q.trim().toLowerCase();

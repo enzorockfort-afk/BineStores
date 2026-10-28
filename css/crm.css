@@ -199,3 +199,131 @@ button.row:hover, a.row:hover { background: var(--carbon-2); }
   .board { grid-auto-columns: 82vw; }
   .tbl .hide-m { display: none; }
 }
+
+/* =========================================================
+   Заказы / Бюджет / Склад по шаблонам продавца
+   ========================================================= */
+.sel-sm { width: auto; height: 36px; padding: 0 34px 0 12px; font-size: 13px; border-radius: var(--pill); background-position: right 10px center; background-size: 16px; }
+.pos, .pos b { color: var(--mint); }
+.neg, .neg b { color: var(--red); }
+.kpi.bad b { color: var(--red); }
+.sumbar { display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 12px 16px; margin-bottom: 14px; border-radius: 14px; background: var(--carbon); border: 1px solid var(--line); font-size: 14px; color: var(--steel); }
+.sumbar b { color: var(--white); margin-left: 4px; }
+.sumbar .pos b { color: var(--mint); }
+
+/* карточка заказа */
+.ocards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 12px; align-items: start; }
+.ocard { border-radius: 18px; background: var(--carbon); border: 1px solid var(--line); padding: 14px 16px; display: grid; gap: 10px; animation: rise .4s var(--ease) both; }
+.oc-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oc-num { font: 400 22px/1 var(--display); transform: skewX(var(--skew)); color: var(--white); }
+.oc-num:hover { text-decoration: underline; text-underline-offset: 4px; }
+.oc-date { color: var(--steel); font-size: 13px; margin-left: auto; }
+.oc-contact { font-size: 14px; color: var(--mist); }
+.oc-contact a, .oc-contact .link-plain { color: var(--white); text-decoration: underline; text-underline-offset: 3px; font-size: 14px; }
+.oc-items { margin: 0; padding: 0 0 0 20px; display: grid; gap: 4px; }
+.oc-items li { display: grid; grid-template-columns: 1fr auto 70px 70px; gap: 10px; align-items: baseline; font-size: 14px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.oc-items li::marker { color: var(--steel); }
+.oi-name { font-weight: 600; }
+.oi-size { color: var(--steel); font-size: 13px; white-space: nowrap; }
+.oi-cost, .oi-price { text-align: right; font-variant-numeric: tabular-nums; }
+.oi-cost { color: var(--steel); }
+.oc-tot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; color: var(--steel); }
+.oc-tot b { color: var(--white); font: 400 16px var(--display); margin-left: 4px; }
+.oc-tot .pos b { color: var(--mint); }
+.oc-tot .neg b { color: var(--red); }
+.oc-acts { margin-left: auto; display: flex; gap: 2px; }
+.oc-acts .ic-btn { width: 36px; height: 36px; }
+.oc-acts .ic-btn svg { width: 18px; height: 18px; }
+.oc-notes { margin: 0; font-size: 13px; color: var(--steel); word-break: break-word; }
+.oc-notes a { color: var(--mist); text-decoration: underline; }
+.oc-req { margin: 0; font-size: 15px; }
+.mini-photos { display: flex; gap: 6px; }
+.mini-photos button { width: 64px; height: 64px; border-radius: 10px; overflow: hidden; }
+.mini-photos img { width: 100%; height: 100%; object-fit: cover; }
+
+/* форма заказа */
+.crm-modal.wide { width: min(760px, calc(100% - 20px)); }
+.form-row { display: flex; gap: 12px; align-items: end; }
+.num-field { width: 110px; flex: none; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.items-head, .item-row { display: grid; grid-template-columns: 1fr 76px 90px 90px 40px; gap: 6px; align-items: center; }
+.items-head span { font-size: 11.5px; color: var(--steel); font-weight: 600; }
+.item-rows { display: grid; gap: 6px; }
+.item-row .input { height: 46px; padding: 0 12px; font-size: 15px; }
+.item-row .ic-btn { width: 40px; height: 40px; }
+.item-row .ic-btn svg { width: 16px; }
+.totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.totals div { padding: 12px 14px; border-radius: 12px; background: var(--carbon-2); }
+.totals small { display: block; color: var(--steel); font-size: 12px; }
+.totals b { font: 400 20px var(--display); }
+.totals .pos b { color: var(--mint); }
+.totals .neg b { color: var(--red); }
+.modal-foot { align-items: center; }
+#omDelete, #smDelete { color: var(--red); border-color: rgba(255,112,112,.4); }
+
+/* бюджет */
+.bform { display: grid; grid-template-columns: 90px auto minmax(220px, 1fr) 160px auto; gap: 10px; align-items: end; margin-bottom: 16px; }
+@media (max-width: 1200px) { .bform { grid-template-columns: 90px auto 1fr; } .bform .grow { grid-column: 1 / -1; grid-row: 2; } .bform-btns { grid-column: 1 / -1; } .bform-btns .btn { flex: 1; } }
+.bform .field > span { font-size: 12px; }
+.bform .input { height: 46px; }
+.bform .form-err { grid-column: 1 / -1; margin: 0; }
+.bform-btns { display: flex; gap: 6px; }
+.bform-btns .btn { height: 46px; }
+.amount { display: flex; gap: 6px; }
+.amount .input { width: 120px; }
+.seg.sign { grid-template-columns: 44px 44px; padding: 3px; }
+.seg.sign span { padding: 9px 0; font-size: 18px; font-weight: 700; }
+.seg.sign label:first-child input:checked + span { background: var(--red); color: var(--ink); }
+.seg.sign label:last-child input:checked + span { background: var(--mint); color: var(--ink); }
+.tbl tr.sel td { background: var(--carbon-2); }
+.tbl td.num b { font-variant-numeric: tabular-nums; }
+.tbl .ic-btn { width: 34px; height: 34px; }
+.tbl .ic-btn svg { width: 16px; height: 16px; }
+
+/* склад — светлые карточки, цвет названия = статус */
+.inv-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr)); gap: 10px; }
+.inv { display: grid; grid-template-columns: 64px 1fr; gap: 14px; width: 100%; text-align: left; padding: 12px; border-radius: 16px; background: var(--paper); color: #222; border: 2px solid transparent; transition: transform .3s var(--ease), border-color .2s; animation: rise .4s var(--ease) both; }
+.inv:hover { transform: translateY(-2px); }
+.inv-pic { width: 64px; height: 78px; border-radius: 10px; overflow: hidden; background: #111; }
+.inv-pic img, .inv-pic .art { width: 100%; height: 100%; object-fit: cover; }
+.inv-body { display: grid; gap: 8px; min-width: 0; }
+.inv-name { font: 400 19px/1.15 var(--display); transform: skewX(var(--skew)); transform-origin: left; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.inv-name small { font: 600 11.5px var(--body); transform: skewX(9deg); padding: 3px 8px; border-radius: 8px; }
+.inv-stock .inv-name { color: #0f8a50; }
+.inv-stock .inv-name small { background: rgba(15,138,80,.12); color: #0f8a50; }
+.inv-transit .inv-name { color: #000; }
+.inv-transit .inv-name small { background: #000; color: #fff; }
+.inv-sold .inv-name { color: #d42a2a; }
+.inv-sold .inv-name small { background: rgba(212,42,42,.12); color: #d42a2a; }
+.inv-sold { opacity: .78; }
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px 12px; font-size: 14px; font-weight: 600; }
+.inv-grid em { display: block; font-style: normal; font-size: 11px; font-weight: 600; color: #6b6f78; }
+.c-stock { color: var(--mint); }
+.seg3 { grid-template-columns: 1fr 1fr 1fr; }
+.seg3 input:checked + .c-stock { background: var(--mint); color: var(--ink); }
+.seg3 input:checked + .c-transit { background: var(--paper); color: #000; }
+.seg3 input:checked + .c-sold { background: var(--red); color: var(--ink); }
+.pairs { display: grid; gap: 6px; }
+.pair { display: grid; grid-template-columns: 1fr auto 90px 40px; gap: 6px; align-items: center; }
+.pair .input { height: 44px; }
+.pair .x { color: var(--steel); font-weight: 700; }
+.pair .ic-btn { width: 40px; height: 40px; }
+.pair .ic-btn svg { width: 16px; }
+
+@media (max-width: 820px) {
+  .crm-nav { overflow-x: auto; justify-content: flex-start; scrollbar-width: none; }
+  .crm-nav::-webkit-scrollbar { display: none; }
+  .crm-nav a { flex: 0 0 auto; min-width: 70px; }
+  .bform { grid-template-columns: 1fr 1fr; }
+  .bform .grow, .bform-btns { grid-column: 1 / -1; }
+  .bform-btns .btn { flex: 1; }
+  .row3 { grid-template-columns: 1fr 1fr; }
+  .row3 input:last-child { grid-column: 1 / -1; }
+  .items-head { display: none; }
+  .item-row { grid-template-columns: 1fr 1fr 40px; }
+  .item-row [name=iname] { grid-column: 1 / 3; }
+  .item-row .ic-btn { grid-column: 3; grid-row: 1; }
+  .totals b { font-size: 16px; }
+  .oc-items li { grid-template-columns: 1fr 60px 60px; }
+  .oc-items .oi-size { grid-column: 1; grid-row: 2; }
+}

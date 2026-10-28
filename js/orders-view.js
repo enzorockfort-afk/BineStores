@@ -3,7 +3,7 @@ import { ORDER_STATUSES, REQUEST_STATUSES } from "./config.js";
 
 function trackHtml(st) {
   if (st === "cancelled") return "";
-  const map = { new: 0, confirmed: 1, ordered: 1, shipping: 2, ready: 2, done: 3 };
+  const map = { new: 0, confirmed: 1, prepaid: 1, ordered: 1, transit: 2, shipping: 2, arrived: 2, ready: 2, done: 3 };
   const at = map[st] ?? 0;
   const labels = ["Принят", "Подтверждён", "В пути", "Получен"];
   return `<div class="track">${labels.map((l, i) => `<span class="${i <= at ? "on" : ""}">${l}</span>`).join("")}</div>`;
