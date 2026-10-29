@@ -1,11 +1,11 @@
-import { initLayout, $, $$, card, skeletons, reveal, esc, qs, icon } from "../ui.js?v=16";
-import { CATEGORIES, SUBCATEGORIES } from "../config.js?v=16";
+import { initLayout, $, $$, card, skeletons, reveal, esc, qs, icon } from "../ui.js?v=17";
+import { CATEGORIES, SUBCATEGORIES } from "../config.js?v=17";
 
 await initLayout("catalog");
 
 const grid = $("#grid");
 grid.innerHTML = skeletons(8);
-const { loadProducts } = await import("../ui.js?v=16");
+const { loadProducts } = await import("../ui.js?v=17");
 const all = await loadProducts();
 
 const S = {

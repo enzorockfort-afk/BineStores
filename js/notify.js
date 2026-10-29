@@ -1,9 +1,9 @@
 /* Уведомления на сайте.
    Админ: новый заказ или заявка с сайта. Клиент: сменился статус его заказа или заявки.
    Что уже видели — хранится в браузере, поэтому при первом входе старое не всплывает. */
-import { api } from "./api.js?v=16";
-import { ORDER_STATUSES, REQUEST_STATUSES } from "./config.js?v=16";
-import { lang, t } from "./i18n.js?v=16";
+import { api } from "./api.js?v=17";
+import { ORDER_STATUSES, REQUEST_STATUSES } from "./config.js?v=17";
+import { lang, t } from "./i18n.js?v=17";
 
 const BELL = '<svg viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2H4.5z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>';
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);

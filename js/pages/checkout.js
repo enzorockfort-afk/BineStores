@@ -1,8 +1,8 @@
-import { initLayout, $, $$, esc, money, art, icon, toast, burst, STATUS, socials, lang } from "../ui.js?v=16";
-import { CITIES, BUS_PRICE, POST_PRICE, pickupPoint } from "../pickup.js?v=16";
-import { api, errorText } from "../api.js?v=16";
-import { SHOP } from "../config.js?v=16";
-import { cart, onStoreChange } from "../store.js?v=16";
+import { initLayout, $, $$, esc, money, art, icon, toast, burst, STATUS, socials, lang } from "../ui.js?v=17";
+import { CITIES, BUS_PRICE, POST_PRICE, pickupPoint } from "../pickup.js?v=17";
+import { api, errorText } from "../api.js?v=17";
+import { SHOP } from "../config.js?v=17";
+import { cart, onStoreChange } from "../store.js?v=17";
 
 const user = await initLayout("");
 const form = $("#form");
@@ -47,6 +47,7 @@ function delivery() {
   const approx = ship && !bus ? "≈" : "";
   $("#delivCost").textContent = cost ? approx + money(cost) : "Бесплатно";
   $("#total").textContent = approx + money(cart.total() + cost);
+  $("#payNote").textContent = ship ? "Сначала оплата всей суммы на карту, затем отправка" : "Оплата при получении";
 }
 renderSummary();
 onStoreChange(renderSummary);

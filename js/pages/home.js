@@ -1,5 +1,5 @@
-import { initLayout, $, $$, card, skeletons, reveal, pic, tag, icon, socials, loadProducts, reduced, esc } from "../ui.js?v=16";
-import { CATEGORIES } from "../config.js?v=16";
+import { initLayout, $, $$, card, skeletons, reveal, pic, tag, icon, socials, loadProducts, reduced, esc } from "../ui.js?v=17";
+import { CATEGORIES } from "../config.js?v=17";
 
 await initLayout("home");
 

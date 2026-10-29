@@ -1,7 +1,7 @@
-import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced, lang, sizesInStock, otherSizes, orderLink } from "../ui.js?v=16";
-import { api } from "../api.js?v=16";
-import { SHOP } from "../config.js?v=16";
-import { cart, favs } from "../store.js?v=16";
+import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced, lang, sizesInStock, otherSizes, orderLink } from "../ui.js?v=17";
+import { api } from "../api.js?v=17";
+import { SHOP } from "../config.js?v=17";
+import { cart, favs } from "../store.js?v=17";
 
 await initLayout("catalog");
 
@@ -65,17 +65,19 @@ if (!p) {
       </div>
       ${SHOP.telegram ? `<a class="pd-ask" href="https://t.me/${SHOP.telegram}?text=${askText}" target="_blank" rel="noopener">${icon.tg} Задать вопрос менеджеру</a>` : ""}
       <div class="pd-perks">
-        <div>${icon.shield} Осматриваем вещь перед выдачей</div>
-        <div>${icon.pin} Встреча и примерка в Кишинёве бесплатно</div>
+        <div>${icon.shield} Осматриваем и упаковываем вещь перед выдачей</div>
+        <div>${icon.pin} Личная встреча в Кишинёве</div>
         <div>${icon.truck} Доставка по Молдове 1–2 дня</div>
       </div>
       <div class="acc">
         ${p.desc ? `<details open><summary>Описание</summary><div class="acc-body">${esc(p.desc)}</div></details>` : ""}
-        <details><summary>Доставка</summary><div class="acc-body">Встреча в Кишинёве — бесплатно, с примеркой.
-Доставка по Молдове почтой или курьером — 1–3 дня после подтверждения.
+        <details><summary>Доставка</summary><div class="acc-body">Встреча в Кишинёве.
+Доставка по Молдове почтой или маршруткой, 1–2 дня.
+При доставке в другой город или село сначала оплачивается вся сумма на карту, затем отправляем заказ почтой или маршруткой.
 ${p.stock === "china" ? `Заказ из Китая — ${SHOP.chinaDays}. Перед отправкой присылаем фото вещи.` : ""}</div></details>
-        <details><summary>Оплата</summary><div class="acc-body">Наличными или переводом при получении.
-Для заказов из Китая — предоплата, остаток при получении.</div></details>
+        <details><summary>Оплата</summary><div class="acc-body">Личная встреча — наличными всю сумму.
+Для заказов из Китая — предоплата 50% на карту, остаток при получении.
+При доставке в другой город или село сначала оплачивается вся сумма на карту, затем отправляем заказ почтой или маршруткой.</div></details>
       </div>
     </div>
   </div>

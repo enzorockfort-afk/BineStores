@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=16">
+  <link rel="stylesheet" href="css/main.css?v=17">
 </head>
 <body>
 <main id="main" class="wrap">
@@ -19,7 +19,7 @@
     <div class="page-head">
       <nav class="crumbs" aria-label="Навигация"><a href="index.html">Главная</a><span>Под заказ</span></nav>
       <h1 class="page-title chrome-t">Под заказ</h1>
-      <p class="sub">Опишите вещь или пришлите фото — найдём у поставщика, назовём цену и срок.</p>
+      <p class="sub">Опишите вещь или пришлите фото. Найдём у поставщика и сообщим цену.</p>
     </div>
 
     <div class="co">
@@ -28,7 +28,7 @@
           <h2>Что ищете</h2>
           <div class="stack">
             <label class="field"><span>Название или модель *</span><input class="input" name="title" placeholder="Например, Nike Dunk Low Panda" required></label>
-            <label class="field"><span>Ссылка на товар</span><input class="input" name="link" type="url" inputmode="url" placeholder="Poizon, 1688, Instagram — если есть"></label>
+            <label class="field"><span>Ссылка на товар</span><input class="input" name="link" type="url" inputmode="url" placeholder="Если есть"></label>
             <div class="field"><span>Фото — до 3 штук</span>
               <label class="drop" id="drop">
                 <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3.5h16V16"/></svg>
@@ -42,20 +42,14 @@
               <label class="field"><span>Размер</span><input class="input" name="size" placeholder="42, M, One size"></label>
               <label class="field"><span>Цвет</span><input class="input" name="color"></label>
             </div>
-            <div class="row2">
-              <label class="field"><span>Количество</span><input class="input" name="qty" type="number" inputmode="numeric" min="1" value="1"></label>
-              <label class="field"><span>Бюджет до, лей</span><input class="input" name="budget" type="number" inputmode="numeric" min="0"></label>
-            </div>
+            <label class="field"><span>Количество</span><input class="input" name="qty" type="number" inputmode="numeric" min="1" value="1"></label>
             <label class="field"><span>Комментарий</span><textarea class="textarea" name="comment" rows="3"></textarea></label>
           </div>
         </div>
 
         <div class="co-block">
           <h2>Контакты</h2>
-          <div class="row2">
-            <label class="field"><span>Имя *</span><input class="input" name="name" autocomplete="name" required></label>
-            <label class="field"><span>Телефон *</span><input class="input" name="phone" type="tel" autocomplete="tel" placeholder="+373 6__ __ ___" required></label>
-          </div>
+          <label class="field"><span>Имя *</span><input class="input" name="name" autocomplete="name" required></label>
           <label class="field" style="margin-top:14px"><span>Ваш Telegram *</span><textarea class="textarea" name="telegram" rows="2" placeholder="@username — если его нет, напишите, как вас найти, например по номеру +373…"></textarea></label>
         </div>
 
@@ -67,16 +61,16 @@
       <aside class="co-summary" aria-label="Как это работает">
         <h2>Как это работает</h2>
         <ol class="mini-steps">
-          <li><b>Заявка</b><span>Вы описываете вещь — это бесплатно и ни к чему не обязывает.</span></li>
-          <li><b>Предложение</b><span>Свяжемся в течение дня: цена, срок, фото от поставщика.</span></li>
+          <li><b>Заявка</b><span>Вы описываете вещь.</span></li>
+          <li><b>Предложение</b><span>Менеджер связывается с вами в течение дня: цена, срок, фото от поставщика.</span></li>
           <li><b>Заказ</b><span>После вашего согласия — предоплата и выкуп.</span></li>
-          <li><b>Получение</b><span>Обычно 14–20 дней. Встреча в Кишинёве или доставка по Молдове.</span></li>
+          <li><b>Получение</b><span>Обычно 20 дней. Встреча в Кишинёве или доставка по Молдове.</span></li>
         </ol>
       </aside>
     </div>
   </div>
   <div id="doneView" hidden></div>
 </main>
-<script type="module" src="js/pages/china.js?v=16"></script>
+<script type="module" src="js/pages/china.js?v=17"></script>
 </body>
 </html>

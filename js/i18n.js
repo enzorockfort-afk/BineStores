@@ -180,6 +180,29 @@ const DICT = {
   "Уведомления": "Notificări",
   "Включить в браузере": "Activează în browser",
   "Здесь появятся статусы ваших заказов": "Aici vor apărea statusurile comenzilor tale",
+  // товар, под заказ, доставка — правки продавца
+  "Осматриваем и упаковываем вещь перед выдачей": "Verificăm și ambalăm produsul înainte de predare",
+  "Личная встреча в Кишинёве": "Întâlnire personală în Chișinău",
+  "Встреча в Кишинёве.": "Întâlnire în Chișinău.",
+  "Доставка по Молдове почтой или маршруткой, 1–2 дня.": "Livrare în Moldova prin poștă sau microbuz, 1–2 zile.",
+  "При доставке в другой город или село сначала оплачивается вся сумма на карту, затем отправляем заказ почтой или маршруткой.":
+    "La livrarea în alt oraș sau sat, mai întâi se achită toată suma pe card, apoi expediem comanda prin poștă sau microbuz.",
+  "Личная встреча — наличными всю сумму.": "Întâlnire personală — toată suma în numerar.",
+  "Для заказов из Китая — предоплата 50% на карту, остаток при получении.": "Pentru comenzile din China — avans 50% pe card, restul la primire.",
+  "Опишите вещь или пришлите фото. Найдём у поставщика и сообщим цену.": "Descrie produsul sau trimite o poză. Îl găsim la furnizor și îți spunem prețul.",
+  "Если есть": "Dacă ai",
+  "Вы описываете вещь.": "Descrii produsul.",
+  "Менеджер связывается с вами в течение дня: цена, срок, фото от поставщика.": "Managerul te contactează în aceeași zi: preț, termen, poze de la furnizor.",
+  "Обычно 20 дней. Встреча в Кишинёве или доставка по Молдове.": "De obicei 20 de zile. Întâlnire în Chișinău sau livrare în Moldova.",
+  "Договоримся о месте и времени. Оплата при получении.": "Stabilim locul și ora. Plata la primire.",
+  "Почтой или маршруткой в любой город или село. ≈50 лей. При доставке в другой город или село сначала оплачивается вся сумма на карту, затем отправляем заказ почтой или маршруткой.":
+    "Prin poștă sau microbuz în orice oraș sau sat. ≈50 lei. La livrarea în alt oraș sau sat, mai întâi se achită toată suma pe card, apoi expediem comanda prin poștă sau microbuz.",
+  "20 дней": "20 zile",
+  "Наличными при получении. Для заказов из Китая — предоплата, остаток при получении. При доставке в другой город или село сначала оплачивается вся сумма на карту, затем отправляем заказ почтой или маршруткой.":
+    "Numerar la primire. Pentru comenzile din China — avans, restul la primire. La livrarea în alt oraș sau sat, mai întâi se achită toată suma pe card, apoi expediem comanda prin poștă sau microbuz.",
+  "Оформляем заказ.": "Plasăm comanda.",
+  "Зарегистрируйтесь — статус заказа виден в личном кабинете.": "Înregistrează-te — statusul comenzii se vede în contul personal.",
+  "Сначала оплата всей суммы на карту, затем отправка": "Mai întâi plata întregii sume pe card, apoi expedierea",
 
   // категории и подкатегории
   "Обувь": "Încălțăminte",

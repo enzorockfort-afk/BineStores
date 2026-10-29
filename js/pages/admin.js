@@ -1,9 +1,9 @@
-import { initLayout, $, $$, esc, money, art, icon, toast, tag, reveal } from "../ui.js?v=16";
-import { api, errorText } from "../api.js?v=16";
-import { CATEGORIES, ORDER_STATUSES, REQUEST_STATUSES, SUBCATEGORIES, SIZE_SETS, WAIST_SUBS } from "../config.js?v=16";
-import { SEED } from "../seed.js?v=16";
-import { orderHtml, requestHtml } from "../orders-view.js?v=16";
-import { compress, isImageFile } from "../images.js?v=16";
+import { initLayout, $, $$, esc, money, art, icon, toast, tag, reveal } from "../ui.js?v=17";
+import { api, errorText } from "../api.js?v=17";
+import { CATEGORIES, ORDER_STATUSES, REQUEST_STATUSES, SUBCATEGORIES, SIZE_SETS, WAIST_SUBS } from "../config.js?v=17";
+import { SEED } from "../seed.js?v=17";
+import { orderHtml, requestHtml } from "../orders-view.js?v=17";
+import { compress, isImageFile } from "../images.js?v=17";
 
 await initLayout("");
 const view = $("#view");

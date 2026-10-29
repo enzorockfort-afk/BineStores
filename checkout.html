@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=16">
+  <link rel="stylesheet" href="css/main.css?v=17">
 </head>
 <body>
 <main id="main" class="wrap">
@@ -55,6 +55,7 @@
             <label class="field"><span>Город или село</span><input class="input" name="city" list="mdCities" autocomplete="address-level2"></label>
             <datalist id="mdCities"></datalist>
             <p class="pickup" id="pickup" data-no-i18n hidden></p>
+            <p class="pickup">При доставке в другой город или село сначала оплачивается вся сумма на карту, затем отправляем заказ почтой или маршруткой.</p>
             <label class="field" id="postField" hidden><span>Отделение почты</span><input class="input" name="address" placeholder="Индекс или адрес отделения"></label>
           </div>
         </div>
@@ -74,12 +75,12 @@
         <div class="sum-row"><span>Получение</span><span id="delivCost">Бесплатно</span></div>
         <div class="sum-row total"><span>Итого</span><b id="total"></b></div>
         <button class="btn btn-dark btn-block" id="submit" form="form" type="submit">Подтвердить заказ</button>
-        <p class="note"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.3 3 7.8 7 9.5 4-1.7 7-5.2 7-9.5V6l-7-3Z"/></svg>Оплата при получении</p>
+        <p class="note"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.3 3 7.8 7 9.5 4-1.7 7-5.2 7-9.5V6l-7-3Z"/></svg><span id="payNote">Оплата при получении</span></p>
       </aside>
     </div>
   </div>
   <div id="doneView" hidden></div>
 </main>
-<script type="module" src="js/pages/checkout.js?v=16"></script>
+<script type="module" src="js/pages/checkout.js?v=17"></script>
 </body>
 </html>

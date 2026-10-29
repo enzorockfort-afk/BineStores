@@ -1,7 +1,7 @@
-import { initLayout, $, esc, icon, toast, burst, lang, qs } from "../ui.js?v=16";
-import { api, errorText } from "../api.js?v=16";
-import { SHOP } from "../config.js?v=16";
-import { compressFile, compress, isImageFile } from "../images.js?v=16";
+import { initLayout, $, esc, icon, toast, burst, lang, qs } from "../ui.js?v=17";
+import { api, errorText } from "../api.js?v=17";
+import { SHOP } from "../config.js?v=17";
+import { compressFile, compress, isImageFile } from "../images.js?v=17";
 
 const user = await initLayout("china");
 const form = $("#form");
@@ -17,14 +17,12 @@ const tgUser = (s) => {
 if (user) {
   const prof = (await api.profile.get().catch(() => null)) || {};
   F.name.value = prof.name || user.name || "";
-  F.phone.value = prof.phone || "";
   F.telegram.value = prof.telegram || "";
 }
 // пришли с карточки товара: «другой размер под заказ»
 if (qs("item")) F.title.value = qs("item");
 if (qs("size")) F.size.value = qs("size");
 
-F.phone.addEventListener("focus", () => !F.phone.value && (F.phone.value = "+373 "));
 form.addEventListener("input", (e) => e.target.removeAttribute("aria-invalid"));
 
 /* ---------------- photos ---------------- */
@@ -84,7 +82,6 @@ form.addEventListener("submit", async (e) => {
   const bad = [];
   if (v("title").length < 2) bad.push("title");
   if (v("name").length < 2) bad.push("name");
-  if (v("phone").replace(/\D/g, "").length < 8) bad.push("phone");
   if (v("telegram").length < 3) bad.push("telegram");
   if (bad.length) {
     bad.forEach((n) => F[n].setAttribute("aria-invalid", "true"));
@@ -109,15 +106,14 @@ form.addEventListener("submit", async (e) => {
     size: v("size"),
     color: v("color"),
     qty: Math.max(1, Math.round(+v("qty") || 1)),
-    budget: Math.round(+v("budget")) || 0,
     comment: v("comment"),
     photos: photos.map((p) => p.data),
-    contact: { name: v("name"), phone: v("phone"), via: "telegram", telegram: tgUser(v("telegram")), tgNote: tgUser(v("telegram")) ? "" : v("telegram") },
+    contact: { name: v("name"), phone: "", via: "telegram", telegram: tgUser(v("telegram")), tgNote: tgUser(v("telegram")) ? "" : v("telegram") },
     consentAt: Date.now(),
   };
   try {
     const saved = await api.requests.create(req);
-    if (user) api.profile.save({ phone: req.contact.phone, telegram: v("telegram") }).catch(() => {});
+    if (user) api.profile.save({ telegram: v("telegram") }).catch(() => {});
     done(saved);
   } catch (err) {
     btn.classList.remove("loading");
