@@ -221,6 +221,18 @@ export async function createLocal() {
       update: (id, patch) => patchIn("orders", id, patch),
     },
 
+    /* демо: вместо живой подписки — опрос раз в 10 секунд */
+    watch(col, mine, cb) {
+      if (mine && !current) return () => {};
+      const run = async () => {
+        const list = await get(col, []);
+        cb(mine ? list.filter((x) => x.uid === current?.uid) : list);
+      };
+      run();
+      const t = setInterval(run, 10000);
+      return () => clearInterval(t);
+    },
+
     /* CRM-коллекции: clients, tasks */
     crm: {
       list: (col) => get(col, []),

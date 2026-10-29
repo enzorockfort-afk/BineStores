@@ -1,4 +1,4 @@
-import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced, lang } from "../ui.js";
+import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced, lang, sizesInStock, otherSizes, orderLink } from "../ui.js";
 import { api } from "../api.js";
 import { SHOP } from "../config.js";
 import { cart, favs } from "../store.js";
@@ -23,8 +23,8 @@ if (!p) {
   const slides = images.length ? images.map((src) => `<img src="${src}" alt="${esc(p.brand + " " + p.name)}">`) : [art(p)];
   const thumbs = images.length ? images.map((src) => `<img src="${src}" alt="">`) : [art(p, "art-sm")];
   // остатки ведутся в CRM: размер с нулём недоступен
-  const out = (s) => p.stockQty && p.stockQty[s] === 0;
-  const avail = (p.sizes || []).filter((s) => !out(s));
+  const avail = sizesInStock(p);
+  const more = otherSizes(p);
   const single = avail.length === 1;
   const askText = encodeURIComponent(
     lang === "ro" ? `Bună ziua! Mă interesează ${p.brand} ${p.name} (${location.href})` : `Здравствуйте! Интересует ${p.brand} ${p.name} (${location.href})`
@@ -53,8 +53,10 @@ if (!p) {
       <div class="pd-price">${priceHtml(p)}</div>
       <div>
         <div class="pd-label"><span>Размер</span><em id="sizeErr">Выберите размер</em></div>
-        <div class="sizes" id="sizes" role="radiogroup" aria-label="Размер">${(p.sizes || [])
-          .map((s) => `<button class="size" role="radio" aria-checked="${single && !out(s)}" data-size="${esc(s)}"${out(s) ? ` disabled aria-label="${esc(s)} — нет в наличии"` : ""}>${esc(s)}</button>`)
+        <div class="sizes" id="sizes" role="radiogroup" aria-label="Размер">${avail
+          .map((s) => `<button class="size" role="radio" aria-checked="${single}" data-size="${esc(s)}">${esc(s)}</button>`)
+          .join("")}${more
+          .map((s) => `<a class="size size-order" href="${orderLink(p, s)}" aria-label="${esc(s)} — под заказ">${esc(s)}<small>под заказ</small></a>`)
           .join("")}</div>
       </div>
       <div class="pd-actions">
@@ -65,7 +67,7 @@ if (!p) {
       <div class="pd-perks">
         <div>${icon.shield} Осматриваем вещь перед выдачей</div>
         <div>${icon.pin} Встреча и примерка в Кишинёве бесплатно</div>
-        <div>${icon.truck} Доставка по Молдове 1–3 дня</div>
+        <div>${icon.truck} Доставка по Молдове 1–2 дня</div>
       </div>
       <div class="acc">
         ${p.desc ? `<details open><summary>Описание</summary><div class="acc-body">${esc(p.desc)}</div></details>` : ""}

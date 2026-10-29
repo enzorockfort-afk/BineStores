@@ -118,7 +118,7 @@ async function dash(user) {
   <div class="wrap">
     <div class="page-head">
       <nav class="crumbs" aria-label="Навигация"><a href="index.html">Главная</a><span>Личный кабинет</span></nav>
-      <h1 class="page-title chrome-t">Привет, ${esc((user.name || user.email).split(" ")[0])}</h1>
+      <h1 class="page-title chrome-t">Привет</h1>
     </div>
     <div class="acc-layout">
       <nav class="acc-nav" aria-label="Разделы кабинета">

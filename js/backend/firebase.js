@@ -180,6 +180,13 @@ export async function createFirebase(config) {
       update: (id, patch) => updateDoc(doc(db, "orders", id), patch),
     },
 
+    /* живая подписка на заказы/заявки: свои (mine) или все (админ) */
+    watch(col, mine, cb) {
+      if (mine && !current) return () => {};
+      const q = mine ? query(collection(db, col), where("uid", "==", current.uid)) : collection(db, col);
+      return F.onSnapshot(q, (s) => cb(s.docs.map(withId)), () => {});
+    },
+
     /* CRM-коллекции: clients, tasks (только для админа) */
     crm: {
       async list(col) {

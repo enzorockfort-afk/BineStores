@@ -1,7 +1,8 @@
 import { lang, locale, t, setLang, I18N_ON } from "./i18n.js";
 import { api } from "./api.js";
-import { SHOP, COMPANY } from "./config.js";
+import { SHOP, COMPANY, SIZE_SETS } from "./config.js";
 import { cart, favs, onStoreChange } from "./store.js";
+import { startNotify } from "./notify.js";
 
 /* ---------------- helpers ---------------- */
 export const $ = (s, r = document) => r.querySelector(s);
@@ -74,8 +75,20 @@ const sale = (p) => (p.oldPrice > p.price ? Math.round((1 - p.price / p.oldPrice
 export const priceHtml = (p) =>
   `<span class="price-now">${money(p.price)}</span>${p.oldPrice > p.price ? `<s>${money(p.oldPrice)}</s>` : ""}`;
 
+/* размеры: в наличии и остальные из той же сетки — их можно заказать */
+export const sizesInStock = (p) => (p.sizes || []).filter((s) => !(p.stockQty && p.stockQty[s] === 0));
+export function otherSizes(p) {
+  const have = p.sizes || [];
+  if (!have.length) return [];
+  const set = have.some((s) => /^W\d/.test(s)) ? SIZE_SETS.waist : have.some((s) => /^\d/.test(s)) ? SIZE_SETS.shoes : have.some((s) => SIZE_SETS.clothes.includes(s)) ? SIZE_SETS.clothes : [];
+  return set.filter((s) => !sizesInStock(p).includes(s));
+}
+export const orderLink = (p, size = "") =>
+  `china.html?item=${encodeURIComponent(((p.brand || "") + " " + (p.name || "")).trim())}${size ? "&size=" + encodeURIComponent(size) : ""}`;
+
 export function card(p, i = 0) {
   const off = sale(p);
+  const have = sizesInStock(p);
   return `<article class="card" data-reveal style="--d:${i % 8}">
     <a class="card-media" href="product.html?id=${encodeURIComponent(p.id)}" data-tilt>
       ${pic(p, 0, "m1")}${p.thumbs?.[1] ? pic(p, 1, "m2") : ""}
@@ -86,6 +99,7 @@ export function card(p, i = 0) {
     <a class="card-info" href="product.html?id=${encodeURIComponent(p.id)}">
       <span class="card-brand">${esc(p.brand)}</span>
       <span class="card-name">${esc(p.name)}</span>
+      ${have.length ? `<span class="card-sizes">${have.slice(0, 5).map(esc).join(" · ")}${have.length > 5 ? " …" : ""}${otherSizes(p).length ? ` <em>и другие размеры</em>` : ""}</span>` : ""}
       <span class="card-price">${priceHtml(p)}</span>
     </a>
   </article>`;
@@ -314,6 +328,30 @@ function header(active) {
 }
 
 /* ссылка на менеджера в Telegram; text — готовое сообщение */
+/* t.me открывает промежуточную страницу — сразу открываем чат в приложении Telegram,
+   а если приложения нет, через секунду открываем t.me */
+function tgDeepLinks() {
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="https://t.me/"]');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const u = new URL(a.href);
+    const domain = u.pathname.slice(1).split("/")[0];
+    if (!/^[A-Za-z0-9_]{4,32}$/.test(domain)) return;
+    e.preventDefault();
+    const text = u.searchParams.get("text");
+    let left = false;
+    const mark = () => (left = true);
+    addEventListener("blur", mark, { once: true });
+    document.addEventListener("visibilitychange", mark, { once: true });
+    location.href = `tg://resolve?domain=${domain}${text ? "&text=" + encodeURIComponent(text) : ""}`;
+    setTimeout(() => {
+      removeEventListener("blur", mark);
+      document.removeEventListener("visibilitychange", mark);
+      if (!left) open(a.href, "_blank", "noopener");
+    }, 1200);
+  });
+}
+
 export const managerLink = (text = "") => `https://t.me/${SHOP.telegram}${text ? "?text=" + encodeURIComponent(text) : ""}`;
 
 export function socials(cls = "") {
@@ -480,6 +518,7 @@ export async function initLayout(active) {
     );
   preloader();
   transitions();
+  tgDeepLinks();
   requestAnimationFrame(() => document.body.classList.add("ready"));
 
   const hdr = $("#hdr");
@@ -597,7 +636,7 @@ export async function initLayout(active) {
     toast(on ? "Добавлено в избранное" : "Удалено из избранного");
   });
 
-  let favUid;
+  let favUid, stopNotify = () => {};
   api.auth.onChange((u) => {
     const a = $("#accBtn");
     a.classList.toggle("is-in", !!u);
@@ -607,6 +646,8 @@ export async function initLayout(active) {
     if ((u?.uid || null) !== favUid) {
       favUid = u?.uid || null;
       favs.attach(api);
+      stopNotify();
+      stopNotify = startNotify(u, { mount: $("#accBtn"), toast });
     }
   });
 

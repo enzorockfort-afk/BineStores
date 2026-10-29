@@ -1,4 +1,5 @@
 import { initLayout, $, $$, esc, money, art, icon, toast, burst, STATUS, socials, lang } from "../ui.js";
+import { CITIES, BUS_PRICE, POST_PRICE, pickupPoint } from "../pickup.js";
 import { api, errorText } from "../api.js";
 import { SHOP } from "../config.js";
 import { cart, onStoreChange } from "../store.js";
@@ -7,14 +8,12 @@ const user = await initLayout("");
 const form = $("#form");
 const F = form.elements;
 
-const MESS = [
-  ["telegram", "Telegram", icon.tg],
-  ["phone", "Звонок", '<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>'],
-].filter(([k]) => k === "phone" || SHOP[k]);
-$("#messengers").style.gridTemplateColumns = `repeat(${MESS.length}, 1fr)`;
-$("#messengers").innerHTML = MESS.map(
-  ([k, t, i], n) => `<label class="opt"><input type="radio" name="messenger" value="${k}"${n ? "" : " checked"}><span class="opt-body">${i}<b>${t}</b></span></label>`
-).join("");
+$("#mdCities").innerHTML = CITIES.map(([ru, ro]) => `<option value="${lang === "ro" ? ro : ru}">`).join("");
+/* username, если клиент указал именно его; иначе — текст «как найти» */
+const tgUser = (s) => {
+  const u = s.replace(/^https?:\/\/t\.me\//i, "").replace(/^@/, "");
+  return /^[A-Za-z0-9_]{4,32}$/.test(u) ? u : "";
+};
 
 function renderSummary() {
   if (!$("#lines")) return;
@@ -32,7 +31,22 @@ function renderSummary() {
     )
     .join("");
   $("#subtotal").textContent = money(cart.total());
-  $("#total").textContent = money(cart.total());
+  delivery();
+}
+
+/* стоимость и пункт получения зависят от способа доставки */
+function delivery() {
+  const ship = F.delivery.value === "ship";
+  const bus = F.shipBy.value === "bus";
+  $("#shipFields").hidden = !ship;
+  $("#postField").hidden = !ship || bus;
+  const where = ship && bus ? pickupPoint(F.city.value, lang) : "";
+  $("#pickup").hidden = !where;
+  $("#pickup").textContent = where;
+  const cost = ship ? (bus ? BUS_PRICE : POST_PRICE) : 0;
+  const approx = ship && !bus ? "≈" : "";
+  $("#delivCost").textContent = cost ? approx + money(cost) : "Бесплатно";
+  $("#total").textContent = approx + money(cart.total() + cost);
 }
 renderSummary();
 onStoreChange(renderSummary);
@@ -45,15 +59,11 @@ if (user) {
   F.phone.value = prof.phone || "";
   F.city.value = prof.city || "";
   F.address.value = prof.address || "";
+  F.telegram.value = prof.telegram || "";
 }
 
-form.addEventListener("change", (e) => {
-  if (e.target.name === "delivery") {
-    const ship = e.target.value === "ship";
-    $("#shipFields").hidden = !ship;
-    $("#delivCost").textContent = ship ? "По тарифу службы" : "Бесплатно";
-  }
-});
+form.addEventListener("change", (e) => ["delivery", "shipBy"].includes(e.target.name) && delivery());
+F.city.addEventListener("input", delivery);
 F.phone.addEventListener("focus", () => !F.phone.value && (F.phone.value = "+373 "));
 form.addEventListener("input", (e) => e.target.removeAttribute("aria-invalid"));
 
@@ -65,8 +75,12 @@ const msgText = (o) =>
     "",
     `${lang === "ro" ? "Total" : "Итого"}: ${money(o.total)}`,
     `${lang === "ro" ? "Nume" : "Имя"}: ${o.contact.name}, ${o.contact.phone}`,
-    o.delivery.type === "ship" ? `${lang === "ro" ? "Livrare" : "Доставка"}: ${o.delivery.city}, ${o.delivery.address}` : lang === "ro" ? "Întâlnire în Chișinău" : "Встреча в Кишинёве",
-    o.comment ? `${lang === "ro" ? "Comentariu" : "Комментарий"}: ${o.comment}` : "",
+    o.delivery.type === "ship"
+      ? o.delivery.method === "bus"
+        ? `${lang === "ro" ? "Microbuz" : "Маршрутка"}: ${o.delivery.city}`
+        : `${lang === "ro" ? "Poștă" : "Почта"}: ${o.delivery.city}, ${o.delivery.address}`
+      : lang === "ro" ? "Întâlnire în Chișinău" : "Встреча в Кишинёве",
+    `Telegram: ${o.contact.telegram ? "@" + o.contact.telegram : o.contact.tgNote}`,
   ]
     .filter((x, i, a) => x || a[i - 1])
     .join("\n");
@@ -84,8 +98,9 @@ form.addEventListener("submit", async (e) => {
   if (d.phone.replace(/\D/g, "").length < 8) bad.push("phone");
   if (d.delivery === "ship") {
     if (!d.city) bad.push("city");
-    if (!d.address) bad.push("address");
+    if (d.shipBy === "post" && !d.address) bad.push("address");
   }
+  if (d.telegram.length < 3) bad.push("telegram");
   if (bad.length) {
     bad.forEach((n) => F[n].setAttribute("aria-invalid", "true"));
     F[bad[0]].focus();
@@ -106,15 +121,20 @@ form.addEventListener("submit", async (e) => {
     number: "BS-" + Date.now().toString(36).slice(-6).toUpperCase(),
     items,
     total: cart.total(),
-    contact: { name: d.name, phone: d.phone },
-    delivery: { type: d.delivery, city: d.city || "", address: d.address || "" },
-    messenger: d.messenger || "",
-    comment: d.comment || "",
+    contact: { name: d.name, phone: d.phone, telegram: tgUser(d.telegram), tgNote: tgUser(d.telegram) ? "" : d.telegram },
+    delivery:
+      d.delivery === "ship"
+        ? d.shipBy === "bus"
+          ? { type: "ship", method: "bus", city: d.city, address: "", pickup: pickupPoint(d.city), cost: BUS_PRICE }
+          : { type: "ship", method: "post", city: d.city, address: d.address, cost: POST_PRICE }
+        : { type: "meet", city: "", address: "" },
+    messenger: "telegram",
+    comment: "",
     consentAt: Date.now(),
   };
   try {
     const saved = await api.orders.create(order);
-    if (user) api.profile.save({ name: d.name, phone: d.phone, city: d.city, address: d.address }).catch(() => {});
+    if (user) api.profile.save({ name: d.name, phone: d.phone, city: d.city, address: d.address, telegram: d.telegram }).catch(() => {});
     cart.clear();
     showDone(saved);
   } catch (err) {
@@ -132,7 +152,7 @@ function showDone(o) {
     <div class="success-orb">${icon.check}</div>
     <h1 class="chrome-t">Заказ принят</h1>
     <span class="num">${esc(o.number)}</span>
-    <p>Мы свяжемся с вами в ближайшее время. Чтобы ускорить подтверждение — отправьте заказ нам в мессенджер.</p>
+    <p>Мы свяжемся с вами в ближайшее время.</p>
     ${SHOP.telegram ? `<a class="btn btn-chrome" href="${messengerUrl(o.messenger, text)}" target="_blank" rel="noopener" data-magnetic>${icon.tg} Написать менеджеру в Telegram</a>` : ""}
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
       ${user ? `<a class="btn btn-ghost" href="account.html#orders">Мои заказы</a>` : ""}

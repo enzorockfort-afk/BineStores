@@ -1,5 +1,17 @@
 import { esc, money, art, fmtDate, STATUS } from "./ui.js";
 import { ORDER_STATUSES, REQUEST_STATUSES } from "./config.js";
+import { pickupPoint } from "./pickup.js";
+import { lang } from "./i18n.js";
+
+/* Telegram клиента: @username ссылкой или текст «как найти» */
+export const tgContact = (c = {}) =>
+  c.telegram ? `<a href="https://t.me/${esc(c.telegram)}" target="_blank" rel="noopener">@${esc(c.telegram)}</a>` : esc(c.tgNote || "—");
+export function deliveryText(d) {
+  if (d?.type !== "ship") return "Встреча в Кишинёве";
+  if (d.method === "bus") return `Маршрутка: ${d.city}`;
+  if (d.method === "post") return `Почта: ${d.city}, ${d.address}`;
+  return `Доставка: ${d.city}, ${d.address}`;
+}
 
 function trackHtml(st) {
   if (st === "cancelled") return "";
@@ -33,8 +45,9 @@ export function orderHtml(o, i, admin = false) {
         )
         .join("")}</ul>
       <dl class="kv">
-        ${admin ? `<dt>Клиент</dt><dd>${esc(o.contact?.name)}, <a href="tel:${esc(o.contact?.phone)}">${esc(o.contact?.phone)}</a></dd><dt>Связь</dt><dd>${esc(o.messenger || "—")}</dd><dt>Аккаунт</dt><dd>${o.uid ? "Да" : "Гость"}</dd>` : ""}
-        <dt>Получение</dt><dd>${o.delivery?.type === "ship" ? `Доставка: ${esc(o.delivery.city)}, ${esc(o.delivery.address)}` : "Встреча в Кишинёве"}</dd>
+        ${admin ? `<dt>Клиент</dt><dd>${esc(o.contact?.name)}, <a href="tel:${esc(o.contact?.phone)}">${esc(o.contact?.phone)}</a></dd><dt>Telegram</dt><dd>${tgContact(o.contact)}</dd><dt>Аккаунт</dt><dd>${o.uid ? "Да" : "Гость"}</dd>` : ""}
+        <dt>Получение</dt><dd>${esc(deliveryText(o.delivery))}</dd>
+        ${o.delivery?.method === "bus" ? `<dt>Где забрать</dt><dd data-no-i18n>${esc(pickupPoint(o.delivery.city, lang))}</dd>` : ""}
         ${o.comment ? `<dt>Комментарий</dt><dd>${esc(o.comment)}</dd>` : ""}
         ${admin ? `<dt>Итого</dt><dd><b>${money(o.total)}</b></dd>` : ""}
       </dl>
@@ -72,7 +85,7 @@ export function requestHtml(r, i, admin = false) {
         <dt>Количество</dt><dd>${r.qty || 1}</dd>
         ${r.budget ? `<dt>Бюджет</dt><dd>до ${money(r.budget)}</dd>` : ""}
         ${r.comment ? `<dt>Комментарий</dt><dd>${esc(r.comment)}</dd>` : ""}
-        ${admin ? `<dt>Клиент</dt><dd>${esc(r.contact?.name)}, <a href="tel:+${digits}">${esc(r.contact?.phone)}</a></dd><dt>Связь</dt><dd>${via}</dd><dt>Аккаунт</dt><dd>${r.uid ? "Да" : "Гость"}</dd>` : ""}
+        ${admin ? `<dt>Клиент</dt><dd>${esc(r.contact?.name)}, <a href="tel:+${digits}">${esc(r.contact?.phone)}</a></dd><dt>Связь</dt><dd>${r.contact?.telegram || r.contact?.tgNote ? tgContact(r.contact) : via}</dd><dt>Аккаунт</dt><dd>${r.uid ? "Да" : "Гость"}</dd>` : ""}
       </dl>
     </div>
   </details>`;

@@ -1,4 +1,4 @@
-import { initLayout, $, esc, icon, toast, burst, lang } from "../ui.js";
+import { initLayout, $, esc, icon, toast, burst, lang, qs } from "../ui.js";
 import { api, errorText } from "../api.js";
 import { SHOP } from "../config.js";
 import { compressFile, compress, isImageFile } from "../images.js";
@@ -8,20 +8,22 @@ const form = $("#form");
 const F = form.elements;
 const MAX = 3;
 
-const MESS = [
-  ["telegram", "Telegram", icon.tg],
-  ["phone", "Звонок", '<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>'],
-].filter(([k]) => k === "phone" || SHOP[k]);
-$("#messengers").style.gridTemplateColumns = `repeat(${Math.min(MESS.length, 4)}, 1fr)`;
-$("#messengers").innerHTML = MESS.map(
-  ([k, t, i], n) => `<label class="opt"><input type="radio" name="messenger" value="${k}"${n ? "" : " checked"}><span class="opt-body">${i}<b>${t}</b></span></label>`
-).join("");
+/* username, если клиент указал именно его; иначе — текст «как найти» */
+const tgUser = (s) => {
+  const u = s.replace(/^https?:\/\/t\.me\//i, "").replace(/^@/, "");
+  return /^[A-Za-z0-9_]{4,32}$/.test(u) ? u : "";
+};
 
 if (user) {
   const prof = (await api.profile.get().catch(() => null)) || {};
   F.name.value = prof.name || user.name || "";
   F.phone.value = prof.phone || "";
+  F.telegram.value = prof.telegram || "";
 }
+// пришли с карточки товара: «другой размер под заказ»
+if (qs("item")) F.title.value = qs("item");
+if (qs("size")) F.size.value = qs("size");
+
 F.phone.addEventListener("focus", () => !F.phone.value && (F.phone.value = "+373 "));
 form.addEventListener("input", (e) => e.target.removeAttribute("aria-invalid"));
 
@@ -83,6 +85,7 @@ form.addEventListener("submit", async (e) => {
   if (v("title").length < 2) bad.push("title");
   if (v("name").length < 2) bad.push("name");
   if (v("phone").replace(/\D/g, "").length < 8) bad.push("phone");
+  if (v("telegram").length < 3) bad.push("telegram");
   if (bad.length) {
     bad.forEach((n) => F[n].setAttribute("aria-invalid", "true"));
     F[bad[0]].focus();
@@ -109,12 +112,12 @@ form.addEventListener("submit", async (e) => {
     budget: Math.round(+v("budget")) || 0,
     comment: v("comment"),
     photos: photos.map((p) => p.data),
-    contact: { name: v("name"), phone: v("phone"), via: form.querySelector("[name=messenger]:checked")?.value || "" },
+    contact: { name: v("name"), phone: v("phone"), via: "telegram", telegram: tgUser(v("telegram")), tgNote: tgUser(v("telegram")) ? "" : v("telegram") },
     consentAt: Date.now(),
   };
   try {
     const saved = await api.requests.create(req);
-    if (user) api.profile.save({ phone: req.contact.phone }).catch(() => {});
+    if (user) api.profile.save({ phone: req.contact.phone, telegram: v("telegram") }).catch(() => {});
     done(saved);
   } catch (err) {
     btn.classList.remove("loading");

@@ -1,5 +1,7 @@
 import { $, $$, esc, art, icon, toast } from "../ui.js";
 import { api, errorText } from "../api.js";
+import { deliveryText } from "../orders-view.js";
+import { startNotify } from "../notify.js";
 import { ORDER_STATUSES, ORDER_STAGES, REQUEST_STATUSES, INV_STATUSES, SOURCES, CATEGORIES, CRM_EMAIL, DEMO_ADMIN } from "../config.js";
 
 /* =========================================================
@@ -170,6 +172,8 @@ function orderCard(o) {
     ]
       .filter(Boolean)
       .join(" · ") || "—"}</div>
+    ${c.tgNote ? `<p class="oc-notes">Telegram: ${esc(c.tgNote)}</p>` : ""}
+    ${fromSite && o.delivery ? `<p class="oc-notes">${esc(deliveryText(o.delivery))}</p>` : ""}
     <ol class="oc-items">${(o.items || [])
       .map(
         (i) => `<li><span class="oi-name">${esc(itemName(i))}</span><span class="oi-size">${esc(i.size || "")}${i.color ? ` · ${esc(i.color)}` : ""}${qtyOf(i) > 1 ? ` ×${qtyOf(i)}` : ""}</span>
@@ -1103,6 +1107,7 @@ async function start() {
   view.innerHTML = `<div class="kpis">${'<div class="kpi sk" style="height:96px"></div>'.repeat(4)}</div>`;
   await load();
   route();
+  startNotify(api.auth.current(), { mount: $("#addBtn"), toast, admin: true, onNew: () => load().then(route) });
 }
 $("#logout").addEventListener("click", () => api.auth.signOut());
 api.auth.onChange((u) => {
