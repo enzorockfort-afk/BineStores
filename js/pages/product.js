@@ -1,7 +1,7 @@
-import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced, lang, sizesInStock, otherSizes, orderLink } from "../ui.js";
-import { api } from "../api.js";
-import { SHOP } from "../config.js";
-import { cart, favs } from "../store.js";
+import { initLayout, $, $$, card, reveal, esc, qs, icon, art, tag, priceHtml, money, toast, flyToCart, burst, loadProducts, reduced, lang, sizesInStock, otherSizes, orderLink } from "../ui.js?v=16";
+import { api } from "../api.js?v=16";
+import { SHOP } from "../config.js?v=16";
+import { cart, favs } from "../store.js?v=16";
 
 await initLayout("catalog");
 

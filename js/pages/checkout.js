@@ -1,8 +1,8 @@
-import { initLayout, $, $$, esc, money, art, icon, toast, burst, STATUS, socials, lang } from "../ui.js";
-import { CITIES, BUS_PRICE, POST_PRICE, pickupPoint } from "../pickup.js";
-import { api, errorText } from "../api.js";
-import { SHOP } from "../config.js";
-import { cart, onStoreChange } from "../store.js";
+import { initLayout, $, $$, esc, money, art, icon, toast, burst, STATUS, socials, lang } from "../ui.js?v=16";
+import { CITIES, BUS_PRICE, POST_PRICE, pickupPoint } from "../pickup.js?v=16";
+import { api, errorText } from "../api.js?v=16";
+import { SHOP } from "../config.js?v=16";
+import { cart, onStoreChange } from "../store.js?v=16";
 
 const user = await initLayout("");
 const form = $("#form");

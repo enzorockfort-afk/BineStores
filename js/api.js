@@ -1,9 +1,9 @@
-import { FIREBASE } from "./config.js";
+import { FIREBASE } from "./config.js?v=16";
 
 /* Выбирает бэкенд: Firebase, если заполнен конфиг, иначе демо в браузере. */
 export const api = await (FIREBASE.apiKey
-  ? import("./backend/firebase.js").then((m) => m.createFirebase(FIREBASE))
-  : import("./backend/local.js").then((m) => m.createLocal()));
+  ? import("./backend/firebase.js?v=16").then((m) => m.createFirebase(FIREBASE))
+  : import("./backend/local.js?v=16").then((m) => m.createLocal()));
 
 const AUTH_ERRORS = {
   "auth/email-already-in-use": "Этот email уже зарегистрирован",
