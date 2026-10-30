@@ -1,8 +1,8 @@
-import { $, $$, esc, art, icon, toast } from "../ui.js?v=17";
-import { api, errorText } from "../api.js?v=17";
-import { deliveryText } from "../orders-view.js?v=17";
-import { startNotify } from "../notify.js?v=17";
-import { ORDER_STATUSES, ORDER_STAGES, REQUEST_STATUSES, INV_STATUSES, SOURCES, CATEGORIES, CRM_EMAIL, DEMO_ADMIN } from "../config.js?v=17";
+import { $, $$, esc, art, icon, toast } from "../ui.js?v=18";
+import { api, errorText } from "../api.js?v=18";
+import { deliveryText } from "../orders-view.js?v=18";
+import { startNotify } from "../notify.js?v=18";
+import { ORDER_STATUSES, ORDER_STAGES, REQUEST_STATUSES, INV_STATUSES, SOURCES, CATEGORIES, CRM_EMAIL, DEMO_ADMIN } from "../config.js?v=18";
 
 /* =========================================================
    Bine CRM (crm.html). Три главных раздела по шаблонам продавца:

@@ -1,9 +1,9 @@
-import { initLayout, $, $$, esc, money, art, icon, toast, tag, reveal } from "../ui.js?v=17";
-import { api, errorText } from "../api.js?v=17";
-import { CATEGORIES, ORDER_STATUSES, REQUEST_STATUSES, SUBCATEGORIES, SIZE_SETS, WAIST_SUBS } from "../config.js?v=17";
-import { SEED } from "../seed.js?v=17";
-import { orderHtml, requestHtml } from "../orders-view.js?v=17";
-import { compress, isImageFile } from "../images.js?v=17";
+import { initLayout, $, $$, esc, money, art, icon, toast, tag, reveal } from "../ui.js?v=18";
+import { api, errorText } from "../api.js?v=18";
+import { CATEGORIES, ORDER_STATUSES, REQUEST_STATUSES, SUBCATEGORIES, SIZE_SETS, WAIST_SUBS } from "../config.js?v=18";
+import { SEED } from "../seed.js?v=18";
+import { orderHtml, requestHtml } from "../orders-view.js?v=18";
+import { compress, isImageFile } from "../images.js?v=18";
 
 await initLayout("");
 const view = $("#view");
@@ -287,7 +287,7 @@ function renderSubs(selected = "") {
   const list = SUBCATEGORIES[EF.cat.value] || [];
   $("#subSel").innerHTML = `<option value="">Без подкатегории</option>` + list.map((s) => `<option${s === selected ? " selected" : ""}>${s}</option>`).join("");
 }
-/* размеры для выбора зависят от категории: обувь 30–48, одежда XXS–XXXL (+ талия для низа) */
+/* размеры для выбора зависят от категории: обувь 37–46, одежда S–XXL (+ талия для низа) */
 function presetSizes() {
   const cat = EF.cat.value;
   if (cat === "Обувь") return SIZE_SETS.shoes;

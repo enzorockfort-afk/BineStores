@@ -1,5 +1,5 @@
-import { initLayout, $, esc, lang } from "../ui.js?v=17";
-import { SHOP, COMPANY, LEGAL_UPDATED } from "../config.js?v=17";
+import { initLayout, $, esc, lang } from "../ui.js?v=18";
+import { SHOP, COMPANY, LEGAL_UPDATED } from "../config.js?v=18";
 
 await initLayout("");
 

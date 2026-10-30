@@ -68,8 +68,8 @@ export const SUBCATEGORIES = {
 /* Наборы размеров для быстрого выбора в админке */
 const range = (a, b, pre = "") => Array.from({ length: b - a + 1 }, (_, i) => pre + (a + i));
 export const SIZE_SETS = {
-  shoes: range(30, 48),
-  clothes: ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"],
+  shoes: range(37, 46),
+  clothes: ["S", "M", "L", "XL", "XXL"],
   waist: range(24, 36, "W").concat(["W38", "W40"]),
   one: ["One size"],
 };

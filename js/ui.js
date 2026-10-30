@@ -1,8 +1,8 @@
-import { lang, locale, t, setLang, I18N_ON } from "./i18n.js?v=17";
-import { api } from "./api.js?v=17";
-import { SHOP, COMPANY, SIZE_SETS } from "./config.js?v=17";
-import { cart, favs, onStoreChange } from "./store.js?v=17";
-import { startNotify } from "./notify.js?v=17";
+import { lang, locale, t, setLang, I18N_ON } from "./i18n.js?v=18";
+import { api } from "./api.js?v=18";
+import { SHOP, COMPANY, SIZE_SETS } from "./config.js?v=18";
+import { cart, favs, onStoreChange } from "./store.js?v=18";
+import { startNotify } from "./notify.js?v=18";
 
 /* ---------------- helpers ---------------- */
 export const $ = (s, r = document) => r.querySelector(s);

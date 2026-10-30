@@ -1,7 +1,7 @@
-import { initLayout, $, esc, icon, toast, burst, lang, qs } from "../ui.js?v=17";
-import { api, errorText } from "../api.js?v=17";
-import { SHOP } from "../config.js?v=17";
-import { compressFile, compress, isImageFile } from "../images.js?v=17";
+import { initLayout, $, esc, icon, toast, burst, lang, qs } from "../ui.js?v=18";
+import { api, errorText } from "../api.js?v=18";
+import { SHOP } from "../config.js?v=18";
+import { compressFile, compress, isImageFile } from "../images.js?v=18";
 
 const user = await initLayout("china");
 const form = $("#form");
