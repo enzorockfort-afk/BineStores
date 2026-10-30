@@ -1,7 +1,7 @@
-import { initLayout, $, $$, esc, money, art, icon, toast, card, reveal, fmtDate, STATUS, loadProducts, qs } from "../ui.js?v=18";
-import { api, errorText } from "../api.js?v=18";
-import { favs, onStoreChange } from "../store.js?v=18";
-import { orderHtml, requestHtml } from "../orders-view.js?v=18";
+import { initLayout, $, $$, esc, money, art, icon, toast, card, reveal, fmtDate, STATUS, loadProducts, qs } from "../ui.js?v=19";
+import { api, errorText } from "../api.js?v=19";
+import { favs, onStoreChange } from "../store.js?v=19";
+import { orderHtml, requestHtml } from "../orders-view.js?v=19";
 
 await initLayout("account");
 const view = $("#view");

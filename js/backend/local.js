@@ -1,6 +1,6 @@
 /* Демо-бэкенд: всё хранится в IndexedDB этого браузера. */
-import { DEMO_ADMIN } from "../config.js?v=18";
-import { SEED } from "../seed.js?v=18";
+import { DEMO_ADMIN } from "../config.js?v=19";
+import { SEED } from "../seed.js?v=19";
 
 const DB = "binestore-demo";
 let dbp;

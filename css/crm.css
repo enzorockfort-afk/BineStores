@@ -327,3 +327,23 @@ button.row:hover, a.row:hover { background: var(--carbon-2); }
   .oc-items li { grid-template-columns: 1fr 60px 60px; }
   .oc-items .oi-size { grid-column: 1; grid-row: 2; }
 }
+
+/* ---------- что закупить ---------- */
+.seg4 { grid-template-columns: repeat(4, 1fr); }
+.idea-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 10px; }
+.idea { display: grid; gap: 12px; padding: 16px; border-radius: 16px; background: var(--carbon); border: 1px solid var(--line); animation: rise .4s var(--ease) both; }
+.idea-h { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.idea-name { text-align: left; font: 400 19px/1.15 var(--display); color: var(--white); }
+.idea-name:hover { text-decoration: underline; }
+.idea-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.idea-links a { padding: 4px 10px; border-radius: 10px; background: var(--carbon-2); border: 1px solid var(--line); font-size: 13px; color: var(--mist); }
+.idea-links a:hover { color: var(--white); border-color: var(--line-2); }
+.idea-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 14px; font-size: 14px; font-weight: 600; }
+.idea-grid em { display: block; font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--steel); margin-bottom: 2px; }
+.idea-grid small { color: var(--steel); font-weight: 500; }
+.idea-grid .neg { color: var(--red); }
+.idea-note { margin: 0; padding-top: 10px; border-top: 1px solid var(--line); color: var(--mist); font-size: 14px; white-space: pre-line; }
+.pill.idea-buy { background: rgba(243,201,119,.14); color: var(--amber); }
+.pill.idea-ordered { background: rgba(125,240,185,.13); color: var(--mint); }
+.pill.idea-skip { opacity: .6; }
+@media (max-width: 520px) { .idea-grid { grid-template-columns: repeat(2, 1fr); } .seg4 span { padding: 10px 4px; font-size: 13px; } }

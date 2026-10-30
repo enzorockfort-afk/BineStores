@@ -1,8 +1,8 @@
-import { $, $$, esc, art, icon, toast } from "../ui.js?v=18";
-import { api, errorText } from "../api.js?v=18";
-import { deliveryText } from "../orders-view.js?v=18";
-import { startNotify } from "../notify.js?v=18";
-import { ORDER_STATUSES, ORDER_STAGES, REQUEST_STATUSES, INV_STATUSES, SOURCES, CATEGORIES, CRM_EMAIL, DEMO_ADMIN } from "../config.js?v=18";
+import { $, $$, esc, art, icon, toast } from "../ui.js?v=19";
+import { api, errorText } from "../api.js?v=19";
+import { deliveryText } from "../orders-view.js?v=19";
+import { startNotify } from "../notify.js?v=19";
+import { ORDER_STATUSES, ORDER_STAGES, REQUEST_STATUSES, INV_STATUSES, SOURCES, CATEGORIES, CRM_EMAIL, DEMO_ADMIN } from "../config.js?v=19";
 
 /* =========================================================
    Bine CRM (crm.html). Три главных раздела по шаблонам продавца:
@@ -40,12 +40,12 @@ const intl = (p) => {
 const clientKey = (c = {}) => phoneKey(c.phone) || (tgName(c.telegram) ? "tg_" + tgName(c.telegram).toLowerCase() : "");
 
 /* ---------------- state ---------------- */
-const D = { orders: [], requests: [], products: [], clients: [], tasks: [], budget: [] };
-const S = { view: "orders", q: "", kind: "all", stage: "all", inv: "all", budgetEdit: null };
+const D = { orders: [], requests: [], products: [], clients: [], tasks: [], budget: [], ideas: [] };
+const S = { view: "orders", q: "", kind: "all", stage: "all", inv: "all", idea: "open", budgetEdit: null };
 
 async function load() {
   const safe = (p) => p.catch((e) => (console.warn(e), []));
-  const [orders, requests, products, clients, tasks, budget] = await Promise.all([
+  const [orders, requests, products, clients, tasks, budget, ideas] = await Promise.all([
     safe(api.orders.all()),
     safe(api.requests.all()),
     safe(api.products.list({ all: true })),
@@ -55,8 +55,12 @@ async function load() {
       if (e?.code === "permission-denied") toast("Обновите правила Firestore — раздел «Бюджет» пока недоступен", "error");
       return [];
     }),
+    api.crm.list("ideas").catch((e) => {
+      if (e?.code === "permission-denied") toast("Обновите правила Firestore — раздел «Закупка» пока недоступен", "error");
+      return [];
+    }),
   ]);
-  Object.assign(D, { orders, requests, products, clients, tasks, budget });
+  Object.assign(D, { orders, requests, products, clients, tasks, budget, ideas });
 }
 
 /* ---------------- orders model ---------------- */
@@ -88,6 +92,7 @@ const VIEWS = {
   orders: ["Заказы", "Заказ"],
   budget: ["Бюджет", "Запись"],
   stock: ["Склад", "Вещь"],
+  ideas: ["Что закупить", "Идея"],
   today: ["Итоги", "Заказ"],
   requests: ["Заявки с сайта", "Заказ"],
   clients: ["Клиенты", "Клиент"],
@@ -106,10 +111,11 @@ function badges() {
   $("#nReq").textContent = D.requests.filter((r) => r.status === "new" && !r.orderId).length || "";
   const end = startOfDay() + DAY;
   $("#nTasks").textContent = D.tasks.filter((t) => !t.done && t.due && t.due < end).length || "";
+  $("#nIdeas").textContent = D.ideas.filter((i) => i.status === "buy").length || "";
 }
 function render() {
   badges();
-  view.innerHTML = { orders: ordersView, budget: budgetView, stock: stockView, today: todayView, requests: requestsView, clients: clientsView, tasks: tasksView, data: dataView }[S.view]();
+  view.innerHTML = { orders: ordersView, budget: budgetView, stock: stockView, ideas: ideasView, today: todayView, requests: requestsView, clients: clientsView, tasks: tasksView, data: dataView }[S.view]();
   after[S.view]?.();
 }
 const after = {};
@@ -897,6 +903,141 @@ async function saveTask(t) {
 }
 
 /* =========================================================
+   ЧТО ЗАКУПИТЬ: заметки с ссылками, ценой, доставкой и прибылью
+   ========================================================= */
+const IDEA_ST = { idea: "Идея", buy: "Закупить", ordered: "Заказано", skip: "Не берём" };
+const ideaCost = (i) => (+i.cost || 0) + (+i.ship || 0);
+const ideaProfit = (i) => (hasVal(i.price) ? +i.price - ideaCost(i) : null);
+const host = (u) => {
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return u.slice(0, 30);
+  }
+};
+function ideasView() {
+  const q = S.q.toLowerCase();
+  const by = (s) => D.ideas.filter((i) => (s === "open" ? i.status !== "skip" && i.status !== "ordered" : i.status === s));
+  const list = by(S.idea)
+    .filter((i) => !q || `${i.title} ${i.note || ""} ${(i.links || []).join(" ")}`.toLowerCase().includes(q))
+    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const toBuy = by("buy");
+  const need = toBuy.reduce((s, i) => s + ideaCost(i) * (+i.qty || 1), 0);
+  const gain = toBuy.reduce((s, i) => s + (ideaProfit(i) || 0) * (+i.qty || 1), 0);
+  return `
+  <div class="sumbar">
+    <span>К закупке <b>${toBuy.length}</b></span>
+    <span>Нужно денег <b>${lei(need)}</b></span>
+    <span class="pos">Прибыль с них <b>${lei(gain)}</b></span>
+  </div>
+  <div class="pipe-bar">
+    ${[["open", "В работе"], ["idea", "Идеи"], ["buy", "Закупить"], ["ordered", "Заказано"], ["skip", "Не берём"]]
+      .map(([k, t]) => `<button class="chip" data-ideast="${k}" aria-pressed="${S.idea === k}">${t} ${by(k).length}</button>`)
+      .join("")}
+  </div>
+  ${
+    list.length
+      ? `<div class="idea-list">${list
+          .map((i) => {
+            const pr = ideaProfit(i);
+            return `<article class="idea">
+          <header class="idea-h"><button class="idea-name" data-idea="${esc(i.id)}">${esc(i.title)}</button><span class="pill idea-${i.status}">${IDEA_ST[i.status] || ""}</span></header>
+          ${(i.links || []).length ? `<div class="idea-links">${i.links.map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(host(u))}</a>`).join("")}</div>` : ""}
+          <div class="idea-grid">
+            <span><em>Цена</em>${hasVal(i.cost) ? lei(i.cost) : "—"}${hasVal(i.cny) ? ` <small>¥${esc(i.cny)}</small>` : ""}</span>
+            <span><em>Доставка</em>${hasVal(i.ship) ? lei(i.ship) : "—"}</span>
+            <span><em>Итого закупка</em>${hasVal(i.cost) || hasVal(i.ship) ? lei(ideaCost(i)) : "—"}</span>
+            <span><em>Продажа</em>${hasVal(i.price) ? lei(i.price) : "—"}</span>
+            <span class="${pr == null ? "" : pr >= 0 ? "pos" : "neg"}"><em>Прибыль</em>${pr == null ? "—" : lei(pr)}</span>
+            <span><em>Размеры · шт.</em>${esc(i.sizes || "—")} · ${+i.qty || 1}</span>
+          </div>
+          ${i.note ? `<p class="idea-note">${esc(i.note)}</p>` : ""}
+        </article>`;
+          })
+          .join("")}</div>`
+      : `<div class="empty-state"><div class="empty-orb">${icon.box}</div><p>Здесь заметки о том, что закупить в Китае: ссылки, цена, доставка</p><button class="btn btn-chrome" id="ideaFirst">Добавить идею</button></div>`
+  }`;
+}
+after.ideas = () => $("#ideaFirst")?.addEventListener("click", () => openIdea());
+
+const im = $("#ideaModal");
+const IF = $("#ideaForm").elements;
+let editingIdea = null;
+const ideaForm = () => ({
+  title: IF.title.value.trim(),
+  status: IF.status.value,
+  links: IF.links.value.split(/\s+/).map((s) => s.trim()).filter(Boolean),
+  cost: IF.cost.value === "" ? null : +IF.cost.value,
+  cny: IF.cny.value === "" ? null : +IF.cny.value,
+  ship: IF.ship.value === "" ? null : +IF.ship.value,
+  price: IF.price.value === "" ? null : +IF.price.value,
+  sizes: IF.sizes.value.trim(),
+  qty: Math.max(1, Math.round(+IF.qty.value || 1)),
+  note: IF.note.value.trim(),
+});
+function ideaCalc() {
+  const i = ideaForm();
+  const pr = ideaProfit(i);
+  $("#ideaCalc").innerHTML = `Закупка с доставкой: <b>${lei(ideaCost(i))}</b>${pr == null ? "" : ` · прибыль <b style="color:var(${pr >= 0 ? "--mint" : "--red"})">${lei(pr)}</b>${i.price ? ` (${Math.round((pr / i.price) * 100)}%)` : ""}`}${i.qty > 1 ? ` · за ${i.qty} шт.: закупка ${lei(ideaCost(i) * i.qty)}` : ""}`;
+}
+function openIdea(i = null) {
+  editingIdea = i;
+  $("#ideaForm").reset();
+  $("#imErr").textContent = "";
+  $("#imTitle").textContent = i ? i.title : "Новая идея для закупки";
+  $("#imDelete").hidden = !i;
+  $("#imToStock").hidden = !i;
+  if (i) {
+    IF.title.value = i.title || "";
+    IF.status.value = i.status || "idea";
+    IF.links.value = (i.links || []).join("\n");
+    for (const k of ["cost", "cny", "ship", "price"]) IF[k].value = hasVal(i[k]) ? i[k] : "";
+    IF.sizes.value = i.sizes || "";
+    IF.qty.value = i.qty || 1;
+    IF.note.value = i.note || "";
+  }
+  ideaCalc();
+  im.showModal();
+  setTimeout(() => IF.title.focus(), 50);
+}
+im.addEventListener("click", (e) => (e.target === im || e.target.closest("[data-close]")) && im.close());
+$("#ideaForm").addEventListener("input", ideaCalc);
+$("#ideaForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = ideaForm();
+  if (!data.title) return ($("#imErr").textContent = "Введите название"), IF.title.focus();
+  try {
+    const saved = await api.crm.save("ideas", editingIdea ? { ...editingIdea, ...data } : data);
+    const k = D.ideas.findIndex((x) => x.id === saved.id);
+    k >= 0 ? (D.ideas[k] = saved) : D.ideas.unshift(saved);
+    im.close();
+    render();
+  } catch (err) {
+    $("#imErr").textContent = errorText(err);
+  }
+});
+$("#imDelete").addEventListener("click", async () => {
+  const i = editingIdea;
+  if (!i || !confirm(`Удалить «${i.title}»?`)) return;
+  await api.crm.remove("ideas", i.id).catch((err) => toast(errorText(err), "error"));
+  D.ideas = D.ideas.filter((x) => x.id !== i.id);
+  im.close();
+  render();
+});
+/* заказали у поставщика — заводим вещь на склад «в дороге» с ценой закупки вместе с доставкой */
+$("#imToStock").addEventListener("click", () => {
+  const i = { ...editingIdea, ...ideaForm() };
+  im.close();
+  openStock();
+  SF.title.value = i.title;
+  SF.inv.value = "transit";
+  SF.cost.value = ideaCost(i) || "";
+  SF.price.value = hasVal(i.price) ? i.price : "";
+  $("#sizeRows .pair [name=sizeQty]").value = i.qty || 1;
+  qtyInfo();
+});
+
+/* =========================================================
    ДАННЫЕ
    ========================================================= */
 function dataView() {
@@ -904,7 +1045,7 @@ function dataView() {
     <div class="box"><div class="box-h"><h2>Где хранятся данные</h2></div>
       <p class="muted">${api.mode === "demo" ? "Демо-режим: всё лежит только в этом браузере." : "Firebase: данные общие для вас, напарника и сайта."} Заказы покупателей и заявки с сайта попадают сюда сами, склад — это те же товары, что на сайте.</p></div>
     <div class="box"><div class="box-h"><h2>Резервная копия</h2></div>
-      <p class="muted">Файл со складом (с фото), заказами, бюджетом, заявками, клиентами и задачами.</p>
+      <p class="muted">Файл со складом (с фото), заказами, бюджетом, заявками, клиентами, задачами и закупкой.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-chrome btn-sm" id="exportBtn">${icon.upload} Скачать копию</button>
         <label class="btn btn-ghost btn-sm" style="cursor:pointer">Загрузить копию<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
       <p class="form-err" id="dataErr"></p></div>
@@ -916,7 +1057,7 @@ after.data = () => {
     b.classList.add("loading");
     const images = {};
     for (const p of D.products) if (p.imgCount) images[p.id] = await api.products.images(p.id).catch(() => []);
-    const dump = { app: "bine-crm", version: 2, exportedAt: new Date().toISOString(), products: D.products, images, orders: D.orders, requests: D.requests, budget: D.budget, clients: D.clients, tasks: D.tasks };
+    const dump = { app: "bine-crm", version: 2, exportedAt: new Date().toISOString(), products: D.products, images, orders: D.orders, requests: D.requests, budget: D.budget, clients: D.clients, tasks: D.tasks, ideas: D.ideas };
     const url = URL.createObjectURL(new Blob([JSON.stringify(dump)], { type: "application/json" }));
     Object.assign(document.createElement("a"), { href: url, download: `bine-crm-${new Date().toISOString().slice(0, 10)}.json` }).click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
@@ -933,7 +1074,7 @@ after.data = () => {
         const imgs = dump.images?.[p.id];
         await api.products.save(p, imgs?.length ? imgs.map((full, i) => ({ full, thumb: p.thumbs?.[i] || (i < 2 ? full : null) })) : undefined);
       }
-      for (const col of ["orders", "requests", "budget", "clients", "tasks"]) for (const x of dump[col] || []) await api.crm.save(col, x);
+      for (const col of ["orders", "requests", "budget", "clients", "tasks", "ideas"]) for (const x of dump[col] || []) await api.crm.save(col, x);
       await load();
       toast("Копия загружена");
       render();
@@ -986,12 +1127,17 @@ document.addEventListener("click", async (e) => {
     if (S.view === "budget") return $("#bForm [name=amount]").focus();
     if (S.view === "clients") return openClient("");
     if (S.view === "tasks") return $("#taskForm [name=title]").focus();
+    if (S.view === "ideas") return openIdea();
     return openOrder();
   }
   const k = t.closest("[data-kind]");
   if (k) return (S.kind = k.dataset.kind), render();
   const iv = t.closest("[data-inv]");
   if (iv) return (S.inv = iv.dataset.inv), render();
+  const ist = t.closest("[data-ideast]");
+  if (ist) return (S.idea = ist.dataset.ideast), render();
+  const ie = t.closest("[data-idea]");
+  if (ie) return openIdea(D.ideas.find((x) => x.id === ie.dataset.idea));
   const gs = t.closest("[data-gostage]");
   if (gs) return (S.stage = gs.dataset.gostage), (location.hash = "orders");
   const bd = t.closest("[data-bdel]");

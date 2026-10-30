@@ -28,6 +28,7 @@ service cloud.firestore {
     match /clients/{id} { allow read, write: if isAdmin(); }
     match /tasks/{id} { allow read, write: if isAdmin(); }
     match /budget/{id} { allow read, write: if isAdmin(); }
+    match /ideas/{id} { allow read, write: if isAdmin(); }
 
     // Профили покупателей
     match /users/{uid} {

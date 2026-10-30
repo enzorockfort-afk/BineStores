@@ -1,7 +1,7 @@
-import { esc, money, art, fmtDate, STATUS } from "./ui.js?v=18";
-import { ORDER_STATUSES, REQUEST_STATUSES } from "./config.js?v=18";
-import { pickupPoint } from "./pickup.js?v=18";
-import { lang } from "./i18n.js?v=18";
+import { esc, money, art, fmtDate, STATUS } from "./ui.js?v=19";
+import { ORDER_STATUSES, REQUEST_STATUSES } from "./config.js?v=19";
+import { pickupPoint } from "./pickup.js?v=19";
+import { lang } from "./i18n.js?v=19";
 
 /* Telegram клиента: @username ссылкой или текст «как найти» */
 export const tgContact = (c = {}) =>
